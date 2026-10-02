@@ -180,37 +180,37 @@ Collaboration links encode room ID and encryption key as `#room=roomId,roomKey`.
 
 ### Loading Scenes from Blob
 
-[`packages/excalidraw/data/blob.ts:138-215`](../../packages/excalidraw/data/blob.ts#L138-L215)
+[`packages/excalidraw/data/blob.ts:138-196`](../../packages/excalidraw/data/blob.ts#L138-L196)
 
-`loadSceneOrLibraryFromBlob` parses file contents as JSON, validates data structure, restores elements and app state with local state merging, and returns a typed result. It handles both Excalidraw scenes and library files.
+`loadSceneOrLibraryFromBlob` parses file contents as JSON, validates data structure, restores elements and app state with local state merging, and returns a typed result. It handles both Excalidraw scenes and library files. Elements are restored once and reused in both the returned data and the scroll calculation to ensure consistency.
 
 ### Converting Canvas to Blob
 
-[`packages/excalidraw/data/blob.ts:236-256`](../../packages/excalidraw/data/blob.ts#L236-L256)
+[`packages/excalidraw/data/blob.ts:237-257`](../../packages/excalidraw/data/blob.ts#L237-L257)
 
 `canvasToBlob` converts an HTML canvas to a Blob via `toBlob`, with error handling for oversized canvases.
 
 ### Generating File IDs
 
-[`packages/excalidraw/data/blob.ts:258-272`](../../packages/excalidraw/data/blob.ts#L258-L272)
+[`packages/excalidraw/data/blob.ts:259-273`](../../packages/excalidraw/data/blob.ts#L259-L273)
 
 `generateIdFromFile` computes SHA-1 digest of file contents via `crypto.subtle.digest`, or falls back to a random nanoid if not supported. This provides content-addressed file identification.
 
 ### Data URL Conversion
 
-[`packages/excalidraw/data/blob.ts:274-312`](../../packages/excalidraw/data/blob.ts#L274-L312)
+[`packages/excalidraw/data/blob.ts:275-313`](../../packages/excalidraw/data/blob.ts#L275-L313)
 
 `getDataURL` reads a file as a data URL via FileReader; `getDataURL_sync` encodes raw data as base64 data URL; `dataURLToFile` and `dataURLToString` provide reverse conversions.
 
 ### Image Handling
 
-[`packages/excalidraw/data/blob.ts:314-413`](../../packages/excalidraw/data/blob.ts#L314-L413)
+[`packages/excalidraw/data/blob.ts:315-414`](../../packages/excalidraw/data/blob.ts#L315-L414)
 
 `getImageFileDimensions` loads an image and measures its natural dimensions (handling both blob URLs and data URLs). `resizeImageFile` uses the `image-blob-reduce` library to resize images above a threshold, preserving SVG files unchanged. `normalizeFile` corrects MIME types for images by detecting actual format from file headers.
 
 ### MIME Type Detection
 
-[[cite:packages/excalidraw/data/blob.ts:82-104,471-502]]
+[[cite:packages/excalidraw/data/blob.ts:82-104,472-503]]
 
 `getMimeType` infers MIME type from filename extension; `getActualMimeTypeFromImage` inspects leading bytes (magic numbers) for PNG, JPEG, GIF, WebP.
 

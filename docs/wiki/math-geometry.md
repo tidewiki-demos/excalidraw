@@ -56,26 +56,27 @@ The math library defines branded types to distinguish between different coordina
 
 - `curve()` constructs a curve from four control points [`packages/math/src/curve.ts:15-22`](../../packages/math/src/curve.ts#L15-L22)
 - `bezierEquation()` evaluates the curve at parameter t ∈ [0, 1] [`packages/math/src/curve.ts:115-128`](../../packages/math/src/curve.ts#L115-L128)
-- `curveTangent()` computes the tangent vector at parameter t [`packages/math/src/curve.ts:318-336`](../../packages/math/src/curve.ts#L318-L336)
+- `curveTangent()` computes the tangent vector at parameter t [`packages/math/src/curve.ts:316-334`](../../packages/math/src/curve.ts#L316-L334)
 - `curveIntersectLineSegment()` finds intersection points between a curve and line segment using Newton-Raphson iteration [`packages/math/src/curve.ts:168-212`](../../packages/math/src/curve.ts#L168-L212)
-- `curveClosestPoint()` finds the point on the curve nearest to a given point [`packages/math/src/curve.ts:227-278`](../../packages/math/src/curve.ts#L227-L278)
-- `curvePointDistance()` computes the shortest distance from a point to the curve [`packages/math/src/curve.ts:287-300`](../../packages/math/src/curve.ts#L287-L300)
+- `curveClosestParameter()` finds the parameter on the curve whose point is closest to a given point [`packages/math/src/curve.ts:223-267`](../../packages/math/src/curve.ts#L223-L267)
+- `curveClosestPoint()` finds the point on the curve nearest to a given point [`packages/math/src/curve.ts:277-283`](../../packages/math/src/curve.ts#L277-L283)
+- `curvePointDistance()` computes the shortest distance from a point to the curve [`packages/math/src/curve.ts:292-298`](../../packages/math/src/curve.ts#L292-L298)
 
 ### Curve Length and Arc-Length Parameterization
 
-[`packages/math/src/curve.ts:452-561`](../../packages/math/src/curve.ts#L452-L561) uses Legendre-Gauss quadrature for accurate calculations:
+[`packages/math/src/curve.ts:450-560`](../../packages/math/src/curve.ts#L450-L560) uses Legendre-Gauss quadrature for accurate calculations:
 
-- `curveLength()` approximates total curve length [`packages/math/src/curve.ts:452-469`](../../packages/math/src/curve.ts#L452-L469)
-- `curveLengthAtParameter()` computes length from the start to parameter t [`packages/math/src/curve.ts:479-508`](../../packages/math/src/curve.ts#L479-L508)
-- `curvePointAtLength()` finds the point at a specific percentage of the curve's total length using binary search [`packages/math/src/curve.ts:518-561`](../../packages/math/src/curve.ts#L518-L561)
+- `curveLength()` approximates total curve length [`packages/math/src/curve.ts:450-467`](../../packages/math/src/curve.ts#L450-L467)
+- `curveLengthAtParameter()` computes length from the start to parameter t [`packages/math/src/curve.ts:477-506`](../../packages/math/src/curve.ts#L477-L506)
+- `curvePointAtLength()` finds the point at a specific percentage of the curve's total length using binary search [`packages/math/src/curve.ts:516-560`](../../packages/math/src/curve.ts#L516-L560)
 
 The quadrature weights and nodes [`packages/math/src/constants.ts`](../../packages/math/src/constants.ts) enable precise arc-length calculations for smooth interpolation.
 
 ### Curve Approximation
 
-- `curveCatmullRomQuadraticApproxPoints()` approximates a curve with quadratic Bézier segments [`packages/math/src/curve.ts:338-361`](../../packages/math/src/curve.ts#L338-L361)
-- `curveCatmullRomCubicApproxPoints()` approximates with cubic segments [`packages/math/src/curve.ts:363-394`](../../packages/math/src/curve.ts#L363-L394)
-- `curveOffsetPoints()` and `offsetPointsForQuadraticBezier()` generate points offset from a curve by a given distance [`packages/math/src/curve.ts:396-441`](../../packages/math/src/curve.ts#L396-L441)
+- `curveCatmullRomQuadraticApproxPoints()` approximates a curve with quadratic Bézier segments [`packages/math/src/curve.ts:336-359`](../../packages/math/src/curve.ts#L336-L359)
+- `curveCatmullRomCubicApproxPoints()` approximates with cubic segments [`packages/math/src/curve.ts:361-392`](../../packages/math/src/curve.ts#L361-L392)
+- `curveOffsetPoints()` and `offsetPointsForQuadraticBezier()` generate points offset from a curve by a given distance [`packages/math/src/curve.ts:394-439`](../../packages/math/src/curve.ts#L394-L439)
 
 ## Ellipses
 
@@ -84,9 +85,9 @@ The quadrature weights and nodes [`packages/math/src/constants.ts`](../../packag
 - `ellipse()` constructs an ellipse from center and half-dimensions [`packages/math/src/ellipse.ts:33-43`](../../packages/math/src/ellipse.ts#L33-L43)
 - `ellipseIncludesPoint()` tests if a point is inside or on the ellipse [`packages/math/src/ellipse.ts:52-61`](../../packages/math/src/ellipse.ts#L52-L61)
 - `ellipseTouchesPoint()` checks if a point is on the outline within a threshold [`packages/math/src/ellipse.ts:72-78`](../../packages/math/src/ellipse.ts#L72-L78)
-- `ellipseDistanceFromPoint()` computes the shortest distance to the outline [`packages/math/src/ellipse.ts:88-137`](../../packages/math/src/ellipse.ts#L88-L137)
-- `ellipseSegmentInterceptPoints()` finds where a line segment intersects an ellipse [`packages/math/src/ellipse.ts:143-195`](../../packages/math/src/ellipse.ts#L143-L195)
-- `ellipseLineIntersectionPoints()` finds intersections with an infinite line [`packages/math/src/ellipse.ts:197-231`](../../packages/math/src/ellipse.ts#L197-L231)
+- `ellipseDistanceFromPoint()` computes the shortest distance to the outline [`packages/math/src/ellipse.ts:88-150`](../../packages/math/src/ellipse.ts#L88-L150)
+- `ellipseSegmentInterceptPoints()` finds where a line segment intersects an ellipse [`packages/math/src/ellipse.ts:156-208`](../../packages/math/src/ellipse.ts#L156-L208)
+- `ellipseLineIntersectionPoints()` finds intersections with an infinite line [`packages/math/src/ellipse.ts:210-244`](../../packages/math/src/ellipse.ts#L210-L244)
 
 ## Lines and Segments
 
@@ -97,12 +98,14 @@ The quadrature weights and nodes [`packages/math/src/constants.ts`](../../packag
 
 [`packages/math/src/segment.ts`](../../packages/math/src/segment.ts) handles finite line segments:
 
-- `lineSegment()` constructs a segment [`packages/math/src/segment.ts:25-30`](../../packages/math/src/segment.ts#L25-L30)
-- `segmentsIntersectAt()` finds intersection of two segments [`packages/math/src/segment.ts:69-100`](../../packages/math/src/segment.ts#L69-L100)
-- `pointOnLineSegment()` tests if a point lies on a segment [`packages/math/src/segment.ts:102-114`](../../packages/math/src/segment.ts#L102-L114)
-- `distanceToLineSegment()` computes the shortest distance from a point to a segment [`packages/math/src/segment.ts:116-152`](../../packages/math/src/segment.ts#L116-L152)
-- `lineSegmentIntersectionPoints()` combines line and segment tests [`packages/math/src/segment.ts:161-179`](../../packages/math/src/segment.ts#L161-L179)
-- `lineSegmentsDistance()` finds the shortest distance between two segments [`packages/math/src/segment.ts:181-195`](../../packages/math/src/segment.ts#L181-L195)
+- `lineSegment()` constructs a segment [`packages/math/src/segment.ts:28-33`](../../packages/math/src/segment.ts#L28-L33)
+- `segmentsIntersectAt()` finds intersection of two segments [`packages/math/src/segment.ts:72-103`](../../packages/math/src/segment.ts#L72-L103)
+- `pointOnLineSegment()` tests if a point lies on a segment [`packages/math/src/segment.ts:105-117`](../../packages/math/src/segment.ts#L105-L117)
+- `distanceToLineSegment()` computes the shortest distance from a point to a segment [`packages/math/src/segment.ts:119-127`](../../packages/math/src/segment.ts#L119-L127)
+- `lineSegmentPointAt()` returns the point at parameter `t` along the segment, where `t = 0` is the start and `t = 1` is the end [`packages/math/src/segment.ts:133-140`](../../packages/math/src/segment.ts#L133-L140)
+- `lineSegmentClosestParameter()` finds the parameter on the segment closest to a point [`packages/math/src/segment.ts:185-204`](../../packages/math/src/segment.ts#L185-L204)
+- `lineSegmentIntersectionPoints()` combines line and segment tests [`packages/math/src/segment.ts:149-167`](../../packages/math/src/segment.ts#L149-L167)
+- `lineSegmentsDistance()` finds the shortest distance between two segments [`packages/math/src/segment.ts:169-183`](../../packages/math/src/segment.ts#L169-L183)
 
 ## Polygons
 
@@ -170,3 +173,11 @@ The `isBounds()` type guard validates this structure.
 - `getSizeFromPoints()` computes width and height from a set of points [`packages/common/src/points.ts:10-19`](../../packages/common/src/points.ts#L10-L19)
 - `rescalePoints()` scales points along one dimension with optional normalization [`packages/common/src/points.ts:22-66`](../../packages/common/src/points.ts#L22-L66)
 - `getGridPoint()` snaps a point to a grid when grid snapping is active [`packages/common/src/points.ts:69-81`](../../packages/common/src/points.ts#L69-L81)
+
+## Decisions
+
+**Arc-length parameterization for arrow label positioning** — Arrow labels can be dragged along their arrow's path and their position is stored as a normalized arc-length parameter (0–1) over the arrow's entire path. This approach keeps labels in place when points are dragged, when midpoints are inserted or removed, and when the arrow is resized. The parameter covers the whole path rather than a single segment. ([PR #10947](https://github.com/excalidraw/excalidraw/pull/10947))
+
+**Refactored curve and segment distance calculations** — Extracted `curveClosestParameter()` and `lineSegmentClosestParameter()` as separate functions to compute parameters rather than just points. This supports arc-length parameterization for labels and provides better composability. `curvePointDistance()` gained an optional `tolerance` parameter, and `curvePointAtLength()` gained an optional `totalLength` parameter to skip recomputation when the length is already known. ([PR #10947](https://github.com/excalidraw/excalidraw/pull/10947))
+
+**Improved ellipse distance calculation robustness** — Added early-exit handling for circles (when `a === b`) to avoid iteration errors, and added a check for `q === 0` during the iterative algorithm to prevent division errors. Fixed sign mapping of closest points on axes to use conditional expressions instead of `Math.sign()`, which correctly handles points exactly on an axis. ([PR #10753](https://github.com/excalidraw/excalidraw/pull/10753))

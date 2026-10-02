@@ -2,7 +2,7 @@
 
 <!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
 
-The color system manages color representation, transformation, palette management, and the interactive color picker interface used throughout the application. It handles color normalization, dark mode filtering, theme colors, custom colors, and provides utilities for color analysis.
+The color system manages color representation, transformation, palette management, and the interactive color picker interface used throughout the application. It handles color normalization, dark mode filtering, theme colors, custom colors, and provides utilities for color analysis. Sticky notes are their own color domain with separate defaults and top-pick slots.
 
 ## Color Utilities and Transformation
 
@@ -20,6 +20,7 @@ The color rotation uses a standard matrix-based approach [`packages/common/src/c
 - `colorToHex` [`packages/common/src/colors.ts:351-358`](../../packages/common/src/colors.ts#L351-L358) converts any valid color format to `#RRGGBB` or `#RRGGBBAA` hex notation
 - `normalizeInputColor` [`packages/common/src/colors.ts:415-431`](../../packages/common/src/colors.ts#L415-L431) attempts to preserve user input while making minimal adjustments (trimming whitespace, adding `#` prefix)
 - `isTransparent` and `isOpaqueColor` [`packages/common/src/colors.ts:360-373`](../../packages/common/src/colors.ts#L360-L373) check alpha channel values
+- `setColorAlpha` [`packages/common/src/colors.ts:363-375`](../../packages/common/src/colors.ts#L363-L375) replaces a color's alpha channel while preserving RGB
 
 ### Color Contrast and Brightness
 
@@ -36,17 +37,42 @@ The color rotation uses a standard matrix-based approach [`packages/common/src/c
 Types and constants:
 - `ColorTuple` [`packages/common/src/colors.ts:179`](../../packages/common/src/colors.ts#L179) represents 5-element color arrays
 - `ColorPaletteCustom` [`packages/common/src/colors.ts:182`](../../packages/common/src/colors.ts#L182) allows custom color palettes
-- `DEFAULT_ELEMENT_STROKE_COLOR_PALETTE` and `DEFAULT_ELEMENT_BACKGROUND_COLOR_PALETTE` [`packages/common/src/colors.ts:283-303`](../../packages/common/src/colors.ts#L283-L303) provide default palettes for different use cases
+- `DEFAULT_ELEMENT_STROKE_COLOR_PALETTE` and `DEFAULT_ELEMENT_BACKGROUND_COLOR_PALETTE` [`packages/common/src/colors.ts:299-319`](../../packages/common/src/colors.ts#L299-L319) provide default palettes for different use cases
 
 ### Quick Picks
 
-[`packages/common/src/colors.ts:230-278`](../../packages/common/src/colors.ts#L230-L278) defines "quick pick" arrays — frequently-used color selections shown in a compact strip:
+[`packages/common/src/colors.ts:230-294`](../../packages/common/src/colors.ts#L230-L294) defines "quick pick" arrays — frequently-used color selections shown in a compact strip:
 - `DEFAULT_ELEMENT_STROKE_PICKS` [`packages/common/src/colors.ts:239-245`](../../packages/common/src/colors.ts#L239-L245) — black and four accent colors
 - `DEFAULT_ELEMENT_BACKGROUND_PICKS` [`packages/common/src/colors.ts:248-254`](../../packages/common/src/colors.ts#L248-L254) — transparent and four accent colors
 - `BUCKET_FILL_BACKGROUND_PICKS` [`packages/common/src/colors.ts:259-265`](../../packages/common/src/colors.ts#L259-L265) — white instead of transparent for fill tool
-- `DEFAULT_CANVAS_BACKGROUND_PICKS` [`packages/common/src/colors.ts:268-278`](../../packages/common/src/colors.ts#L268-L278) — light backgrounds for canvas
+- `DEFAULT_CANVAS_BACKGROUND_PICKS` [`packages/common/src/colors.ts:284-294`](../../packages/common/src/colors.ts#L284-L294) — light backgrounds for canvas
+- `STICKY_NOTE_STROKE_PICKS` and `STICKY_NOTE_BACKGROUND_PICKS` [`packages/common/src/colors.ts:270-281`](../../packages/common/src/colors.ts#L270-L281) — sticky notes use their own domain with yellow as the default background; transparent is excluded from the background picks
 
 The `COLOR_TOP_PICKS_SLOTS` constant [`packages/common/src/colors.ts:236`](../../packages/common/src/colors.ts#L236) defines that the strip has exactly 5 swatches.
+
+## Sticky Notes Color Domain
+
+Sticky notes are their own color domain with separate defaults, palettes, and top-pick slots. This separation prevents mixing with regular element colors.
+
+[`packages/common/src/colors.ts:267-281`](../../packages/common/src/colors.ts#L267-L281) defines sticky-note-specific colors:
+- `DEFAULT_STICKY_NOTE_BG` [`packages/common/src/colors.ts:268`](../../packages/common/src/colors.ts#L268) is `#ffdf6b` (yellow)
+- `STICKY_NOTE_STROKE_PICKS` reuses the regular stroke picks
+- `STICKY_NOTE_BACKGROUND_PICKS` uses classic note colors (yellow, pink, green, blue, orange) with transparent excluded
+
+[`packages/common/src/constants.ts:221-264`](../../packages/common/src/constants.ts#L221-L264) adds sticky-note geometry and styling constants including font sizes, padding, footer layout, and shadow properties.
+
+## Color Target Resolution
+
+[`packages/excalidraw/actions/colorTargets.ts`](../../packages/excalidraw/actions/colorTargets.ts) introduces a color targeting system that determines which domain (regular, sticky, or mixed) a color pick applies to.
+
+`resolveColorTarget` [`packages/excalidraw/actions/colorTargets.ts:103-175`](../../packages/excalidraw/actions/colorTargets.ts#L103-L175) resolves at execution time:
+- Identifies selected elements that support the color property (stroke or background)
+- Includes bound text elements for stroke (a note's visible text is its label)
+- Determines the domain: sticky notes target the sticky domain, regular elements target the regular domain, mixed selections target both
+- Returns the appropriate palette, top picks, and current-item defaults for the target kind
+- Provides `excludedColors` for sticky backgrounds (transparent is hidden, not removed)
+
+`getColorTargetAppStateUpdates` [`packages/excalidraw/actions/colorTargets.ts:177-192`](../../packages/excalidraw/actions/colorTargets.ts#L177-L192) normalizes color values when writing to app state defaults — sticky stroke defaults must be dark, sticky background defaults must be opaque.
 
 ## Color Picker Interface
 
@@ -54,15 +80,15 @@ The color picker UI is structured as a modal dialog with multiple sections: quic
 
 ### Main Color Picker Component
 
-[`packages/excalidraw/components/ColorPicker/ColorPicker.tsx:346-494`](../../packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L346-L494) renders the complete color picker interface. It manages popup visibility, theme application, and coordinates between multiple sub-components. The component uses memoization [`packages/excalidraw/components/ColorPicker/ColorPicker.tsx:509-537`](../../packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L509-L537) to avoid unnecessary re-renders during canvas interactions.
+[`packages/excalidraw/components/ColorPicker/ColorPicker.tsx:350-494`](../../packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L350-L494) renders the complete color picker interface. It manages popup visibility, theme application, and coordinates between multiple sub-components. The component uses memoization [`packages/excalidraw/components/ColorPicker/ColorPicker.tsx:509-537`](../../packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L509-L537) to avoid unnecessary re-renders during canvas interactions.
 
 ### Color Picker Trigger
 
-[`packages/excalidraw/components/ColorPicker/ColorPicker.tsx:263-344`](../../packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L263-L344) renders the trigger button showing the current color as an active swatch. It displays a slash icon when no color is selected and applies dark mode filtering to the displayed color.
+[`packages/excalidraw/components/ColorPicker/ColorPicker.tsx:267-348`](../../packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L267-L348) renders the trigger button showing the current color as an active swatch. It displays a slash icon when no color is selected and applies dark mode filtering to the displayed color. The trigger can be dragged onto the top-picks strip to pin the current color.
 
 ### Color Input
 
-[`packages/excalidraw/components/ColorPicker/ColorInput.tsx`](../../packages/excalidraw/components/ColorPicker/ColorInput.tsx) provides a hex color input field with validation and an eye dropper trigger. It normalizes input using `normalizeInputColor` [`packages/excalidraw/components/ColorPicker/ColorInput.tsx:41-59`](../../packages/excalidraw/components/ColorPicker/ColorInput.tsx#L41-L59) and shows specific error messages for invalid hex lengths versus completely invalid colors.
+[`packages/excalidraw/components/ColorPicker/ColorInput.tsx:41-59`](../../packages/excalidraw/components/ColorPicker/ColorInput.tsx#L41-L59) provides a hex color input field with validation and an eye dropper trigger. It normalizes input using `normalizeInputColor` and shows specific error messages for invalid hex lengths versus completely invalid colors.
 
 ### Picker Content Sections
 
@@ -99,20 +125,22 @@ The `colorPickerHotkeyBindings` array [`packages/excalidraw/components/ColorPick
 
 ## Drag and Drop for Top Picks
 
-[`packages/excalidraw/components/ColorPicker/topPicksDnD.tsx`](../../packages/excalidraw/components/ColorPicker/topPicksDnD.tsx) implements custom pointer-based drag & drop for customizing the top picks strip without native HTML5 drag events (which cause flickering).
+[`packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx`](../../packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx) implements custom pointer-based drag & drop for customizing the top picks strip without native HTML5 drag events (which cause flickering).
 
 Key features:
-- **Swatch dragging** [`packages/excalidraw/components/ColorPicker/topPicksDnD.tsx:38-43`](../../packages/excalidraw/components/ColorPicker/topPicksDnD.tsx#L38-L43) — drag any color swatch onto the strip to pin it
-- **Pick reordering** [`packages/excalidraw/components/ColorPicker/topPicksDnD.tsx:43`](../../packages/excalidraw/components/ColorPicker/topPicksDnD.tsx#L43) — drag picks to reorder them within the strip
-- **Duplicate detection** [`packages/excalidraw/components/ColorPicker/topPicksDnD.tsx:229-291`](../../packages/excalidraw/components/ColorPicker/topPicksDnD.tsx#L229-L291) — prevents the same color from occupying multiple slots
+- **Swatch dragging** — drag any color swatch from the picker popup or active-color trigger onto the strip to pin it
+- **Pick reordering** — drag picks to reorder them within the strip
+- **Duplicate detection** — prevents the same color from occupying multiple slots through value-equality comparison
 - **Visual feedback** — animated ghost element follows the pointer, slot highlighting, and "marching ants" outline
-- **Threshold handling** [`packages/excalidraw/components/ColorPicker/topPicksDnD.tsx:23-26`](../../packages/excalidraw/components/ColorPicker/topPicksDnD.tsx#L23-L26) — requires 100ms hold + 10px movement to activate drag (prevents accidental drags on fast clicks)
+- **Threshold handling** [`packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx:19-22`](../../packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx#L19-L22) — requires 100ms hold + 10px movement to activate drag (prevents accidental drags on fast clicks)
 
-The drag state [`packages/excalidraw/components/ColorPicker/topPicksDnD.tsx:45-55`](../../packages/excalidraw/components/ColorPicker/topPicksDnD.tsx#L45-L55) tracks origin (palette swatch vs. strip pick), hover index, and duplicate conflicts.
+The drag state [`packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx:31-41`](../../packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx#L31-L41) tracks origin (palette swatch vs. strip pick), hover index, and duplicate conflicts.
+
+Color-specific drag & drop is implemented in [`packages/excalidraw/components/ColorPicker/colorTopPicksDnD.ts`](../../packages/excalidraw/components/ColorPicker/colorTopPicksDnD.ts) which uses color-equality checking to detect duplicates across different color notations.
 
 ## Theme Integration
 
-[`packages/excalidraw/components/ColorPicker/ColorPicker.tsx:285-287`](../../packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L285-L287) applies `applyDarkModeFilter` to display colors appropriately in dark mode. The color picker respects the application theme when rendering swatches and determining text contrast for hotkey labels.
+[`packages/excalidraw/components/ColorPicker/ColorPicker.tsx:289-291`](../../packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L289-L291) applies `applyDarkModeFilter` to display colors appropriately in dark mode. The color picker respects the application theme when rendering swatches and determining text contrast for hotkey labels.
 
 ## Styling
 
@@ -121,6 +149,12 @@ The drag state [`packages/excalidraw/components/ColorPicker/topPicksDnD.tsx:45-5
 - **Transparent pattern** — data URI PNG checkerboard for transparent swatches
 - **DnD animations** — smooth transitions for drag preview scaling and "marching ants" dash animation
 - **Grid layout** — 5-column layout for palette colors with responsive sizing on mobile
+
+## Decisions
+
+**Dark mode filtering moved from CSS to JavaScript** (commit f1a79b73df5b): The interactive canvas was filtered via CSS in dark mode, costing performance on software-rendered browsers. Colors are now mapped in JavaScript via `applyDarkModeFilter`, with hardcoded equivalents of the previous filter results. This fixes performance on Firefox/Zen and allows collaborator cursors and selection outlines to render in actual colors instead of inverted ones.
+
+**Sticky notes are their own color domain** (commit afa3a653fc5d, decision D2): Sticky notes have separate `currentItemStickynoteStrokeColor` and `currentItemStickynoteBackgroundColor` defaults, their own top-pick slots, and transparent is excluded from background picks. The `resolveColorTarget` function determines at execution time which domain a pick targets, enabling mixed selections to write both domains.
 
 ## Related Pages
 

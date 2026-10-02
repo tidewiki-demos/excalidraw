@@ -6,36 +6,37 @@ This page covers spatial transformations of elements: resizing, rotating, flippi
 
 ## Resizing
 
-Resizing is handled by the `transformElements` function, which dispatches to single or multiple element resize logic based on selection. [`packages/element/src/resizeElements.ts:87-201`](../../packages/element/src/resizeElements.ts#L87-L201)
+Resizing is handled by the `transformElements` function, which dispatches to single or multiple element resize logic based on selection. [`packages/element/src/resizeElements.ts:94-208`](../../packages/element/src/resizeElements.ts#L94-L208)
 
-For a single element, `resizeSingleElement` computes the new dimensions and adjusts the element's position based on which resize handle was dragged. The position adjustment accounts for the resize anchor point (which corner or side is fixed) and element rotation. [`packages/element/src/resizeElements.ts:722-927`](../../packages/element/src/resizeElements.ts#L722-L927)
+For a single element, `resizeSingleElement` computes the new dimensions and adjusts the element's position based on which resize handle was dragged. The position adjustment accounts for the resize anchor point (which corner or side is fixed) and element rotation. [`packages/element/src/resizeElements.ts:729-986`](../../packages/element/src/resizeElements.ts#L729-L986)
 
-For text elements, resizing scales the font size proportionally and reflows text to fit the new width. [`packages/element/src/resizeElements.ts:310-402`](../../packages/element/src/resizeElements.ts#L310-L402)
+For text elements, resizing scales the font size proportionally and reflows text to fit the new width. [`packages/element/src/resizeElements.ts:317-409`](../../packages/element/src/resizeElements.ts#L317-L409)
 
-When resizing multiple selected elements, `resizeMultipleElements` scales all elements uniformly relative to their common bounding box. It also handles flipping (when dimensions become negative) by mirroring element points and adjusting bindings for [arrows](arrows-bindings.md). [`packages/element/src/resizeElements.ts:1150-1511`](../../packages/element/src/resizeElements.ts#L1150-L1511)
+When resizing multiple selected elements, `resizeMultipleElements` scales all elements uniformly relative to their common bounding box. It also handles flipping (when dimensions become negative) by mirroring element points and adjusting bindings for [arrows](arrows-bindings.md). [`packages/element/src/resizeElements.ts:1209-1594`](../../packages/element/src/resizeElements.ts#L1209-L1594)
 
 Key concepts:
-- **Aspect ratio locking**: When enabled, maintains the original width-to-height ratio by adjusting one dimension when the other changes. [`packages/element/src/resizeElements.ts:1003-1015`](../../packages/element/src/resizeElements.ts#L1003-L1015)
-- **Resize from center**: When enabled, resizing grows or shrinks the element from its center rather than from the opposite corner. [`packages/element/src/resizeElements.ts:997-1000`](../../packages/element/src/resizeElements.ts#L997-L1000)
-- **Point rescaling**: For linear and free-draw elements, points are rescaled proportionally during resize. [`packages/element/src/resizeElements.ts:268-283`](../../packages/element/src/resizeElements.ts#L268-L283)
+- **Aspect ratio locking**: When enabled, maintains the original width-to-height ratio by adjusting one dimension when the other changes. [`packages/element/src/resizeElements.ts:1062-1074`](../../packages/element/src/resizeElements.ts#L1062-L1074)
+- **Resize from center**: When enabled, resizing grows or shrinks the element from its center rather than from the opposite corner. [`packages/element/src/resizeElements.ts:1056-1059`](../../packages/element/src/resizeElements.ts#L1056-L1059)
+- **Point rescaling**: For linear and free-draw elements, points are rescaled proportionally during resize. [`packages/element/src/resizeElements.ts:275-290`](../../packages/element/src/resizeElements.ts#L275-L290)
+- **Sticky note sizing**: Sticky notes enforce a minimum size to fit one line at their label's font ceiling. [`packages/element/src/resizeElements.ts:768-803`](../../packages/element/src/resizeElements.ts#L768-L803)
 
 ## Rotation
 
-Rotation is performed on single or multiple elements. For a single element, the angle is computed from the pointer position relative to the element's center. [`packages/element/src/resizeElements.ts:203-266`](../../packages/element/src/resizeElements.ts#L203-L266)
+Rotation is performed on single or multiple elements. For a single element, the angle is computed from the pointer position relative to the element's center. [`packages/element/src/resizeElements.ts:210-273`](../../packages/element/src/resizeElements.ts#L210-L273)
 
-For multiple elements, all are rotated around their common center while their individual centers orbit around that point. [`packages/element/src/resizeElements.ts:404-488`](../../packages/element/src/resizeElements.ts#L404-L488)
+For multiple elements, all are rotated around their common center while their individual centers orbit around that point. [`packages/element/src/resizeElements.ts:411-495`](../../packages/element/src/resizeElements.ts#L411-L495)
 
-Discrete angle snapping is applied when the shift key is held, restricting rotation to increments defined by `SHIFT_LOCKING_ANGLE`. [`packages/element/src/resizeElements.ts:222-225`](../../packages/element/src/resizeElements.ts#L222-L225)
+Discrete angle snapping is applied when the shift key is held, restricting rotation to increments defined by `SHIFT_LOCKING_ANGLE`. [`packages/element/src/resizeElements.ts:229-233`](../../packages/element/src/resizeElements.ts#L229-L233)
 
-When elements with [bound text](text-editing.md) are rotated, the text follows and rotates with them. [`packages/element/src/resizeElements.ts:249-265`](../../packages/element/src/resizeElements.ts#L249-L265)
+When elements with [bound text](text-editing.md) are rotated, the text follows and rotates with them. [`packages/element/src/resizeElements.ts:256-272`](../../packages/element/src/resizeElements.ts#L256-L272)
 
-[Arrows](arrows-bindings.md) unbind from their targets when rotated, preventing distortion. [`packages/element/src/resizeElements.ts:234-244`](../../packages/element/src/resizeElements.ts#L234-L244)
+[Arrows](arrows-bindings.md) unbind from their targets when rotated, preventing distortion. [`packages/element/src/resizeElements.ts:241-252`](../../packages/element/src/resizeElements.ts#L241-L252)
 
 ## Flipping
 
-Flipping occurs implicitly when a resize results in negative dimensions. The element's position is adjusted and, for linear elements, points are mirrored. For [images](image-handling.md), the scale property is inverted. [`packages/element/src/resizeElements.ts:845-850`](../../packages/element/src/resizeElements.ts#L845-L850)
+Flipping occurs implicitly when a resize results in negative dimensions. The element's position is adjusted and, for linear elements, points are mirrored. For [images](image-handling.md), the scale property is inverted. [`packages/element/src/resizeElements.ts:886-902`](../../packages/element/src/resizeElements.ts#L886-L902)
 
-For [elbow arrows](arrows-bindings.md), fixed point bindings are mirrored when flipped. [`packages/element/src/resizeElements.ts:1387-1423`](../../packages/element/src/resizeElements.ts#L1387-L1423)
+For [elbow arrows](arrows-bindings.md), fixed point bindings are mirrored when flipped. [`packages/element/src/resizeElements.ts:1446-1482`](../../packages/element/src/resizeElements.ts#L1446-L1482)
 
 ## Alignment
 
@@ -65,16 +66,28 @@ Rows are centered horizontally and the entire grid is centered vertically around
 
 ## Bound Element Updates
 
-All transformations trigger `updateBoundElements`, which updates [arrows](arrows-bindings.md) connected to the transformed element and repositions [bound text](text-editing.md). The function is called with the `simultaneouslyUpdated` set to avoid redundant recalculations when multiple elements in a group are transformed together. [[cite:packages/element/src/resizeElements.ts:112, 149, 453-455]]
+All transformations trigger `updateBoundElements`, which updates [arrows](arrows-bindings.md) connected to the transformed element and repositions [bound text](text-editing.md). The function is called with the `simultaneouslyUpdated` set to avoid redundant recalculations when multiple elements in a group are transformed together. Sticky notes delegate to `updateStickyNoteLayout` which handles label fitting and content correction before the arrow pass. [[cite:packages/element/src/resizeElements.ts:954-967, 1536-1551]]
 
 ## Integration with Scene and State
 
-Transformations use the `Scene` API to mutate elements, ensuring consistency with the [element model](element-data-model.md) and triggering [observers](app-state.md). [[cite:packages/element/src/resizeElements.ts:40, 76, 104]]
+Transformations use the `Scene` API to mutate elements, ensuring consistency with the [element model](element-data-model.md) and triggering [observers](app-state.md). [[cite:packages/element/src/resizeElements.ts:108, 187, 254]]
 
-Original element state is preserved during interactive transforms (stored in `pointerDownState`) to compute correct delta changes. [`packages/element/src/resizeElements.ts:87-99`](../../packages/element/src/resizeElements.ts#L87-L99)
+Original element state is preserved during interactive transforms (stored in `pointerDownState`) to compute correct delta changes. [`packages/element/src/resizeElements.ts:94-154`](../../packages/element/src/resizeElements.ts#L94-L154)
+
+## Element Skeleton Conversion
+
+The `convertToExcalidrawElements` function transforms element skeletons (user-provided data) into full Excalidraw elements. For sticky notes, it accepts a `ValidStickyNote` skeleton that specifies type, position, optional dimensions, and an optional label. [[cite:packages/element/src/transform.ts:208-213, 699-713]]
+
+Sticky note skeletons are normalized through `normalizeStickyNoteGeometry`, enforcing minimum size and base height constraints. The label binding, if provided, runs the sticky note fit calculation (via `redrawTextBoundingBox`), which sets the label's font size as the ceiling that the fit shrinks from. [`packages/element/src/transform.ts:704-757`](../../packages/element/src/transform.ts#L704-L757)
+
+Bound text elements (labels on containers) are created with shared ink coloring: a sticky note label that provides a stroke color gives it to the note (the footer paints with it), while transparent labels fall back to the note's stroke. [`packages/element/src/transform.ts:264-295`](../../packages/element/src/transform.ts#L264-L295)
 
 ## Decisions
 
 - **Grouped element handling**: Alignment and distribution treat grouped elements as single units rather than transforming each individually. This preserves group cohesion and respects [frame](frames-groups.md) boundaries. [`packages/element/src/align.ts:25-29`](../../packages/element/src/align.ts#L25-L29)
 
-- **Text scaling on resize**: When resizing containers with [bound text](text-editing.md), font size is adjusted proportionally to prevent overflow. For text elements themselves, the font size is capped at `MIN_FONT_SIZE`. [[cite:packages/element/src/resizeElements.ts:310-327, 1432-1438]]
+- **Sticky note resizing**: When resizing sticky notes, font scaling is delegated to `updateStickyNoteLayout` instead of the generic bound-text handler. The layout function runs the fit calculation (shrinking the label's font from its ceiling) and handles content correction (pinning the corner where the drag originates). [[cite:packages/element/src/resizeElements.ts:954-967, 1536-1551]]
+
+- **Text scaling on resize**: For regular text containers, when resizing with aspect ratio locked, font size is adjusted proportionally. For text elements themselves and other containers without aspect ratio locking, the font size is capped at `MIN_FONT_SIZE`. [`packages/element/src/resizeElements.ts:806-834`](../../packages/element/src/resizeElements.ts#L806-L834)
+
+- **Creation timestamps on import**: When element skeletons are converted via `convertToExcalidrawElements` with regenerated IDs, all resulting elements share a single creation timestamp, marking them as a cohesive import batch. [`packages/element/src/transform.ts:584-592`](../../packages/element/src/transform.ts#L584-L592)

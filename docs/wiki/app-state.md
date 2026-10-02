@@ -6,32 +6,33 @@ Global application state in Excalidraw encompasses UI settings, tool configurati
 
 ## State Structure
 
-[`packages/excalidraw/appState.ts:23-139`](../../packages/excalidraw/appState.ts#L23-L139) `getDefaultAppState()` defines the complete initial state. State divides into several categories:
+[`packages/excalidraw/appState.ts:24-147`](../../packages/excalidraw/appState.ts#L24-L147) `getDefaultAppState()` defines the complete initial state. State divides into several categories:
 
-- **Drawing tool state**: `activeTool`, `currentItemStrokeColor`, `currentItemFontSize`, and related properties that persist the user's current drawing preferences
-- **UI state**: `theme`, `zenModeEnabled`, `openMenu`, `openDialog`, `openSidebar` that track visible panels and modes
+- **Drawing tool state**: `activeTool`, `currentItemStrokeColor`, `currentItemFontSize`, `currentItemStickynoteStrokeColor`, `currentItemStickynoteBackgroundColor`, and related properties that persist the user's current drawing preferences
+- **UI state**: `theme`, `zenModeEnabled`, `openMenu`, `openDialog`, `openSidebar`, `showHints` that track visible panels and modes
 - **Viewport state**: `scrollX`, `scrollY`, `zoom` for canvas navigation
 - **Selection state**: `selectedElementIds`, `selectedGroupIds`, `hoveredElementIds` for tracking which elements are currently selected or hovered
 - **Transient state**: `isLoading`, `isResizing`, `isRotating`, `multiElement` that exist only during specific user actions
 - **Element manipulation**: `editingTextElement`, `editingGroupId`, `resizingElement` for in-progress operations
+- **Input state**: `inputDevice` to track the user's input device preference
 
 See [Element Selection and Bounding Boxes](element-selection-bounds.md) for selection-related state, [Element Transformation and Manipulation](element-transformation.md) for transformation state, and [Toolbar and Tools](toolbar-tools.md) for active tool management.
 
 ## Storage Configuration
 
-[`packages/excalidraw/appState.ts:145-270`](../../packages/excalidraw/appState.ts#L145-L270) `APP_STATE_STORAGE_CONF` defines which state properties persist to different storage destinations. Each property has three boolean flags:
+[`packages/excalidraw/appState.ts:153-291`](../../packages/excalidraw/appState.ts#L153-L291) `APP_STATE_STORAGE_CONF` defines which state properties persist to different storage destinations. Each property has three boolean flags:
 
 - **`browser`**: persists to localStorage or IndexedDB for the current browser session
 - **`export`**: included when saving to files or local exports
 - **`server`**: sent to servers during collaboration or share links
 
-[`packages/excalidraw/appState.ts:296-306`](../../packages/excalidraw/appState.ts#L296-L306) Three helper functions filter state based on destination:
+[`packages/excalidraw/appState.ts:317-327`](../../packages/excalidraw/appState.ts#L317-L327) Three helper functions filter state based on destination:
 
 - `clearAppStateForLocalStorage()` keeps only browser-compatible state
 - `cleanAppStateForExport()` strips state for file export (most UI and transient state removed)
 - `clearAppStateForDatabase()` prepares state for server sync
 
-For example, `theme` is `browser: true, export: false, server: false` — it saves locally but never leaves the browser. Grid settings are `browser: true, export: true, server: true` — they persist everywhere. Current tool state like `activeTool` is `browser: true, export: false, server: false` — the user's drawing preferences stay local. See [Storage and Persistence](storage-persistence.md) and [File Formats and Data Restoration](file-formats-restore.md) for storage implementation details.
+For example, `theme` is `browser: true, export: false, server: false` — it saves locally but never leaves the browser. Grid settings are `browser: true, export: true, server: true` — they persist everywhere. Current tool state like `activeTool` is `browser: true, export: false, server: false` — the user's drawing preferences stay local. Sticky note colors (`currentItemStickynoteStrokeColor`, `currentItemStickynoteBackgroundColor`) and input device preference are also `browser: true, export: false, server: false`. Color and font top picks are `browser: true, export: false, server: false`. See [Storage and Persistence](storage-persistence.md) and [File Formats and Data Restoration](file-formats-restore.md) for storage implementation details.
 
 ## State Observation
 
@@ -66,9 +67,13 @@ This pattern integrates with the [Actions and Command System](actions-system.md)
 
 ## Tool State Helpers
 
-[`packages/excalidraw/appState.ts:308-320`](../../packages/excalidraw/appState.ts#L308-L320) Two utility functions check the active tool:
+[`packages/excalidraw/appState.ts:329-341`](../../packages/excalidraw/appState.ts#L329-L341) Two utility functions check the active tool:
 
 - `isEraserActive()` returns true if `activeTool.type === "eraser"`
 - `isHandToolActive()` returns true if `activeTool.type === "hand"`
 
 These are used throughout the codebase to conditionally enable tool-specific behavior. See [Toolbar and Tools](toolbar-tools.md) for tool management and [Actions and Command System](actions-system.md) for action dispatching.
+
+## Input Device Resolution
+
+[`packages/excalidraw/appState.ts:343-355`](../../packages/excalidraw/appState.ts#L343-L355) `resolveInputDevice()` resolves the user's input device preference to a concrete device type. The `inputDevice` app state property tracks this preference with value `"auto"` (default) or a specific device. The function maps `"auto"` to `"trackpad"` — the traditional editor mapping — while other values pass through unchanged. Automatic device detection from wheel events is planned but not yet implemented.
