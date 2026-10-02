@@ -32,7 +32,7 @@ The toolbar provides the UI for selecting and configuring drawing tools. It adap
 
 ## Sticky Note Tool
 
-[`packages/excalidraw/components/Tools.tsx:121-124`](../../packages/excalidraw/components/Tools.tsx#L121-L124) The sticky note tool is defined with the `N` keyboard shortcut. [`packages/excalidraw/components/Tools.tsx:336`](../../packages/excalidraw/components/Tools.tsx#L336) `StickyNoteToolButton` is exported and placed in the toolbar. [`packages/excalidraw/components/App.toolDrag.ts:49-80`](../../packages/excalidraw/components/App.toolDrag.ts#L49-L80) The sticky note tool is draggable: pressing and dragging the button from the toolbar creates a default-sized note centered on the pointer release point. [`packages/excalidraw/components/App.toolDrag.ts:70-77`](../../packages/excalidraw/components/App.toolDrag.ts#L70-L77) On drop, the note enters text-editing mode immediately.
+[`packages/excalidraw/components/Tools.tsx:121-124`](../../packages/excalidraw/components/Tools.tsx#L121-L124) The sticky note tool is defined with the `N` keyboard shortcut. [`packages/excalidraw/components/Tools.tsx:336`](../../packages/excalidraw/components/Tools.tsx#L336) `StickyNoteToolButton` is exported and placed in the toolbar. [`packages/excalidraw/components/App.toolDrag.ts:49-80`](../../packages/excalidraw/components/App.toolDrag.ts#L49-L80) The sticky note tool is draggable: pressing and dragging the button from the toolbar creates a default-sized note centered on the pointer release point. [`packages/excalidraw/components/App.toolDrag.ts:70-77`](../../packages/excalidraw/components/App.toolDrag.ts#L70-L77) On drop, the note enters text-editing mode immediately via [`packages/excalidraw/components/App.toolDrag.ts:72`](../../packages/excalidraw/components/App.toolDrag.ts#L72) `app.text.startTextEditing`.
 
 ## Tool Dragging
 
@@ -63,3 +63,7 @@ The toolbar provides the UI for selecting and configuring drawing tools. It adap
 ## Tool Properties and States
 
 Tool properties and configuration options are rendered separately in the [Properties and Stats Panel](properties-panel.md). The toolbar manages tool *selection* and general UI affordances; tool-specific settings (stroke color, fill color, etc.) are handled by [Element Data Model and Types](element-data-model.md) and the properties panel.
+
+## Decisions
+
+**Text editing moved to `app.text` namespace** — Commit 39478830637a refactored text editing logic out of `App.tsx` into a new `App.text.ts` module (`AppText`). This change affected how the sticky note tool initiates text editing on drop: callers now invoke `app.text.startTextEditing()` instead of `app.startTextEditing()`.

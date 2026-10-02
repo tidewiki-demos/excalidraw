@@ -14,6 +14,7 @@ When Excalidraw loads a file or receives data from collaboration or import, the 
 - **Conflict resolution**: Choosing between local and remote element versions during collaboration
 - **Index management**: Ensuring fractional indices are valid and ordered
 - **Sticky note restoration**: Normalizing sticky note and label pairs with consistent colors and layout
+- **File drop handling**: Processing dragged files with visual feedback for merge vs. replace operations
 
 ## Element Restoration
 
@@ -125,6 +126,20 @@ The `reconcileElements` function merges local and remote element changes during 
 
 The `resaveAsImageWithScene` function exports the canvas with embedded scene data. It prepares elements for export, applies the export background setting, and sets `exportEmbedScene` to true so the drawing can be re-imported later with all element data intact. See [Clipboard and Data Export](clipboard-export.md) for related export functionality.
 
+## File Drop and Scene Merge
+
+[`packages/excalidraw/components/FileDropOverlay.tsx`](../../packages/excalidraw/components/FileDropOverlay.tsx)
+
+The `FileDropOverlay` component provides visual feedback when users drag files over the canvas. It distinguishes between replacing and merging (Shift-dropping) based on modifier keys and file type:
+
+- **Replace mode** (default): Dragging a `.excalidraw` file shows a "Drop to replace content" overlay with a crossed-out file illustration, indicating the scene will be replaced
+- **Add/merge mode** (Shift held or library file): Dragging with Shift or dropping a `.excalidrawlib` shows "Drop to add to canvas" or "Drop to import library", indicating content is preserved
+- **File type detection**: The overlay distinguishes scene files (JSON MIME type), library files (`excalidrawlib` MIME type), and untyped files (OS-dragged `.excalidraw`/`.excalidrawlib` files, which are ambiguous until dropped). For unknown types, it displays a hint that library files will append rather than replace
+- **Image handling**: Image drags keep the canvas visible, allowing the browser's native image insertion to proceed
+- **Modal protection**: File drags over modal dialogs are cancelled to prevent the browser from opening dropped files
+
+When a scene file is dropped and replaces content, a toast message shows how to undo the replacement using the keyboard shortcut.
+
 ## Decisions
 
 **Oversized linear elements are removed** ([`packages/excalidraw/data/restore.ts:126-157`](../../packages/excalidraw/data/restore.ts#L126-L157)): Elements with width or height exceeding 75,000 pixels are marked deleted during restoration. This prevents rendering freezes caused by enormous dash arrays. See [GitHub issue #11497](https://github.com/excalidraw/excalidraw/issues/11497).
@@ -138,3 +153,5 @@ The `resaveAsImageWithScene` function exports the canvas with embedded scene dat
 **Sticky notes have dedicated restoration logic** (commit afa3a653fc5d): Sticky note labels and their container notes are restored as a pair. The label's `baseFontSize` (the font ceiling) is seeded during restoration and reconciled against the container. A label's stroke is never transparent and takes the note's color if needed. Both pairs are refitted together when `refreshDimensions` is enabled, ensuring consistent layout and geometry.
 
 **Element creation timestamps are tracked** (commit 854d00c31b71): All elements now have a `created` timestamp field (defaulting to `null`), which is restored from imported data or set during element creation.
+
+**File drop overlay shows merge vs. replace feedback** (#12177): When users drag files over the canvas, an overlay indicates whether the drop will replace the scene or add to it. The behavior depends on the Shift modifier (holding Shift merges) and file type (library files always append). Images are excluded to allow native insertion. Modals are protected from accidental file opens by cancelling file drops over them. After a replace, a toast guides users to undo with the keyboard shortcut.

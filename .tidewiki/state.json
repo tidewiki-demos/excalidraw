@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
+  "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
   "language": "en",
-  "updated_at": "2026-10-02T12:14:01Z",
+  "updated_at": "2026-10-02T12:25:04Z",
   "pages": {
     "actions-system": {
       "title": "Actions and Command System",
@@ -45,6 +45,7 @@
         "packages/excalidraw/actions/actionToggleObjectsSnapMode.tsx",
         "packages/excalidraw/actions/actionToggleSearchMenu.ts",
         "packages/excalidraw/actions/actionToggleShapeSwitch.tsx",
+        "packages/excalidraw/actions/actionToggleShowHints.tsx",
         "packages/excalidraw/actions/actionToggleStats.tsx",
         "packages/excalidraw/actions/actionToggleViewMode.tsx",
         "packages/excalidraw/actions/actionToggleZenMode.tsx",
@@ -58,8 +59,8 @@
         "packages/excalidraw/components/App.duplicate.ts",
         "packages/excalidraw/tests/onDuplicate.test.tsx"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "bba65a76451422637c61540c853b155481a464b45fb53bab8de53bbda9db047b"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "2d1cfe3bce467d1c21b0540469f1142890fd0ae3fc4c874f751cc1907ca05df2"
     },
     "ai-features": {
       "title": "AI and Text Generation",
@@ -121,8 +122,8 @@
         "packages/excalidraw/appState.ts",
         "packages/excalidraw/components/AppStateObserver.ts"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "76c56192412376e2e4e782b523744822e807c401329dfbf4fe8155028e847ac5"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "ff641834366b7ab36bb4c34f04e6f2fe88c58feba1157e77b0090ddd62e573af"
     },
     "arrows-bindings": {
       "title": "Arrows and Bindings",
@@ -135,8 +136,8 @@
         "packages/element/src/elbowArrow.ts",
         "packages/excalidraw/tests/convertElementType.binding.test.tsx"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "71336cf12aeb8a8cce96c491d08cf568423692e0d2b189b7390215be438a7945"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "304da1b577e362a3cf2ca2475701d92f9f0c1535d7e99567683ac450445e835e"
     },
     "bucket-fill": {
       "title": "Bucket Fill Tool",
@@ -169,12 +170,13 @@
       "summary": "Clipboard operations, copy/paste functionality, and conversion between internal and external formats.",
       "files": [
         "packages/excalidraw/clipboard.ts",
+        "packages/excalidraw/components/App.clipboard.ts",
         "packages/excalidraw/data/encode.ts",
         "packages/excalidraw/data/json.ts",
         "packages/utils/src/export.ts"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "b1746d147fae68f1cf5ca3ab773f588f3e433bbe65ad78c552d0206c1c0f74a7"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "958d9745b1599d408d1690f1105b8f65f767e55974cacb9bc7e7673622922243"
     },
     "collaboration": {
       "title": "Real-Time Collaboration",
@@ -212,8 +214,8 @@
         "packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx",
         "packages/excalidraw/tests/colorTargets.test.ts"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "5c7d0fe5ff27f4ddd5cf504cc6cdc4f0780f5fa7f5c653cd47f5f48f1273b96d"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "1144edfa35868d9b9f8fe8e626a1ec43885213f30092e4c61972e82accba37b5"
     },
     "core-editor-canvas": {
       "title": "Core Editor and Canvas Rendering",
@@ -237,11 +239,12 @@
         "packages/excalidraw/scene/Renderer.ts",
         "packages/excalidraw/tests/pan.test.tsx",
         "packages/excalidraw/tests/pixelSnap.test.tsx",
+        "packages/excalidraw/tests/viewport.test.ts",
         "packages/excalidraw/tests/wheel.test.tsx",
         "packages/excalidraw/viewport.ts"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "b256de55254353c5b63d8a00d136c6d20f72cb53c94d248e11fb58fa286dee00"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "6434fccfe3156f2daae1dd0b34909951603c0e4c7cdfe321b101dd53a43afa72"
     },
     "element-data-model": {
       "title": "Element Data Model and Types",
@@ -254,8 +257,8 @@
         "packages/excalidraw/tests/created.test.tsx",
         "packages/excalidraw/types.ts"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "aa84d3b20e8e7d027164dc3c893eb86775ceced4f3f95d16640856471770c66b"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "1d1379f4546045333393105adb99df6df9d7406ccebf07f6b4bd9fa00917c1c6"
     },
     "element-selection-bounds": {
       "title": "Element Selection and Bounding Boxes",
@@ -266,8 +269,8 @@
         "packages/element/src/collision.ts",
         "packages/element/src/selection.ts"
       ],
-      "commit": "c9382677a75cfb82f1bd3207d880d58c1bbe1b04",
-      "hash": "d1a4536df1fcd075a68207d16474f905c166490be36182c89b45b780bad7f1b4"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "518b0528c1e353a1b0da1725cfba26147ce3d7baebcb335f0970cef21e4d044e"
     },
     "element-transformation": {
       "title": "Element Transformation and Manipulation",
@@ -277,10 +280,11 @@
         "packages/element/src/distribute.ts",
         "packages/element/src/positionElementsOnGrid.ts",
         "packages/element/src/resizeElements.ts",
-        "packages/element/src/transform.ts"
+        "packages/element/src/transform.ts",
+        "packages/element/tests/dragElements.test.ts"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "a2fd34f27fd78ef7a56d645b1ac1c5f36e26a1aa0b498771aacde015f21242ee"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "34ae48c0a799ca67b4412906c4e80b9a6baf60f46dc30e5b11499affb61655a3"
     },
     "encryption-security": {
       "title": "End-to-End Encryption",
@@ -295,12 +299,14 @@
       "title": "File Formats and Data Restoration",
       "summary": "Excalidraw file format parsing, data migration, format versioning, and element restoration.",
       "files": [
+        "packages/excalidraw/components/FileDropOverlay.tsx",
         "packages/excalidraw/data/reconcile.ts",
         "packages/excalidraw/data/resave.ts",
-        "packages/excalidraw/data/restore.ts"
+        "packages/excalidraw/data/restore.ts",
+        "packages/excalidraw/tests/fileDrop.test.tsx"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "ad08cc3682473ba76d869331e03611248172657fc7bff841665aae182a883d8a"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "eec9faf551d86da0f85d3f0d7c2ad0582738fe54acb0bb0d2960da41fb4d6b5e"
     },
     "frames-groups": {
       "title": "Frames and Groups",
@@ -421,8 +427,8 @@
         "packages/excalidraw/components/Stats/stats.test.tsx",
         "packages/excalidraw/components/Stats/utils.ts"
       ],
-      "commit": "c9382677a75cfb82f1bd3207d880d58c1bbe1b04",
-      "hash": "3f73d9b085d10bc7744b2fab33cd8a685e7c019ebe0cc41c0a1df4ac2aa4f192"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "bffa9b01a8d87dc206e57f8a0e80c70978738b96bb38edee0854425278a43f9d"
     },
     "search-command": {
       "title": "Search and Command Palette",
@@ -435,8 +441,8 @@
         "packages/excalidraw/components/QuickSearch.tsx",
         "packages/excalidraw/components/SearchMenu.tsx"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "cbc7de15cbe0db2f3ca0be73057abd43fd4200c0f708ec6f14954fc799b8ad96"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "1b9c4ce3bf84cb139aaff943c7fff0170b4af70ce5677e1e845931cfe4a25085"
     },
     "shape-generation": {
       "title": "Shape Generation and Drawing",
@@ -448,7 +454,7 @@
         "packages/element/src/shape.ts",
         "packages/excalidraw/components/App.drawshape.ts"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
       "hash": "2215e98b7d6a04a03da9dd104f605c16f06aa02cf2d22a781b1154f8935d8b51"
     },
     "snapping-guides": {
@@ -484,10 +490,13 @@
       "summary": "Text element creation, editing, measurement, wrapping, font management, and WYSIWYG editor.",
       "files": [
         "packages/element/src/__tests__/stickyNote.test.ts",
+        "packages/element/src/listMarker.ts",
         "packages/element/src/stickyNote.ts",
         "packages/element/src/textElement.ts",
         "packages/element/src/textMeasurements.ts",
         "packages/element/src/textWrapping.ts",
+        "packages/excalidraw/components/App.text.ts",
+        "packages/excalidraw/components/App.textTool.ts",
         "packages/excalidraw/components/FontPicker/fontTopPicksDnD.ts",
         "packages/excalidraw/fonts/Cascadia/index.ts",
         "packages/excalidraw/fonts/ComicShanns/index.ts",
@@ -504,11 +513,10 @@
         "packages/excalidraw/fonts/index.ts",
         "packages/excalidraw/tests/fontTopPicks.test.ts",
         "packages/excalidraw/tests/stickyNotes.test.tsx",
-        "packages/excalidraw/wysiwyg/textWysiwyg.test.tsx",
         "packages/excalidraw/wysiwyg/textWysiwyg.tsx"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "49a6f7104a8046854eae37ff18a582091b368174c4ef8464f6e223a495003325"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "660dd9a2af50e2be11f61745d6ffd26ab53c0af75eaaf5479d4da68542d9f4f6"
     },
     "toolbar-tools": {
       "title": "Toolbar and Tools",
@@ -520,8 +528,8 @@
         "packages/excalidraw/components/Tools.tsx",
         "packages/excalidraw/tests/toolDrag.test.tsx"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "71b1697e068f2edc9abd8c7ff080174373bffa9e93aa9ab1afc5ae2155248cd4"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "2d93c0c2e9f36de1cb8b0b5ba5643e9bfaf427e4dc7713ddfd56c6c6a38de772"
     },
     "ui-components": {
       "title": "UI Components Library",
@@ -552,10 +560,11 @@
         "packages/excalidraw/components/dropdownMenu/DropdownMenuSubTrigger.tsx",
         "packages/excalidraw/components/dropdownMenu/DropdownMenuTrigger.tsx",
         "packages/excalidraw/components/dropdownMenu/common.ts",
-        "packages/excalidraw/components/dropdownMenu/dropdownMenuUtils.ts"
+        "packages/excalidraw/components/dropdownMenu/dropdownMenuUtils.ts",
+        "packages/excalidraw/tests/tooltip.test.tsx"
       ],
-      "commit": "c55a4771dd0cbc9f0320d83c8944dc3c3ab467ec",
-      "hash": "8f1856d919d8367bc5da5dd130caa87c976352d4ce2bbb8c254fdcef4d545c28"
+      "commit": "3f6d737c9929a75d60e58e26dd8e02013b90ff86",
+      "hash": "ae1d673e7d89004673a2b63da184284e717a5376734e20c50097e8dee223d02e"
     },
     "undo-redo-history": {
       "title": "Undo/Redo and History",
@@ -855,6 +864,7 @@
     "packages/excalidraw/components/ExportDialog.scss",
     "packages/excalidraw/components/EyeDropper.scss",
     "packages/excalidraw/components/EyeDropper.tsx",
+    "packages/excalidraw/components/FileDropOverlay.scss",
     "packages/excalidraw/components/FilledButton.scss",
     "packages/excalidraw/components/FilledButton.tsx",
     "packages/excalidraw/components/FixedSideContainer.scss",

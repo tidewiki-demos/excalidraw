@@ -4,6 +4,10 @@
 
 Clipboard operations enable users to copy, paste, and export content between Excalidraw and external applications. The system handles multiple data formats including Excalidraw elements, JSON, images, HTML, and mixed content.
 
+## Decisions
+
+The clipboard handling was refactored out of the main App component into a dedicated `AppClipboard` class (e283f724c89a, #12197). This separation moves cut, copy, and paste operations into a focused module (`packages/excalidraw/components/App.clipboard.ts`), reducing App.tsx complexity while maintaining the same functionality. The paste state flags (`IS_PLAIN_PASTE`, `IS_PLAIN_PASTE_TIMER`) remain module-level for tracking whether Ctrl/Cmd+Shift+V (plain paste with Shift) was used, allowing content to be inserted without formatting or with reduced formatting where applicable.
+
 ## Core Components
 
 ### Clipboard Data Types
@@ -16,6 +20,10 @@ Clipboard operations enable users to copy, paste, and export content between Exc
 
 [`packages/excalidraw/clipboard.ts:195-210`](../../packages/excalidraw/clipboard.ts#L195-L210) `copyToClipboard` serializes elements to JSON and stores them as both `excalidrawClipboard` and plain text MIME types in the system clipboard, allowing content to be pasted into other applications as formatted text.
 
+### Copy and Cut Events
+
+[`packages/excalidraw/components/App.clipboard.ts:81-94`](../../packages/excalidraw/components/App.clipboard.ts#L81-L94) and [`packages/excalidraw/components/App.clipboard.ts:96-109`](../../packages/excalidraw/components/App.clipboard.ts#L96-L109) The `onCut` and `onCopy` methods handle document-level cut and copy events (triggered by Ctrl/Cmd+C and Ctrl/Cmd+X). They check that Excalidraw is active and not focused on a writable element, then delegate to the corresponding actions (`actionCut` and `actionCopy`).
+
 ### Reading from System Clipboard
 
 [`packages/excalidraw/clipboard.ts:257-326`](../../packages/excalidraw/clipboard.ts#L257-L326) `readSystemClipboard` uses the Clipboard API with fallbacks for browser compatibility. It attempts `navigator.clipboard.read()` first, then falls back to `readText()`. The function filters results by allowed MIME types and handles images by creating File objects.
@@ -27,6 +35,18 @@ Clipboard operations enable users to copy, paste, and export content between Exc
 [`packages/excalidraw/clipboard.ts:331-364`](../../packages/excalidraw/clipboard.ts#L331-L364) `parseClipboardEventTextData` attempts to extract structured data from HTML content. If HTML contains only text nodes, it returns plain text; otherwise it returns mixed content (text and image URLs). Falls back to plain text extraction if HTML parsing fails.
 
 [`packages/excalidraw/clipboard.ts:523-555`](../../packages/excalidraw/clipboard.ts#L523-L555) `parseClipboard` is the main entry point for paste handling. It parses event data, attempts to deserialize as Excalidraw JSON, and returns either structured element data or fallback content (text or mixed).
+
+### Pasting Content
+
+[`packages/excalidraw/components/App.clipboard.ts:287-296`](../../packages/excalidraw/components/App.clipboard.ts#L287-L296) `onPasteShortcut` marks whether a paste will be "plain" (when Shift is held with Ctrl/Cmd+V). This flag influences how content is formatted when inserted.
+
+[`packages/excalidraw/components/App.clipboard.ts:304-362`](../../packages/excalidraw/components/App.clipboard.ts#L304-L362) `pasteFromClipboard` is the main entry point for paste events. It validates that Excalidraw is active and under the cursor, extracts data from the clipboard event (calling `parseDataTransferEvent` and `parseClipboard`), invokes the host's `onPaste` callback if provided, and delegates to `insertClipboardContent` to insert the parsed data.
+
+[`packages/excalidraw/components/App.clipboard.ts:112-281`](../../packages/excalidraw/components/App.clipboard.ts#L112-L281) `insertClipboardContent` routes pasted data to appropriate handlers based on content type: error messages, mixed content (text and images), spreadsheets (opens charts dialog), images or SVG code, Excalidraw elements, Mermaid definitions, embeddable URLs, or plain text. Plain paste mode (`isPlainPaste`) skips format-rich handling (e.g., Mermaid parsing) and retains seeds on pasted elements.
+
+[`packages/excalidraw/components/App.clipboard.ts:366-415`](../../packages/excalidraw/components/App.clipboard.ts#L366-L415) `addElementsFromMixedContentPaste` handles pasted content with both text and images. If images are supported and not a plain paste, it fetches image URLs and inserts them; otherwise it extracts and pastes text nodes.
+
+[`packages/excalidraw/components/App.clipboard.ts:417-611`](../../packages/excalidraw/components/App.clipboard.ts#L417-L611) `addTextFromPaste` creates text elements from pasted text. Each line becomes a separate text element (unless it's a plain paste, where all text is one element). Text wraps to viewport bounds and is positioned relative to viewport scrolling and UI panels (e.g., stats panel). A toast notification offers plain paste as an alternative when multiple text elements are created.
 
 ### Writing to System Clipboard
 

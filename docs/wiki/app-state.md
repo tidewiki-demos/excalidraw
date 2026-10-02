@@ -15,6 +15,7 @@ Global application state in Excalidraw encompasses UI settings, tool configurati
 - **Transient state**: `isLoading`, `isResizing`, `isRotating`, `multiElement` that exist only during specific user actions
 - **Element manipulation**: `editingTextElement`, `editingGroupId`, `resizingElement` for in-progress operations
 - **Input state**: `inputDevice` to track the user's input device preference
+- **Text tool state**: `textToolHover` to track what element the text tool would act on when hovering
 
 See [Element Selection and Bounding Boxes](element-selection-bounds.md) for selection-related state, [Element Transformation and Manipulation](element-transformation.md) for transformation state, and [Toolbar and Tools](toolbar-tools.md) for active tool management.
 
@@ -32,7 +33,7 @@ See [Element Selection and Bounding Boxes](element-selection-bounds.md) for sele
 - `cleanAppStateForExport()` strips state for file export (most UI and transient state removed)
 - `clearAppStateForDatabase()` prepares state for server sync
 
-For example, `theme` is `browser: true, export: false, server: false` — it saves locally but never leaves the browser. Grid settings are `browser: true, export: true, server: true` — they persist everywhere. Current tool state like `activeTool` is `browser: true, export: false, server: false` — the user's drawing preferences stay local. Sticky note colors (`currentItemStickynoteStrokeColor`, `currentItemStickynoteBackgroundColor`) and input device preference are also `browser: true, export: false, server: false`. Color and font top picks are `browser: true, export: false, server: false`. See [Storage and Persistence](storage-persistence.md) and [File Formats and Data Restoration](file-formats-restore.md) for storage implementation details.
+For example, `theme` is `browser: true, export: false, server: false` — it saves locally but never leaves the browser. Grid settings are `browser: true, export: true, server: true` — they persist everywhere. Current tool state like `activeTool` is `browser: true, export: false, server: false` — the user's drawing preferences stay local. Sticky note colors (`currentItemStickynoteStrokeColor`, `currentItemStickynoteBackgroundColor`) and input device preference are also `browser: true, export: false, server: false`. Color and font top picks are `browser: true, export: false, server: false`. The `textToolHover` state is `browser: false, export: false, server: false` — it is transient and never persisted. See [Storage and Persistence](storage-persistence.md) and [File Formats and Data Restoration](file-formats-restore.md) for storage implementation details.
 
 ## State Observation
 
@@ -76,4 +77,8 @@ These are used throughout the codebase to conditionally enable tool-specific beh
 
 ## Input Device Resolution
 
-[`packages/excalidraw/appState.ts:343-355`](../../packages/excalidraw/appState.ts#L343-L355) `resolveInputDevice()` resolves the user's input device preference to a concrete device type. The `inputDevice` app state property tracks this preference with value `"auto"` (default) or a specific device. The function maps `"auto"` to `"trackpad"` — the traditional editor mapping — while other values pass through unchanged. Automatic device detection from wheel events is planned but not yet implemented.
+[`packages/excalidraw/appState.ts:352-355`](../../packages/excalidraw/appState.ts#L352-L355) `resolveInputDevice()` resolves the user's input device preference to a concrete device type. The `inputDevice` app state property tracks this preference with value `"auto"` (default) or a specific device. The function maps `"auto"` to `"trackpad"` — the traditional editor mapping — while other values pass through unchanged. Automatic device detection from wheel events is planned but not yet implemented.
+
+## Decisions
+
+**Text tool hover state renamed from `hoveredArrowTextAnchor` to `textToolHover`** (c10499eebb62): The text tool's hover affordance was generalized beyond arrow text anchors to cover all text tool targets (endpoint text bindings, existing text elements, and empty containers). The state was renamed to reflect its broader scope, and a single `textToolHover` field now manages all text tool hover highlights instead of multiple state fields (`hoveredArrowTextAnchor`, `elementsToHighlight`, `suggestedBinding`). This simplifies the hover UI and ensures consistency between what the affordance shows and what a click will do.

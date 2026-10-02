@@ -2,11 +2,11 @@
 
 <!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
 
-Text editing and typography in Excalidraw comprises text element creation, measurement, wrapping, alignment, font management, and a WYSIWYG editor. The system handles both free-standing text and text bound to containers (shapes and arrows), with support for multiple languages including CJK and emoji. Sticky notes are a specialized text container with auto-fitting typography and creation-date footers.
+Text editing and typography in Excalidraw comprises text element creation, measurement, wrapping, alignment, font management, and a WYSIWYG editor. The system handles both free-standing text and text bound to containers (shapes and arrows), with support for multiple languages including CJK and emoji. Sticky notes are a specialized text container with auto-fitting typography and creation-date footers. List items are auto-numbered when duplicated.
 
 ## Text Element Fundamentals
 
-[`packages/element/src/textElement.ts:1-45`](../../packages/element/src/textElement.ts#L1-L45) defines the core text element operations. Text elements can either be standalone or bound to containers (rectangles, diamonds, ellipses, arrows, sticky notes). [`packages/element/src/textElement.ts:479-485`](../../packages/element/src/textElement.ts#L479-L485) specifies that five container types support bound text: `rectangle`, `stickynote`, `ellipse`, `diamond`, and `arrow`.
+[`packages/element/src/textElement.ts:1-45`](../../packages/element/src/textElement.ts#L1-L45) defines the core text element operations. Text elements can either be standalone or bound to containers (rectangles, diamonds, ellipses, arrows, sticky notes). [`packages/element/src/textElement.ts:508-514`](../../packages/element/src/textElement.ts#L508-L514) specifies that five container types support bound text: `rectangle`, `stickynote`, `ellipse`, `diamond`, and `arrow`.
 
 When a text element is bound to a container, its position and dimensions are constrained by the container's geometry. [`packages/element/src/textElement.ts:51-64`](../../packages/element/src/textElement.ts#L51-L64) The `redrawTextBoundingBox` function handles sticky notes specially: the sticky fit owns both the label and note geometry through `updateStickyNoteLayout`. For other containers, it recalculates text metrics, applies wrapping if needed, and positions the text within container constraints. The function may also grow the container if the text exceeds available space.
 
@@ -28,7 +28,7 @@ When a text element is bound to a container, its position and dimensions are con
 
 [`packages/element/src/textElement.ts:249-324`](../../packages/element/src/textElement.ts#L249-L324) The `computeBoundTextPosition` function calculates text position within a container using horizontal (`textAlign`) and vertical (`verticalAlign`) alignment properties. Sticky notes receive special handling: their label body ends above the creation-date footer, so middle-aligned text centers in the whole padded note while staying clear of the footer, only pushed up against the body's bottom once it would overlap. For rotated containers, it rotates the computed position around the container's center (or the note's center for sticky notes) to maintain alignment.
 
-[`packages/element/src/textElement.ts:396-417`](../../packages/element/src/textElement.ts#L396-L417) Container coordinate calculations account for shape-specific geometry and padding: sticky notes use `STICKY_NOTE_PADDING`, other containers use `BOUND_TEXT_PADDING`. Ellipses and diamonds have inset padding to account for their non-rectangular shapes. [`packages/element/src/textElement.ts:530-550`](../../packages/element/src/textElement.ts#L530-L550) Max width and height constraints vary by container type—ellipses and diamonds have tighter bounds due to their geometry, sticky notes reserve height for the footer, while arrows apply special label width fractions.
+[`packages/element/src/textElement.ts:396-417`](../../packages/element/src/textElement.ts#L396-L417) Container coordinate calculations account for shape-specific geometry and padding: sticky notes use `STICKY_NOTE_PADDING`, other containers use `BOUND_TEXT_PADDING`. Ellipses and diamonds have inset padding to account for their non-rectangular shapes. [`packages/element/src/textElement.ts:540-569`](../../packages/element/src/textElement.ts#L540-L569) Max width and height constraints vary by container type—ellipses and diamonds have tighter bounds due to their geometry, sticky notes reserve height for the footer, while arrows apply special label width fractions.
 
 ## Font Management
 
@@ -44,36 +44,54 @@ Registered fonts include [`packages/excalidraw/fonts/Fonts.ts:398-411`](../../pa
 
 ## WYSIWYG Editor
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:206-232`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L206-L232) The `textWysiwyg` function creates an in-place text editor as a textarea element, positioned and styled to match the text element being edited. It accepts callbacks for text changes and submission.
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:250-279`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L250-L279) The `textWysiwyg` function creates an in-place text editor as a textarea element, positioned and styled to match the text element being edited. It accepts callbacks for text changes and submission.
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:268-450`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L268-L450) The `updateWysiwygStyle` function continuously synchronizes the editor's appearance with the edited element's properties: font, size, color (with dark mode filter), position, dimensions, and rotation. For sticky notes, it delegates to `computeBoundTextPosition` instead of auto-growing the container. For bound text in other containers, it updates container coordinates and handles auto-growing containers.
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:337-527`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L337-L527) The `updateWysiwygStyle` function continuously synchronizes the editor's appearance with the edited element's properties: font, size, color (with dark mode filter), position, dimensions, and rotation. For sticky notes, it delegates to `computeBoundTextPosition` instead of auto-growing the container. For bound text in other containers, it updates container coordinates and handles auto-growing containers.
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:461-487`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L461-L487) The textarea is styled with appropriate `white-space` and `word-break` properties depending on whether the text is bound (`pre-wrap` / `break-word`) or unbound and auto-resizing (`pre` / `normal`).
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:538-564`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L538-L564) The textarea is styled with appropriate `white-space` and `word-break` properties depending on whether the text is bound (`pre-wrap` / `break-word`) or unbound and auto-resizing (`pre` / `normal`).
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:540-637`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L540-L637) Input handling normalizes text (EOL and tabs) and invokes `onChange` callbacks. Paste events [`packages/excalidraw/wysiwyg/textWysiwyg.tsx:541-623`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L541-L623) extract text from Excalidraw clipboard data or plain text, and auto-resize the editor if the text is bound to a container.
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:620-844`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L620-L844) Input handling normalizes text (EOL and tabs) and invokes `onChange` callbacks. Paste events extract text from Excalidraw clipboard data or plain text, and auto-resize the editor if the text is bound to a container.
 
 ### Keyboard Shortcuts
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:639-688`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L639-L688) Key handling in the editor supports:
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:864-913`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L864-L913) Key handling in the editor supports:
 - Zoom in/out/reset (Ctrl+Plus, Ctrl+Minus, Ctrl+0)
 - Font size increase/decrease (Ctrl+Shift+Right/Left)
 - Tab/Shift+Tab for indentation
 - Escape to submit
 - Ctrl+Enter to submit
+- Ctrl+S/Cmd+S to save (actionSaveToActiveFile)
+- Ctrl+Shift+S/Cmd+Shift+S to save to disk (actionSaveFileToDisk)
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:693-753`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L693-L753) Indentation logic applies TAB characters (4 spaces) to selected lines, tracking cursor position correctly.
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:920-980`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L920-L980) Indentation logic applies TAB characters (4 spaces) to selected lines, tracking cursor position correctly.
 
 ### Caret Positioning
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:124-202`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L124-L202) The `getLineCaretOffsetFromNativeLayout` function maps scene coordinates to text offsets using the DOM Range API. It creates a mirror div with identical font and line height, measures caret positions, and finds the closest offset to the target X coordinate.
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:130-246`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L130-L246) Caret positioning uses native DOM Range API measurement. [`packages/excalidraw/wysiwyg/textWysiwyg.tsx:143-201`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L143-L201) The `measureNativeLineCaretPositions` function measures where the caret appears at each offset into a line, accounting for bidirectional text. [`packages/excalidraw/wysiwyg/textWysiwyg.tsx:203-230`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L203-L230) `getLineCaretOffsetFromNativeLayout` finds the closest offset to a target X coordinate. [`packages/excalidraw/wysiwyg/textWysiwyg.tsx:237-246`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L237-L246) `getLineCaretXFromNativeLayout` returns the caret's X position at a given offset.
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:474-525`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L474-L525) Initial caret placement uses `getCaretIndexFromInitialSceneCoords`, which unrotates scene coordinates, determines the line, accounts for text alignment, and calls the caret offset function.
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:568-619`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L568-L619) Initial caret placement uses `getCaretIndexFromInitialSceneCoords`, which unrotates scene coordinates, determines the line, accounts for text alignment, and calls the caret offset function.
+
+### Caret Following
+
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:625-694`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L625-L694) `getCaretViewportBounds` computes where the caret appears on screen, accounting for text alignment, bidirectional layout, and rotation. [`packages/excalidraw/wysiwyg/textWysiwyg.tsx:704-728`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L704-L728) `followCaretFromUnderPanels` pans the canvas when a caret would be hidden under the stats or styles panel, bringing it back into view with room to spare. [`packages/excalidraw/wysiwyg/textWysiwyg.tsx:1239-1272`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L1239-L1272) The editor's scroll container detects when the browser tries to reveal an out-of-view caret, captures that scroll, and instead pans the canvas while keeping the editor box stationary.
 
 ### Blur and Submit Handling
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:795-849`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L795-L849) The `handleSubmit` function finalizes editing by updating the text element's wrapped text and bound element references. For bound text, it ensures the element is in the container's `boundElements` array or removes it if empty.
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:1085-1139`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L1085-L1139) The `handleSubmit` function finalizes editing by updating the text element's wrapped text and bound element references. For bound text, it ensures the element is in the container's `boundElements` array or removes it if empty.
 
-[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:874-913`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L874-L913) The `bindBlurEvent` function temporarily disables blur-on-submit when interacting with UI elements (shape actions, properties panel) to prevent unintended submission.
+[`packages/excalidraw/wysiwyg/textWysiwyg.tsx:1154-1200`](../../packages/excalidraw/wysiwyg/textWysiwyg.tsx#L1154-L1200) The `onPointerDown` handler prevents blur-on-submit when interacting with UI elements (shape actions, properties panel) and supports Alt+drag on the edited text for duplication.
+
+## Text Editing Session Management
+
+[`packages/excalidraw/components/App.text.ts:83-908`](../../packages/excalidraw/components/App.text.ts#L83-L908) The `AppText` class manages the editing lifecycle: resolving what text to edit or create, and where; the editor's callbacks; and the canvas area the text is kept within. [`packages/excalidraw/components/App.text.ts:168-390`](../../packages/excalidraw/components/App.text.ts#L168-L390) `handleTextWysiwyg` sets up the WYSIWYG editor for a text element, handling both sticky note layout and free text resizing. [`packages/excalidraw/components/App.text.ts:613-908`](../../packages/excalidraw/components/App.text.ts#L613-L908) `startTextEditing` creates or edits a text element at a scene position, with support for container binding, arrow endpoint binding, and caret positioning.
+
+[`packages/excalidraw/components/App.text.ts:113-118`](../../packages/excalidraw/components/App.text.ts#L113-L118) `getTextSidePanels` returns the panels (stats, styles) that should be kept clear of the edited text. [`packages/excalidraw/components/App.text.ts:120-152`](../../packages/excalidraw/components/App.text.ts#L120-L152) `getTextViewportOffsets` and [`packages/excalidraw/components/App.text.ts:159-166`](../../packages/excalidraw/components/App.text.ts#L159-L166) `getMaxTextWidth` constrain the text to the canvas area, accounting for side panels and a viewport padding.
+
+## Text Tool Pointer Interaction
+
+[`packages/excalidraw/components/App.textTool.ts:97-455`](../../packages/excalidraw/components/App.textTool.ts#L97-L455) The `AppTextTool` class handles the text tool's pointer interaction. [`packages/excalidraw/components/App.textTool.ts:128-162`](../../packages/excalidraw/components/App.textTool.ts#L128-L162) `getTargetAt` answers what a click at a position would do: bind to an endpoint, edit existing text, bind a label to an empty container, or create free text—in that priority order. [`packages/excalidraw/components/App.textTool.ts:171-201`](../../packages/excalidraw/components/App.textTool.ts#L171-L201) `updateHover` keeps the affordance (`appState.textToolHover`) in sync with the pointer. [`packages/excalidraw/components/App.textTool.ts:217-233`](../../packages/excalidraw/components/App.textTool.ts#L217-L233) `refresh` re-resolves the hover when modifiers change or the viewport moves.
+
+[`packages/excalidraw/components/App.textTool.ts:279-336`](../../packages/excalidraw/components/App.textTool.ts#L279-L336) `handlePointerDown` responds to the pointer, with special handling for empty containers: the click is deferred on pointerdown. [`packages/excalidraw/components/App.textTool.ts:346-363`](../../packages/excalidraw/components/App.textTool.ts#L346-L363) `handlePointerMove` detects if the pointer has dragged past the autowrap threshold, turning the deferred click into a free text drag. [`packages/excalidraw/components/App.textTool.ts:371-392`](../../packages/excalidraw/components/App.textTool.ts#L371-L392) `handlePointerUp` commits the deferred click as a label or discards it if it was a drag.
 
 ## Sticky Notes
 
@@ -109,9 +127,15 @@ Sticky notes are a specialized text container type that combines a visually dist
 
 ## Container Coordinate Calculations
 
-[`packages/element/src/textElement.ts:338-355`](../../packages/element/src/textElement.ts#L338-L355) The `getContainerCenter` function returns the point text centers on within a container—for shapes it's the geometric center, for arrows it delegates to `LinearElementEditor.getBoundTextElementCenter`.
+[`packages/element/src/textElement.ts:377-394`](../../packages/element/src/textElement.ts#L377-L394) The `getContainerCenter` function returns the point text centers on within a container—for shapes it's the geometric center, for arrows it delegates to `LinearElementEditor.getBoundTextElementCenter`.
 
-[`packages/element/src/textElement.ts:318-332`](../../packages/element/src/textElement.ts#L318-L332) The `getContainerElement` function retrieves the container of a text element via its `containerId`.
+[`packages/element/src/textElement.ts:357-371`](../../packages/element/src/textElement.ts#L357-L371) The `getContainerElement` function retrieves the container of a text element via its `containerId`.
+
+[`packages/element/src/textElement.ts:452-473`](../../packages/element/src/textElement.ts#L452-L473) `getTextElementWithAccuratePosition` returns a text element's accurate position. Arrow labels have derived positions (updated at render time, not on the element), so code reading coords must use this helper.
+
+## List Item Auto-Numbering
+
+[`packages/element/src/listMarker.ts:1-364`](../../packages/element/src/listMarker.ts#L1-L364) The list marker system auto-numbers list items when duplicated. [`packages/element/src/listMarker.ts:241-331`](../../packages/element/src/listMarker.ts#L241-L331) `advanceDuplicatedListMarkers` advances the markers of duplicated texts and labels: duplicating `1. foo` gives `2. foo`. Duplicating several list items at once continues from the highest; only if nothing but list items are selected. [`packages/element/src/listMarker.ts:336-364`](../../packages/element/src/listMarker.ts#L336-L364) `applyListMarkerAdvances` applies or reverses these changes for undo/redo.
 
 ## Decisions
 
@@ -122,3 +146,11 @@ Sticky notes are a specialized text container type that combines a visually dist
 - **Footer is never measured** (commit afa3a653fc5d): The creation-date footer text is chosen by width bucket (e.g., "7 Sep" vs. "7 Sep 2025") rather than measured. This keeps canvas and SVG export renderers measurement-free and exports date-stable—an absolute timestamp means paintings never go stale.
 
 - **One layout calculation owns sticky note geometry** (commit afa3a653fc5d): `getStickyNoteLayout` is the single source of truth. It wraps, fits the font, grows the height only when needed, and positions the label. Property actions and resizing both call this function (directly or via `updateStickyNoteLayout` / `relayoutStickyNotes`), making the pair always self-consistent and preventing the phantom-container mismatch that plagued earlier designs.
+
+- **Text tool resolves targets once** (c10499eebb62): What a click would do was computed in three places with different modifier awareness. `AppTextTool.getTargetAt` now answers it once — endpoint → text → empty centered container (unless Ctrl/Cmd) → free — and feeds the hover, cursor, and pointerdown. The affordance never promises what the click won't deliver.
+
+- **Deferred center click for text tool drag** (c10499eebb62): An empty container's center click waits for pointerup: dragging horizontally past the autowrap threshold creates fixed-width free text instead, preventing provisional container enlargement. This gives users drag-to-size without binding commitment.
+
+- **Ctrl/Cmd, not Alt, opts out of binding** (c10499eebb62): Ctrl/Cmd disables container label binding in the text tool (as it does arrow endpoint binding), making one key mean "no binding" throughout the tool. Alt is left for its generic drag meaning (resize from center).
+
+- **Caret follows panels when typed under them** (c10499eebb62): When a caret would hide under the stats or styles panel, the canvas pans to bring it back into view with room to spare. The editor's scroll box detects the reveal and diverts it to canvas panning instead.
