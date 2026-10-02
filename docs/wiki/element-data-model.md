@@ -31,7 +31,7 @@ Basic drawable shapes: `rectangle`, `diamond`, `ellipse`. These are the simplest
 
 [`packages/element/src/types.ts:253-291`](../../packages/element/src/types.ts#L253-L291) `ExcalidrawTextElement` adds typography properties: `fontSize`, `fontFamily`, `text`, `textAlign`, `verticalAlign`, `containerId` (if bound to a shape), `originalText`, `autoResize`, `lineHeight` (unitless, W3C-aligned), `baseFontSize` (the font size the user picked; only sticky note labels have one today), and `labelPosition` (for text bound to a linear element).
 
-Text creation is handled by `newTextElement()` [`packages/element/src/newElement.ts:335-391`](../../packages/element/src/newElement.ts#L335-L391). The function measures text using `measureText()` and computes position offsets based on text alignment anchors via `getTextAnchorRatios()` [`packages/element/src/newElement.ts:303-314`](../../packages/element/src/newElement.ts#L303-L314). This ensures the anchor point stays fixed as text is edited. When text resizes, `refreshTextDimensions()` [`packages/element/src/newElement.ts:529-549`](../../packages/element/src/newElement.ts#L529-L549) recalculates dimensions and handles wrapping for constrained text.
+Text creation is handled by `newTextElement()` [`packages/element/src/newElement.ts:335-391`](../../packages/element/src/newElement.ts#L335-L391). The function measures text using `measureText()` and computes position offsets based on text alignment anchors via `getTextAnchorRatios()` [`packages/element/src/newElement.ts:303-314`](../../packages/element/src/newElement.ts#L303-L314). This ensures the anchor point stays fixed as text is edited. When text resizes, `refreshTextDimensions()` [`packages/element/src/newElement.ts:533-581`](../../packages/element/src/newElement.ts#L533-L581) recalculates dimensions and handles wrapping for constrained text. It now accepts a `maxWidth` parameter: when set for free text that grows with its content (`autoResize`), the text stops growing and wraps at this width once it exceeds that limit, anchored to its alignment point.
 
 See [Text Editing and Typography](text-editing.md) for text interaction details.
 
@@ -46,7 +46,7 @@ See [Text Editing and Typography](text-editing.md) for text interaction details.
 
 [`packages/element/src/types.ts:391-395`](../../packages/element/src/types.ts#L391-L395) `ExcalidrawArrowElement` adds the `elbowed` boolean flag. When true, the element is an `ExcalidrawElbowArrowElement` [`packages/element/src/types.ts:397-421`](../../packages/element/src/types.ts#L397-L421), which includes `fixedSegments`, `startIsSpecial`, and `endIsSpecial` for orthogonal arrow routing.
 
-Arrow creation uses `newArrowElement()` [`packages/element/src/newElement.ts:601-639`](../../packages/element/src/newElement.ts#L601-L639), which returns different types based on the `elbowed` parameter. Linear element creation (for both arrows and lines) uses `newLinearElement()` [`packages/element/src/newElement.ts:572-599`](../../packages/element/src/newElement.ts#L572-L599).
+Arrow creation uses `newArrowElement()` [`packages/element/src/newElement.ts:633-671`](../../packages/element/src/newElement.ts#L633-L671), which returns different types based on the `elbowed` parameter. Linear element creation (for both arrows and lines) uses `newLinearElement()` [`packages/element/src/newElement.ts:604-631`](../../packages/element/src/newElement.ts#L604-L631).
 
 See [Arrows and Bindings](arrows-bindings.md) for binding mechanics.
 
@@ -58,7 +58,7 @@ See [Arrows and Bindings](arrows-bindings.md) for binding mechanics.
 - `simulatePressure`: whether pressure is simulated
 - `strokeOptions`: variability ("variable" or "constant") and streamline factor
 
-Created via `newFreeDrawElement()` [`packages/element/src/newElement.ts:551-570`](../../packages/element/src/newElement.ts#L551-L570).
+Created via `newFreeDrawElement()` [`packages/element/src/newElement.ts:583-602`](../../packages/element/src/newElement.ts#L583-L602).
 
 ### Image Elements
 
@@ -68,7 +68,7 @@ Created via `newFreeDrawElement()` [`packages/element/src/newElement.ts:551-570`
 - `scale`: `[x, y]` factors for flipping
 - `crop`: crop region or null
 
-Created via `newImageElement()` [`packages/element/src/newElement.ts:641-660`](../../packages/element/src/newElement.ts#L641-L660). See [Image Support](image-handling.md).
+Created via `newImageElement()` [`packages/element/src/newElement.ts:673-692`](../../packages/element/src/newElement.ts#L673-L692). See [Image Support](image-handling.md).
 
 ### Frames and Magic Frames
 
@@ -137,7 +137,7 @@ The `ElementConstructorOpts` type [`packages/element/src/newElement.ts:61-85`](.
 
 Text positioning is anchor-based. `getTextAnchorRatios()` [`packages/element/src/newElement.ts:303-314`](../../packages/element/src/newElement.ts#L303-L314) converts alignment settings to normalized ratios (e.g., center = 0.5, right = 1). The actual x/y position is offset from the text content's bounding box so the anchor stays fixed when the text changes size.
 
-For resizing text with rotation, `adjustXYWithRotation()` [`packages/element/src/newElement.ts:482-527`](../../packages/element/src/newElement.ts#L482-L527) applies rotation-aware deltas to grow the text away from its alignment anchors.
+For resizing text with rotation, `adjustXYWithRotation()` [`packages/element/src/newElement.ts:486-531`](../../packages/element/src/newElement.ts#L486-L531) applies rotation-aware deltas to grow the text away from its alignment anchors.
 
 ## Element Collections
 
@@ -159,3 +159,5 @@ For resizing text with rotation, `adjustXYWithRotation()` [`packages/element/src
 **Element creation timestamps**: Every element has a `created` timestamp initialized on creation and preserved across edits and undo/redo. The timestamp is not included in element updates (see `ElementUpdate` / `newElementWith` / `mutateElement`), so it stays stable as a metadata field separate from versioning. Duplicating an element starts a new lifetime. From commit 854d00c31b71.
 
 **Arrow label positioning**: Text bound to a linear element (such as an arrow) stores its position as `labelPosition`, a normalized arc-length parameter (0–1) along the container's whole path. This is independent of how the path is segmented, so the label survives midpoint insertion, removal, and other geometry changes. From commit 214cd6e6e8ac.
+
+**Text tool hover state and target resolution**: The text tool resolves what a click at the hovered position would act on — a text element to edit, an empty container to label, or an arrow anchor — once per pointer movement, unified into a single `textToolHover` AppState field (replacing the separate `hoveredArrowTextAnchor`, `elementsToHighlight`, and `suggestedBinding` affordances). This resolves inconsistencies where the hover promised one action but the click delivered another. From c10499eebb62.

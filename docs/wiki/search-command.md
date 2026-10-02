@@ -23,9 +23,9 @@ The Command Palette is a modal dialog that aggregates commands from multiple sou
 
 Commands are built from four main sources:
 
-1. **Editor Actions** [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:360-420`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L360-L420): Core editing operations like undo/redo, zoom, grid mode, view mode, element operations (group, cut, copy, align, flip, etc.), and export functions.
+1. **Editor Actions** [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:360-377`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L360-L377): Core editing operations like undo/redo, zoom, grid mode, view mode, element operations (group, cut, copy, align, flip, etc.), and export functions.
 
-2. **Additional Commands** [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:422-603`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L422-L603): Supplementary actions including theme toggle, library sidebar toggle, search menu toggle, shape switch, color pickers, tool selection, and AI-powered features (text-to-diagram, mermaid conversion).
+2. **Additional Commands** [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:423-604`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L423-L604): Supplementary actions including theme toggle, library sidebar toggle, search menu toggle, shape switch, color pickers, tool selection, and AI-powered features (text-to-diagram, mermaid conversion).
 
 3. **Library Items** [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:223-248`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L223-L248): Named library items are converted to commands that insert them on the canvas when executed.
 
@@ -50,21 +50,21 @@ Each command item contains:
 
 ### Filtering and Search
 
-[`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:814-879`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L814-L879)
+[`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:815-880`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L815-L880)
 
 Commands are filtered and ranked by availability and search relevance:
 
 1. **Predicate Evaluation**: Commands check their predicate function to determine availability. For element-related commands, the predicate typically requires selected elements. [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:346-357`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L346-L357)
 
-2. **Fuzzy Matching**: When a search query is entered, the fuzzy library filters commands against their haystack using fuzzy matching and scores by relevance. [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:861-869`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L861-L869)
+2. **Fuzzy Matching**: When a search query is entered, the fuzzy library filters commands against their haystack using fuzzy matching and scores by relevance. [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:862-870`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L862-L870)
 
 3. **Category Ordering**: Commands are organized by predefined category order (App → Export → Editor → Tools → Elements → Links) to surface commonly-used commands first. [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:87-114`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L87-L114)
 
-4. **Last-Used Tracking**: When no search is active, the previously executed command is highlighted and can be quickly re-executed by pressing Enter. [[cite:packages/excalidraw/components/CommandPalette/CommandPalette.tsx:85,844-857]]
+4. **Last-Used Tracking**: When no search is active, the previously executed command is highlighted and can be quickly re-executed by pressing Enter. [[cite:packages/excalidraw/components/CommandPalette/CommandPalette.tsx:85,845-858]]
 
 ### Keyboard Navigation
 
-[`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:691-802`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L691-L802)
+[`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:692-803`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L692-L803)
 
 The palette supports keyboard-driven navigation:
 
@@ -88,7 +88,7 @@ The command palette modal uses a flexible layout:
 - Shortcuts are displayed as styled keyboard key badges
 - On mobile (phone form factor), shortcuts are hidden to save space
 
-[`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:900-912`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L900-L912)
+[`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:901-913`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L901-L913)
 
 ## Search Menu
 
@@ -173,3 +173,5 @@ Text in elements may be wrapped across multiple lines. The search system careful
 **Command Palette Stability During Search**: Commands are computed once when the palette opens and are not updated while searching, even though the underlying app state changes. This prevents cascading state resets that would interrupt user searching. [`packages/excalidraw/components/CommandPalette/CommandPalette.tsx:250-256`](../../packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L250-L256)
 
 **Separate Search Systems**: Quick search (Command Palette) and content search (Search Menu) are implemented as distinct systems. The command palette focuses on action discovery with fuzzy matching, while the search menu focuses on finding content within elements with pixel-accurate canvas highlighting. This separation allows each to be optimized for its use case.
+
+**Show Hints in Command Palette**: The `showHints` preference is now routed through the action system as `actionToggleShowHints` (commit 2d3707b). This allows it to appear in the command palette and integrate with the full action system features (tracking, view mode declaration, etc.), whereas previously it only flipped `appState` directly and had no keyboard shortcut or command palette entry.

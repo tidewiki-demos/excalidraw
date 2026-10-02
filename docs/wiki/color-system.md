@@ -59,7 +59,13 @@ Sticky notes are their own color domain with separate defaults, palettes, and to
 - `STICKY_NOTE_STROKE_PICKS` reuses the regular stroke picks
 - `STICKY_NOTE_BACKGROUND_PICKS` uses classic note colors (yellow, pink, green, blue, orange) with transparent excluded
 
-[`packages/common/src/constants.ts:221-264`](../../packages/common/src/constants.ts#L221-L264) adds sticky-note geometry and styling constants including font sizes, padding, footer layout, and shadow properties.
+[`packages/common/src/constants.ts:225-270`](../../packages/common/src/constants.ts#L225-L270) adds sticky-note geometry and styling constants including font sizes, padding, footer layout, and shadow properties.
+
+## Text Wrapping Limits
+
+[`packages/common/src/constants.ts:25-30`](../../packages/common/src/constants.ts#L25-L30) defines constants for text sizing and wrapping behavior:
+- `TEXT_VIEWPORT_PADDING` [`packages/common/src/constants.ts:27`](../../packages/common/src/constants.ts#L27) is 20px — room left at each side of the visible canvas when a text stops growing at its width or is brought into view once it wraps
+- `TEXT_MAX_WRAP_WIDTH` [`packages/common/src/constants.ts:30`](../../packages/common/src/constants.ts#L30) is 800px (in scene units, zoom-independent) — the maximum width a typed or pasted text can reach before it wraps
 
 ## Color Target Resolution
 
@@ -163,3 +169,4 @@ Color-specific drag & drop is implemented in [`packages/excalidraw/components/Co
 - [Toolbar and Tools](toolbar-tools.md) — color selection in drawing tools
 - [Element Data Model and Types](element-data-model.md) — elements store strokeColor and backgroundColor
 - [Application State Management](app-state.md) — colorTopPicks stored in appState for persistence
+- [Text Editing and Typography](text-editing.md) — text wrapping uses viewport padding and max width constants

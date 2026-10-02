@@ -16,21 +16,21 @@ Each canvas is a separate React component with independent rendering pipelines o
 
 ## InteractiveCanvas: UI Overlay Rendering
 
-[`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:87-233`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L87-L233) The InteractiveCanvas component manages the overlay layer where selection UI appears. It receives all necessary app state and element data as props and uses memoization to avoid unnecessary rerenders.
+[`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:88-229`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L88-L229) The InteractiveCanvas component manages the overlay layer where selection UI appears. It receives all necessary app state and element data as props and uses memoization to avoid unnecessary rerenders.
 
-The component sets up canvas dimensions matching the viewport with device pixel ratio scaling. [`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:209-213`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L209-L213) It configures the canvas size dynamically based on `appState.width` and `appState.height`.
+The component sets up canvas dimensions matching the viewport with device pixel ratio scaling. [`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:208-209`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L208-L209) It configures the canvas size dynamically based on `appState.width` and `appState.height`.
 
 ### Animation Loop
 
-[`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:174-199`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L174-L199) The interactive scene rendering runs through an animation loop managed by `AnimationController`. When the component mounts, it starts an animation that continuously calls `renderInteractiveScene`, passing animation state through frames. The loop stops automatically when there's no more animation state to render.
+[`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:170-195`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L170-L195) The interactive scene rendering runs through an animation loop managed by `AnimationController`. When the component mounts, it starts an animation that continuously calls `renderInteractiveScene`, passing animation state through frames. The loop stops automatically when there's no more animation state to render.
 
 ### Collaborator Integration
 
-[`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:108-137`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L108-L137) The interactive canvas processes collaborator state to display remote user cursors and selections. For each collaborator with an active pointer, it converts their scene coordinates to viewport coordinates and passes them to the renderer.
+[`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:109-138`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L109-L138) The interactive canvas processes collaborator state to display remote user cursors and selections. For each collaborator with an active pointer, it converts their scene coordinates to viewport coordinates and passes them to the renderer.
 
 ### Memoization Strategy
 
-[`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:280-309`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L280-L309) The component uses custom memoization comparing specific app state properties rather than all properties. This prevents rerenders when unrelated app state changes, such as cursor movements. The comparison extracts only `InteractiveCanvasAppState`-relevant properties to determine if a rerender is needed.
+[`packages/excalidraw/components/canvases/InteractiveCanvas.tsx:276-305`](../../packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L276-L305) The component uses custom memoization comparing specific app state properties rather than all properties. This prevents rerenders when unrelated app state changes, such as cursor movements. The comparison extracts only `InteractiveCanvasAppState`-relevant properties to determine if a rerender is needed.
 
 ## StaticCanvas: Scene Content Rendering
 
@@ -56,7 +56,7 @@ The component sets up canvas dimensions matching the viewport with device pixel 
 
 ## Interactive Scene Rendering
 
-[`packages/excalidraw/renderer/interactiveScene.ts:1582-2111`](../../packages/excalidraw/renderer/interactiveScene.ts#L1582-L2111) The `renderInteractiveScene` function renders all UI overlays on the interactive canvas. It handles:
+[`packages/excalidraw/renderer/interactiveScene.ts:1700-2111`](../../packages/excalidraw/renderer/interactiveScene.ts#L1700-L2111) The `renderInteractiveScene` function renders all UI overlays on the interactive canvas. It handles:
 
 - **Selection boxes** for individual and multiple selected elements [`packages/excalidraw/renderer/interactiveScene.ts:1828-1929`](../../packages/excalidraw/renderer/interactiveScene.ts#L1828-L1929)
 - **Transform handles** for resizing and rotating [`packages/excalidraw/renderer/interactiveScene.ts:1931-2020`](../../packages/excalidraw/renderer/interactiveScene.ts#L1931-L2020)
@@ -64,10 +64,20 @@ The component sets up canvas dimensions matching the viewport with device pixel 
 - **Binding highlights** showing where arrows can attach [`packages/excalidraw/renderer/interactiveScene.ts:916-961`](../../packages/excalidraw/renderer/interactiveScene.ts#L916-L961)
 - **Focus point indicators** for arrow connections [`packages/excalidraw/renderer/interactiveScene.ts:1283-1373`](../../packages/excalidraw/renderer/interactiveScene.ts#L1283-L1373)
 - **Text element boxes** showing text editing boundaries [`packages/excalidraw/renderer/interactiveScene.ts:1523-1545`](../../packages/excalidraw/renderer/interactiveScene.ts#L1523-L1545)
+- **Text tool hover affordances** showing what a click would act on [`packages/excalidraw/renderer/interactiveScene.ts:1531-1577`](../../packages/excalidraw/renderer/interactiveScene.ts#L1531-L1577)
 - **Search result highlights** [`packages/excalidraw/renderer/interactiveScene.ts:2024-2065`](../../packages/excalidraw/renderer/interactiveScene.ts#L2024-L2065)
 - **Snap lines** [`packages/excalidraw/renderer/interactiveScene.ts:2067`](../../packages/excalidraw/renderer/interactiveScene.ts#L2067)
 - **Remote cursors and selected elements** from collaborators [`packages/excalidraw/renderer/interactiveScene.ts:2071-2077`](../../packages/excalidraw/renderer/interactiveScene.ts#L2071-L2077)
 - **Scrollbars** [`packages/excalidraw/renderer/interactiveScene.ts:2079-2105`](../../packages/excalidraw/renderer/interactiveScene.ts#L2079-L2105)
+
+### Text Tool Hover Rendering
+
+[`packages/excalidraw/renderer/interactiveScene.ts:1500-1577`](../../packages/excalidraw/renderer/interactiveScene.ts#L1500-L1577) The text tool hover state is rendered through `renderTextToolHover`, which displays three types of affordances:
+- A dashed box around text elements the tool would edit
+- A binding outline around empty containers the tool would label
+- A point highlight on arrow anchors (endpoints or midpoint label) the tool would attach text to
+
+This consolidates the previous separate renderers for hovered arrow text anchors and provides a unified preview of what a text-tool click would do.
 
 ### Animation State Management
 
@@ -108,6 +118,12 @@ Frame rendering applies canvas clipping via `frameClip` [`packages/excalidraw/re
 - `contain`: fill viewport (may exceed 100%)
 - `none`: keep current zoom, only center target
 
+[`packages/excalidraw/viewport.ts:426-481`](../../packages/excalidraw/viewport.ts#L426-L481) `scrollBoundsIntoView` brings bounds into the viewport by the least movement, accounting for UI offsets (screen pixels covering edges or room to leave). Along an axis where bounds don't fit, their start (left/top) is brought in instead, or that axis keeps its scroll with the `tooLarge: "leave"` option.
+
+## Pan Navigation State
+
+[`packages/excalidraw/components/App.pan.ts:60-69`](../../packages/excalidraw/components/App.pan.ts#L60-L69) The `AppPan` class provides an `isNavigating` method that returns whether the pointer is navigating the viewport rather than acting on the scene. It accounts for space being held to pan, an active pan session, scrollbar dragging, or the hand tool being active. When navigating, hover and cursor states belong to the navigation gesture rather than scene interaction.
+
 ## Animation Controller
 
 [`packages/excalidraw/renderer/animation.ts:14-166`](../../packages/excalidraw/renderer/animation.ts#L14-L166) The `AnimationController` manages all animation loops in the application. It:
@@ -139,3 +155,8 @@ Rendering uses several strategies to maintain performance:
 - **Selective rendering**: Elements outside the viewport are filtered out before rendering
 - **Canvas reuse**: Link icon canvases are cached and only regenerated when zoom changes [`packages/excalidraw/renderer/staticScene.ts:159-235`](../../packages/excalidraw/renderer/staticScene.ts#L159-L235)
 - **Efficient clearing**: Background rendering skips redundant clear operations
+- **New element nonce folding**: A new element being drag-sized is mutated in place without updating scene nonce. Its own `versionNonce` is folded into `canvasNonce` to trigger redraws on the interactive canvas when the text box changes size, and on the static canvas when a framed element is being created. [`packages/excalidraw/scene/Renderer.ts:361-373`](../../packages/excalidraw/scene/Renderer.ts#L361-L373)
+
+## Decisions
+
+**Text tool hover consolidation** (commit c10499eebb62): The text tool's hover affordances were previously tracked through three separate AppState fields (`elementsToHighlight`, `suggestedBinding`, `hoveredArrowTextAnchor`) and rendered through multiple branches, leading to inconsistencies where the affordance could promise different behavior than the click would deliver. A new unified `textToolHover` field and `renderTextToolHover` function now resolve the target once — endpoint → text → empty centered container (unless Ctrl/Cmd) → free — and feed the hover, cursor, and pointerdown through the same logic. The renderer now gates on the single field instead of three, eliminating affordance mismatch bugs.

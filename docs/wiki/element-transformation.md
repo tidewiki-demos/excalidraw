@@ -64,6 +64,14 @@ Elements are sorted by their position along the distribution axis before spacing
 
 Rows are centered horizontally and the entire grid is centered vertically around the provided center coordinates. [`packages/element/src/positionElementsOnGrid.ts:77-110`](../../packages/element/src/positionElementsOnGrid.ts#L77-L110)
 
+## Dragging Elements
+
+The `dragSelectedElements` function translates multiple selected elements together. To avoid redundant calculations, it builds the moved-element array once per drag step and passes the same array instance to every `updateBoundElements` call. This reuses the per-array ID-set cache (via `getSimultaneouslyUpdatedElementIds`) for unbinding checks and bound element updates, ensuring linear performance in the number of dragged elements. [`packages/element/tests/dragElements.test.ts:78-97`](../../packages/element/tests/dragElements.test.ts#L78-L97)
+
+Dragging respects [frames](frames-groups.md) and [groups](frames-groups.md), moving their children once without duplication even when a child is also selected. [`packages/element/tests/dragElements.test.ts:141-159`](../../packages/element/tests/dragElements.test.ts#L141-L159)
+
+When an arrow and its bound element are dragged together, bindings are preserved and points remain unchanged. [`packages/element/tests/dragElements.test.ts:184-199`](../../packages/element/tests/dragElements.test.ts#L184-L199) When only an arrow is dragged away from its bound element, the binding is removed and the element's `boundElements` list is cleared. [`packages/element/tests/dragElements.test.ts:201-208`](../../packages/element/tests/dragElements.test.ts#L201-L208)
+
 ## Bound Element Updates
 
 All transformations trigger `updateBoundElements`, which updates [arrows](arrows-bindings.md) connected to the transformed element and repositions [bound text](text-editing.md). The function is called with the `simultaneouslyUpdated` set to avoid redundant recalculations when multiple elements in a group are transformed together. Sticky notes delegate to `updateStickyNoteLayout` which handles label fitting and content correction before the arrow pass. [[cite:packages/element/src/resizeElements.ts:954-967, 1536-1551]]
@@ -91,3 +99,5 @@ Bound text elements (labels on containers) are created with shared ink coloring:
 - **Text scaling on resize**: For regular text containers, when resizing with aspect ratio locked, font size is adjusted proportionally. For text elements themselves and other containers without aspect ratio locking, the font size is capped at `MIN_FONT_SIZE`. [`packages/element/src/resizeElements.ts:806-834`](../../packages/element/src/resizeElements.ts#L806-L834)
 
 - **Creation timestamps on import**: When element skeletons are converted via `convertToExcalidrawElements` with regenerated IDs, all resulting elements share a single creation timestamp, marking them as a cohesive import batch. [`packages/element/src/transform.ts:584-592`](../../packages/element/src/transform.ts#L584-L592)
+
+- **Efficient drag updates**: When dragging multiple selected elements, the moved-element array is built once per drag step and reused across all `updateBoundElements` calls. This avoids rebuilding the selection-sized ID-set cache for every element, making drag performance linear in the number of moved elements rather than quadratic (commit 74423812ec59, #12183). [`packages/element/tests/dragElements.test.ts:78-97`](../../packages/element/tests/dragElements.test.ts#L78-L97)

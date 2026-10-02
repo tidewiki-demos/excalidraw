@@ -35,7 +35,7 @@ graph TD
 
 ### DragInput [`packages/excalidraw/components/Stats/DragInput.tsx:1-100`](../../packages/excalidraw/components/Stats/DragInput.tsx#L1-L100)
 
-The core interactive input component that supports both dragging the label and typing values. [`packages/excalidraw/components/Stats/DragInput.tsx:73-89`](../../packages/excalidraw/components/Stats/DragInput.tsx#L73-L89) It tracks pointer movement to accumulate changes and fires callbacks at configurable sensitivity. The component preserves original element state during interactions and supports step-sized increments when Shift is held.
+The core interactive input component that supports both dragging the label and typing values. [`packages/excalidraw/components/Stats/DragInput.tsx:120-177`](../../packages/excalidraw/components/Stats/DragInput.tsx#L120-L177) It tracks pointer movement to accumulate changes and fires callbacks at configurable sensitivity. The component preserves original element state during interactions and supports step-sized increments when Shift is held. [`packages/excalidraw/components/Stats/DragInput.tsx:131-137`](../../packages/excalidraw/components/Stats/DragInput.tsx#L131-L137) Non-finite values (NaN, Infinity) are rejected to prevent corruption of element geometry.
 
 ### Stats Panel [`packages/excalidraw/components/Stats/index.tsx:115-180`](../../packages/excalidraw/components/Stats/index.tsx#L115-L180)
 
@@ -48,31 +48,31 @@ For individual elements, specialized components handle property editing:
 - **Position** [`packages/excalidraw/components/Stats/Position.tsx:175-209`](../../packages/excalidraw/components/Stats/Position.tsx#L175-L209): Edits X/Y coordinates while accounting for element rotation and crop mode
 - **Dimension** [`packages/excalidraw/components/Stats/Dimension.tsx:320-359`](../../packages/excalidraw/components/Stats/Dimension.tsx#L320-L359): Edits width/height with aspect ratio preservation for images
 - **Angle** [`packages/excalidraw/components/Stats/Angle.tsx:87-101`](../../packages/excalidraw/components/Stats/Angle.tsx#L87-L101): Rotates elements in degrees (0-360), updating bound text if present
-- **FontSize** [`packages/excalidraw/components/Stats/FontSize.tsx:80-103`](../../packages/excalidraw/components/Stats/FontSize.tsx#L80-L103): Adjusts font size for text elements and elements with bound text
+- **FontSize** [`packages/excalidraw/components/Stats/FontSize.tsx:85-112`](../../packages/excalidraw/components/Stats/FontSize.tsx#L85-L112): Adjusts font size for text elements and elements with bound text, using `getBaseFontSize` to read the actual font size (accounting for sticky note label ceiling)
 
 ### Multi-Element Components
 
 When multiple elements are selected, these components display common values or "Mixed" when they differ:
 
 - **MultiPosition** [`packages/excalidraw/components/Stats/MultiPosition.tsx:223-271`](../../packages/excalidraw/components/Stats/MultiPosition.tsx#L223-L271): Moves multiple elements or groups as units
-- **MultiDimension** [`packages/excalidraw/components/Stats/MultiDimension.tsx:431-481`](../../packages/excalidraw/components/Stats/MultiDimension.tsx#L431-L481): Resizes element groups while maintaining aspect ratios and internal relationships
+- **MultiDimension** [`packages/excalidraw/components/Stats/MultiDimension.tsx:83-143`](../../packages/excalidraw/components/Stats/MultiDimension.tsx#L83-L143): Resizes element groups while maintaining aspect ratios and internal relationships. Sticky note elements are handled specially: their layout owns the bound label entirely, and direct scaling is skipped [`packages/excalidraw/components/Stats/MultiDimension.tsx:95-121`](../../packages/excalidraw/components/Stats/MultiDimension.tsx#L95-L121)
 - **MultiAngle** [`packages/excalidraw/components/Stats/MultiAngle.tsx:102-133`](../../packages/excalidraw/components/Stats/MultiAngle.tsx#L102-L133): Rotates multiple individual elements
-- **MultiFontSize** [`packages/excalidraw/components/Stats/MultiFontSize.tsx:127-159`](../../packages/excalidraw/components/Stats/MultiFontSize.tsx#L127-L159): Adjusts font size for multiple text elements
+- **MultiFontSize** [`packages/excalidraw/components/Stats/MultiFontSize.tsx:133-165`](../../packages/excalidraw/components/Stats/MultiFontSize.tsx#L133-L165): Adjusts font size for multiple text elements, using `getBaseFontSize` to read values
 
 ## Property Editing
 
 ### Interaction Flow
 
-[`packages/excalidraw/components/Stats/DragInput.tsx:228-346`](../../packages/excalidraw/components/Stats/DragInput.tsx#L228-L346) Users can interact with properties in two ways:
+[`packages/excalidraw/components/Stats/DragInput.tsx:240-357`](../../packages/excalidraw/components/Stats/DragInput.tsx#L240-L357) Users can interact with properties in two ways:
 
 1. **Drag the label**: Moving the mouse horizontally triggers `onPointerDown` on the label, which tracks movement and accumulates changes
 2. **Type in the input**: Direct text input that's submitted on Enter or blur
 
-Both paths call the `dragInputCallback` with change information, which then calls `scene.mutateElement()` to update the element.
+Both paths call the `dragInputCallback` with change information, which then calls `scene.mutateElement()` to update the element. [`packages/excalidraw/components/Stats/DragInput.tsx:149-157`](../../packages/excalidraw/components/Stats/DragInput.tsx#L149-L157) The typed-value path creates a snapshot of the elements map (copying all elements) to ensure gesture-start values are read from the original state, not the live map that may already carry applied changes.
 
 ### Handling Grouped Elements
 
-[`packages/excalidraw/components/Stats/utils.ts:235-254`](../../packages/excalidraw/components/Stats/utils.ts#L235-L254) Atomic units group elements that should resize together. When resizing a group, the code maintains aspect ratio and scales all contained elements proportionally. [`packages/excalidraw/components/Stats/MultiDimension.tsx:114-150`](../../packages/excalidraw/components/Stats/MultiDimension.tsx#L114-L150)
+[`packages/excalidraw/components/Stats/utils.ts:235-254`](../../packages/excalidraw/components/Stats/utils.ts#L235-L254) Atomic units group elements that should resize together. When resizing a group, the code maintains aspect ratio and scales all contained elements proportionally. [`packages/excalidraw/components/Stats/MultiDimension.tsx:145-181`](../../packages/excalidraw/components/Stats/MultiDimension.tsx#L145-L181)
 
 ### Position and Rotation
 
@@ -88,9 +88,17 @@ When an image is being cropped, [`packages/excalidraw/components/Stats/Dimension
 
 When resizing a frame, the panel detects which elements should be added or removed from frame membership based on new bounds. [`packages/excalidraw/components/Stats/Dimension.tsx:200-216`](../../packages/excalidraw/components/Stats/Dimension.tsx#L200-L216) This is handled through `getElementsInResizingFrame()` and `replaceAllElementsInFrame()`.
 
-### Text Elements
+### Text Elements and Sticky Notes
 
-[`packages/excalidraw/components/Stats/FontSize.tsx:32-78`](../../packages/excalidraw/components/Stats/FontSize.tsx#L32-L78) Font size changes trigger `redrawTextBoundingBox()` to recalculate text layout. For bound text (text inside shapes), the panel can edit font size through the container element. [`packages/excalidraw/components/Stats/index.tsx`](../../packages/excalidraw/components/Stats/index.tsx)
+[`packages/excalidraw/components/Stats/FontSize.tsx:1-83`](../../packages/excalidraw/components/Stats/FontSize.tsx#L1-L83) Font size changes trigger `redrawTextBoundingBox()` to recalculate text layout. For bound text (text inside shapes), the panel can edit font size through the container element. For sticky notes, `getBaseFontSize` returns the label's ceiling value (the maximum font size that fits), while `getBaseFontSizeUpdate` produces the appropriate update object accounting for the note's layout constraints.
+
+## Decisions
+
+**Font size representation for sticky notes** (commit afa3a653fc5d): Sticky note labels have a maximum font size (ceiling) that determines note growth. The Stats panel reads and writes this ceiling through `getBaseFontSize` / `getBaseFontSizeUpdate` rather than direct `fontSize` access. This ensures the panel shows the user's constraint ceiling, not the fitted result, and preserves it through edits.
+
+**Non-finite value rejection in DragInput** (commit afa3a653fc5d): The typed-value path now validates using `Number.isFinite()` instead of `isNaN()`, rejecting Infinity and values like "1e999" that would corrupt element geometry and fail JSON serialization on save.
+
+**Snapshot semantics for typed input** (commit afa3a653fc5d): The typed-value path in DragInput now creates a real snapshot of elements (deep copying) before calling callbacks, matching the pointer-drag path behavior. This ensures gesture-start values are read from the original state, preventing stale reads from the live elements map.
 
 ## Related Pages
 

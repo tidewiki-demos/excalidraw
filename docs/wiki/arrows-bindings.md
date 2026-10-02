@@ -21,15 +21,15 @@ Two binding modes exist:
 - **Inside binding**: The arrow endpoint sits inside the target element's interior. This is used when both endpoints of an arrow are bound to the same element.
 - **Orbit binding**: The arrow endpoint is positioned outside the target element, on or near its outline. The binding gap creates clearance between the outline and the arrowhead.
 
-[`packages/element/src/binding.ts:1144-1171`](../../packages/element/src/binding.ts#L1144-L1171) shows `bindBindingElement`, which establishes a new binding and records it bidirectionally—both on the arrow and in the target element's `boundElements` list. For elbow arrows, binding always uses "orbit" mode.
+[`packages/element/src/binding.ts:1141-1185`](../../packages/element/src/binding.ts#L1141-L1185) shows `bindBindingElement`, which establishes a new binding and records it bidirectionally—both on the arrow and in the target element's `boundElements` list. For elbow arrows, binding always uses "orbit" mode.
 
 ### Fixed Points
 
-Bindings store a `fixedPoint`—a proportional coordinate `[x, y]` within the target element's bounds (typically 0.0–1.0). This allows the arrow endpoint to move with the element if it is resized or rotated. [`packages/element/src/binding.ts:2634-2649`](../../packages/element/src/binding.ts#L2634-L2649) converts a fixed point ratio to global coordinates for rendering.
+Bindings store a `fixedPoint`—a proportional coordinate `[x, y]` within the target element's bounds (typically 0.0–1.0). This allows the arrow endpoint to move with the element if it is resized or rotated. [`packages/element/src/binding.ts:2670-2685`](../../packages/element/src/binding.ts#L2670-L2685) converts a fixed point ratio to global coordinates for rendering.
 
 ### Binding Gap and Snapping
 
-The binding gap is added to the stroke width. [`packages/element/src/binding.ts:125-131`](../../packages/element/src/binding.ts#L125-L131) calculates this. When an arrow endpoint is dragged, it snaps to the nearest point on the target element's outline, staying `gap` distance outside. [`packages/element/src/binding.ts:1595-1751`](../../packages/element/src/binding.ts#L1595-L1751) implements `bindPointToSnapToElementOutline`, which uses line intersection to find the correct outline point.
+The binding gap is added to the stroke width. [`packages/element/src/binding.ts:125-131`](../../packages/element/src/binding.ts#L125-L131) calculates this. When an arrow endpoint is dragged, it snaps to the nearest point on the target element's outline, staying `gap` distance outside. [`packages/element/src/binding.ts:1617-1763`](../../packages/element/src/binding.ts#L1617-L1763) implements `bindPointToSnapToElementOutline`, which uses line intersection to find the correct outline point.
 
 ## Arrow-Endpoint Labels
 
@@ -82,15 +82,15 @@ When a fixed segment is added at the start or end, a "special point" flag (`star
 
 ## Updating and Rebinding
 
-[`packages/element/src/binding.ts:1371-1485`](../../packages/element/src/binding.ts#L1371-L1485) shows `updateArrowBindings`, called when a bindable element changes. It iterates through all arrows bound to that element and updates their endpoints so they stay attached.
+[`packages/element/src/binding.ts:1431-1494`](../../packages/element/src/binding.ts#L1431-L1494) shows `updateArrowBindings`, called when a bindable element changes. It iterates through all arrows bound to that element and updates their endpoints so they stay attached.
 
-[`packages/element/src/binding.ts:1485-1550`](../../packages/element/src/binding.ts#L1485-L1550) is the public `updateBindings` function, which handles both arrow binding updates (when the arrow moves) and bindable element updates (when the shape moves).
+[`packages/element/src/binding.ts:1496-1533`](../../packages/element/src/binding.ts#L1496-L1533) is the public `updateBindings` function, which handles both arrow binding updates (when the arrow moves) and bindable element updates (when the shape moves).
 
 ## Cleanup and Duplication
 
-[`packages/element/src/binding.ts:2213-2283`](../../packages/element/src/binding.ts#L2213-L2283) fixes bindings after element duplication, remapping binding IDs to point to the duplicated targets.
+[`packages/element/src/binding.ts:2249-2319`](../../packages/element/src/binding.ts#L2249-L2319) fixes bindings after element duplication, remapping binding IDs to point to the duplicated targets.
 
-[`packages/element/src/binding.ts:2285-2299`](../../packages/element/src/binding.ts#L2285-L2299) cleans up bindings when elements are deleted, using the `BoundElement` and `BindableElement` classes to unbind and rebind affected arrows and shapes bidirectionally.
+[`packages/element/src/binding.ts:2321-2335`](../../packages/element/src/binding.ts#L2321-L2335) cleans up bindings when elements are deleted, using the `BoundElement` and `BindableElement` classes to unbind and rebind affected arrows and shapes bidirectionally.
 
 ## Decisions
 
@@ -99,3 +99,5 @@ When a fixed segment is added at the start or end, a "special point" flag (`star
 **Binding hit test now takes zoom parameter (commit 4850bf336fe0)**: Functions like `getHoveredElementForBinding` and `getAllHoveredElementAtPoint` now accept a `zoom` parameter directly instead of using `maxBindingDistance_simple(zoom)` at call sites. This centralizes zoom handling and ensures consistent behavior across binding operations.
 
 **Reanchoring bindings to outline (commit dc2c16d9e207)**: A new `reanchorBindingsToOutline` function handles the case where a bindable element changes shape (e.g., via type conversion). For elbow arrows, it recalculates the fixed point using the new outline. For simple arrows, it recomputes the fixed point if the original focus point drifts outside the element or inside it unexpectedly.
+
+**Cached ID set for simultaneously updated elements (commits 84e3f5a40c5f, 74423812ec59)**: To avoid O(n²) behavior when updating many elements, `getSimultaneouslyUpdatedElementIds` now caches the ID set per array in a WeakMap [`packages/element/src/binding.ts:1545-1572`](../../packages/element/src/binding.ts#L1545-L1572). Callers must pass a single array instance for all elements in an operation and not modify its membership afterward. This optimization reduced multi-element resize and drag operations by 60–90%.

@@ -25,7 +25,9 @@ Excalidraw provides a collection of reusable React components that implement com
 
 ## Tooltip
 
-[`packages/excalidraw/components/Tooltip.tsx:5-118`](../../packages/excalidraw/components/Tooltip.tsx#L5-L118) `Tooltip` provides inline help text on hover. It uses a singleton DOM element (`.excalidraw-tooltip`) for all tooltip instances to reduce overhead. The `updateTooltipPosition` function [`packages/excalidraw/components/Tooltip.tsx:18-60`](../../packages/excalidraw/components/Tooltip.tsx#L18-L60) intelligently repositions tooltips to stay within the viewport, supporting both top and bottom placement with automatic fallback. Tooltips can be disabled and support configurable width for short (`10ch`) or long (`50ch`) text.
+[`packages/excalidraw/components/Tooltip.tsx:19-61`](../../packages/excalidraw/components/Tooltip.tsx#L19-L61) `Tooltip` provides inline help text on hover. It uses a singleton DOM element (`.excalidraw-tooltip`) for all tooltip instances to reduce overhead. The `updateTooltipPosition` function intelligently repositions tooltips to stay within the viewport, supporting both top and bottom placement with automatic fallback. Tooltips can be disabled and support configurable width for short (`10ch`) or long (`50ch`) text.
+
+[`packages/excalidraw/components/Tooltip.tsx:79-89`](../../packages/excalidraw/components/Tooltip.tsx#L79-L89) The `hideTooltip` function uses a plain DOM query rather than calling `getTooltipDiv()`, ensuring that hiding a tooltip never creates the tooltip node if it doesn't already exist. [`packages/excalidraw/components/Tooltip.tsx:91-117`](../../packages/excalidraw/components/Tooltip.tsx#L91-L117) The `updateTooltip` helper sets up a `MutationObserver` that watches for the tooltip's item being removed from the DOM (e.g., unmounted while hovered), and automatically hides the tooltip in that case.
 
 ## Dropdown Menu
 
@@ -79,3 +81,7 @@ All components follow WCAG standards:
 - ESC key closes modals and menus
 - Semantic HTML roles and aria labels are applied
 - Focus is restored after dismissal
+
+## Decisions
+
+**Tooltip state and owner tracking** (834e5af631ef, follow-ups to #12188): The tooltip implementation was refactored to fix unrelated Tooltip unmounting from hiding a visible tooltip. Since tooltip state (timer and visibility) is shared by all instances (one tooltip node per page), the component now uses a `MutationObserver` in `updateTooltip` to watch whether the item is still connected to the DOM. If an item is removed, the observer hides the tooltip. This eliminates the need for a cleanup effect in the `Tooltip` component itself, which was previously calling `hideTooltip()` on unmount and inadvertently hiding tooltips from unrelated instances. Additionally, `hideTooltip()` now uses a plain DOM query (`document.querySelector`) instead of `getTooltipDiv()` to ensure that hiding never creates the tooltip node if it doesn't exist.
