@@ -14,7 +14,7 @@ The visual effects system provides smooth, performant animations for trails left
 
 ## Animation Controller
 
-[`packages/excalidraw/renderer/animation.ts`](../../packages/excalidraw/renderer/animation.ts)
+[`packages/excalidraw/renderer/animation.ts:1-50`](../../packages/excalidraw/renderer/animation.ts#L1-L50)
 
 The `AnimationController` is a static class that schedules and ticks animations efficiently. It uses `requestAnimationFrame` when render throttling is enabled, otherwise falls back to `setTimeout` for more consistent timing.
 
@@ -29,7 +29,7 @@ The `AnimationController` is a static class that schedules and ticks animations 
 
 ## Animated Trail
 
-[`packages/excalidraw/animatedTrail.ts`](../../packages/excalidraw/animatedTrail.ts)
+[`packages/excalidraw/animatedTrail.ts:1-50`](../../packages/excalidraw/animatedTrail.ts#L1-L50)
 
 `AnimatedTrail` is the primary class for rendering laser pointer trails as SVG paths. It maintains a current trail (being drawn) and past trails (finished), all powered by the `LaserPointer` algorithm.
 
@@ -49,7 +49,7 @@ The `AnimationController` is a static class that schedules and ticks animations 
 
 ## Laser Trails
 
-[`packages/excalidraw/laserTrails.ts`](../../packages/excalidraw/laserTrails.ts)
+[`packages/excalidraw/laserTrails.ts:1-50`](../../packages/excalidraw/laserTrails.ts#L1-L50)
 
 `LaserTrails` is a manager that implements the `Trail` interface and wraps both the local user's trail and trails for remote collaborators in real-time collaboration.
 
@@ -88,9 +88,22 @@ The `getStrokeOutline()` method returns a closed polygon representing the visual
 - Size varies along the stroke based on `sizeMapping`, which receives pressure, running length, and index information
 - Start and end caps are added with variable radius
 
+## Render Overrides
+
+[`packages/excalidraw/renderOverrides.ts:1-70`](../../packages/excalidraw/renderOverrides.ts#L1-L70)
+
+The `renderOverrides` module provides utilities to apply visual-only transformations to elements without modifying the underlying document. These overrides are used for real-time visual feedback such as fade and translation effects during collaborative interactions.
+
+**Key functions:**
+
+- `copyElementRenderOverrides()` – Validates and copies a snapshot of render overrides (opacity and offset), clamping opacity to 0–100 and rejecting non-finite values atomically
+- `getElementRenderOffsets()` – Extracts offsets from an overrides snapshot, memoizing the result on map identity so opacity-only fades reuse cached visibility without recalculating viewport geometry
+
+**Design principle:** Render overrides are visual-only and never modify elements, history, or trigger `onChange` events. Mutations by callers are detected by copying the input map. Equivalent snapshots are recognized by comparing offset entries, so submissions that only change opacities can skip expensive viewport recalculations.
+
 ## Decisions
 
-No significant architectural decisions are documented in the provided code.
+The `renderOverrides` system was introduced to allow real-time visual feedback during frame animations and collaborative interactions. The key decision was to separate visual-only state from document state: [[commit:a9186480121a]] implements `setElementRenderOverrides()` to apply temporary opacity and translation transforms without persisting changes or triggering document update handlers. This enables smooth, responsive visual effects while keeping the document layer clean.
 
 ## See also
 

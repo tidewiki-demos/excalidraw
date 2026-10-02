@@ -64,7 +64,7 @@ Element order is also constrained by structural relationships:
 
 ## Z-Index Manipulation Commands
 
-[`packages/element/src/zindex.ts:638-676`](../../packages/element/src/zindex.ts#L638-L676)
+[`packages/element/src/zindex.ts:626-664`](../../packages/element/src/zindex.ts#L626-L664)
 
 Public API functions handle moving elements forward/backward:
 
@@ -75,7 +75,7 @@ Both account for [frames](frames-groups.md) by processing frame children separat
 
 ## Movement Logic
 
-[`packages/element/src/zindex.ts:357-441`](../../packages/element/src/zindex.ts#L357-L441)
+[`packages/element/src/zindex.ts:345-429`](../../packages/element/src/zindex.ts#L345-L429)
 
 `shiftElementsByOne` moves selected elements one step in the specified direction:
 1. Groups contiguous selected indices
@@ -87,18 +87,20 @@ Both account for [frames](frames-groups.md) by processing frame children separat
    - Bound text elements (moved as a unit with container)
 4. Rearranges array slices and syncs fractional indices via `syncMovedIndices`
 
-[`packages/element/src/zindex.ts:443-553`](../../packages/element/src/zindex.ts#L443-L553)
+[`packages/element/src/zindex.ts:431-541`](../../packages/element/src/zindex.ts#L431-L541)
 
 `shiftElementsToEnd` moves elements to the absolute front or back within their scope (frame, editing group, or canvas).
 
 ## Arrow Binding Order
 
-[`packages/element/src/zindex.ts:156-199`](../../packages/element/src/zindex.ts#L156-L199)
+[`packages/element/src/zindex.ts:153-187`](../../packages/element/src/zindex.ts#L153-L187)
 
-`moveArrowAboveBindable` automatically repositions arrow elements above any bindable elements they intersect or hover over. This ensures arrows remain visible on top of the elements they connect to. The function identifies bindable elements (the hovered shape, its bound text, or its container) and moves the arrow above them if needed.
+`moveArrowAboveBindable` automatically repositions arrow elements above any bindable elements they intersect or hover over. This ensures arrows remain visible on top of the elements they connect to. The function identifies bindable elements (the hovered shape, its bound text, or its container) and moves the arrow above them if needed. The `hoveredElement` parameter is now passed directly by the caller rather than being resolved internally.
 
 ## Decisions
 
 **Fractional indices over numeric z-index**: Fractional indices allow efficient reordering without renumbering all elements, reducing the cost of z-index operations and making the system more suitable for real-time collaboration. [`packages/element/src/fractionalIndex.ts:27-42`](../../packages/element/src/fractionalIndex.ts#L27-L42)
 
 **Array as cache**: The element array serves as the cached order derived from fractional indices, avoiding the need to reorder on every operation while supporting backward compatibility with old scenes. [`packages/element/src/fractionalIndex.ts:27-42`](../../packages/element/src/fractionalIndex.ts#L27-L42)
+
+**Hovered element passed to moveArrowAboveBindable**: The caller now determines which element is hovered and passes it directly to `moveArrowAboveBindable`, allowing binding detection to be based on distance calculations performed upstream rather than internally. [4850bf336fe0](https://github.com/excalidraw/excalidraw/commit/4850bf336fe0)

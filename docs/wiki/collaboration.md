@@ -67,12 +67,13 @@ This ensures that local edits and remote updates are merged intelligently rather
 - **Bandwidth optimization**: Only changed properties are transmitted
 - **Conflict detection**: Versions and version nonces identify which changes conflict
 
-[`packages/element/src/delta.ts:1033-1466`](../../packages/element/src/delta.ts#L1033-L1466) The `ElementsDelta` class extends this concept to handle sets of elements, tracking added, removed, and updated elements separately. The `applyTo` method applies deltas while:
+[`packages/element/src/delta.ts:1034-1554`](../../packages/element/src/delta.ts#L1034-L1554) The `ElementsDelta` class extends this concept to handle sets of elements, tracking added, removed, and updated elements separately. The `applyTo` method applies deltas while:
 
-1. Resolving binding conflicts (reconnecting arrows to their targets)
-2. Reordering elements based on fractional indices (z-order)
-3. Redrawing text bounding boxes and dependent elements
-4. Detecting whether changes result in visible differences
+1. Expanding `idsToCheck` to include layout dependencies (containers, bound arrows, bound text)
+2. Resolving binding conflicts (reconnecting arrows to their targets)
+3. Reordering elements based on fractional indices (z-order)
+4. Redrawing text bounding boxes and dependent elements
+5. Detecting visible differences by comparing the applied result, where empty text elements and deleted elements paint nothing, and `boundElements` references are filtered to exclude empty labels
 
 ## Multi-User State Management
 
@@ -167,4 +168,4 @@ If saving fails due to size constraints or network errors, an error indicator is
 
 **Periodic full scene resync**: Despite incremental updates, the system periodically broadcasts the entire scene to handle dropped messages or server outages. This is throttled to prevent overwhelming the network. From [`excalidraw-app/collab/Collab.tsx:976-988`](../../excalidraw-app/collab/Collab.tsx#L976-L988).
 
-**Delta-based conflict resolution**: Changes are represented as deltas that track both added and removed properties, allowing intelligent merging and the ability to resolve binding conflicts when elements are moved or deleted. From [`packages/element/src/delta.ts:1417-1422`](../../packages/element/src/delta.ts#L1417-L1422).
+**Visible changes decided from applied result**: Whether a delta results in a visible change is determined after layout has run (binding repair, text bounding box redraw, bound arrow updates), not from property patches alone. This ensures that layout effects count toward visibility, and entries like deleting an empty label—where both before and after paint nothing—are correctly identified as non-visible. From [`packages/element/src/delta.ts:1446-1452`](../../packages/element/src/delta.ts#L1446-L1452).

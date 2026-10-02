@@ -48,13 +48,13 @@ Clipboard operations enable users to copy, paste, and export content between Exc
 
 ### Multi-Format Export
 
-[`packages/utils/src/export.ts:41-103`](../../packages/utils/src/export.ts#L41-L103) `exportToCanvas` renders elements to an HTML canvas element. It restores elements and app state, then delegates to the scene rendering system with optional frame export and custom dimension handling.
+[`packages/utils/src/export.ts:42-104`](../../packages/utils/src/export.ts#L42-L104) `exportToCanvas` renders elements to an HTML canvas element. It restores elements and app state, then delegates to the scene rendering system with optional frame export and custom dimension handling.
 
-[`packages/utils/src/export.ts:105-167`](../../packages/utils/src/export.ts#L105-L167) `exportToBlob` converts canvas rendering to an image blob (PNG, JPEG, WebP). It warns when quality settings are incompatible with the format and optionally embeds scene data into PNG metadata via [`packages/utils/src/export.ts:146-159`](../../packages/utils/src/export.ts#L146-L159).
+[`packages/utils/src/export.ts:106-168`](../../packages/utils/src/export.ts#L106-L168) `exportToBlob` converts canvas rendering to an image blob (PNG, JPEG, WebP). It warns when quality settings are incompatible with the format and optionally embeds scene data into PNG metadata via [`packages/utils/src/export.ts:149-160`](../../packages/utils/src/export.ts#L149-L160). When embedding scene metadata, elements are restored to preserve creation timestamps and other restored properties.
 
-[`packages/utils/src/export.ts:169-202`](../../packages/utils/src/export.ts#L169-L202) `exportToSvg` produces vector output, supporting font inlining, embeddable rendering, and frame-specific exports.
+[`packages/utils/src/export.ts:170-203`](../../packages/utils/src/export.ts#L170-L203) `exportToSvg` produces vector output, supporting font inlining, embeddable rendering, and frame-specific exports.
 
-[`packages/utils/src/export.ts:204-221`](../../packages/utils/src/export.ts#L204-L221) `exportToClipboard` exports to clipboard in multiple formats: SVG as HTML string, PNG as blob, or JSON as serialized elements.
+[`packages/utils/src/export.ts:205-225`](../../packages/utils/src/export.ts#L205-L225) `exportToClipboard` exports to clipboard in multiple formats: SVG as HTML string, PNG as blob, or JSON as serialized elements. For JSON export, elements are restored before being converted to non-deleted elements to preserve restored properties.
 
 ## HTML Content Parsing
 
