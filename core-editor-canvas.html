@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core Editor and Canvas Rendering · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html" aria-current="page">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="core-editor-and-canvas-rendering">Core Editor and Canvas Rendering</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The editor’s drawing surface is built on a multi-canvas rendering architecture that separates interactive UI elements from static content. This separation allows efficient redrawing and enables real-time collaboration features.</p>
+
+<h2 id="canvas-architecture">Canvas Architecture</h2>
+
+<p>The rendering system uses three primary canvas layers: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/index.tsx#L1-L3"><code>packages/excalidraw/components/canvases/index.tsx:1-3</code></a></p>
+
+<ul>
+  <li><strong>InteractiveCanvas</strong>: Renders UI elements like selection boxes, transform handles, and cursor indicators over the drawing area</li>
+  <li><strong>StaticCanvas</strong>: Renders the actual elements (shapes, text, images) with the scene background</li>
+  <li><strong>NewElementCanvas</strong>: Renders elements currently being created before they’re finalized</li>
+</ul>
+
+<p>Each canvas is a separate React component with independent rendering pipelines optimized for their specific content.</p>
+
+<h2 id="interactivecanvas-ui-overlay-rendering">InteractiveCanvas: UI Overlay Rendering</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L88-L229"><code>packages/excalidraw/components/canvases/InteractiveCanvas.tsx:88-229</code></a> The InteractiveCanvas component manages the overlay layer where selection UI appears. It receives all necessary app state and element data as props and uses memoization to avoid unnecessary rerenders.</p>
+
+<p>The component sets up canvas dimensions matching the viewport with device pixel ratio scaling. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L208-L209"><code>packages/excalidraw/components/canvases/InteractiveCanvas.tsx:208-209</code></a> It configures the canvas size dynamically based on <code>appState.width</code> and <code>appState.height</code>.</p>
+
+<h3 id="animation-loop">Animation Loop</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L170-L195"><code>packages/excalidraw/components/canvases/InteractiveCanvas.tsx:170-195</code></a> The interactive scene rendering runs through an animation loop managed by <code>AnimationController</code>. When the component mounts, it starts an animation that continuously calls <code>renderInteractiveScene</code>, passing animation state through frames. The loop stops automatically when there’s no more animation state to render.</p>
+
+<h3 id="collaborator-integration">Collaborator Integration</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L109-L138"><code>packages/excalidraw/components/canvases/InteractiveCanvas.tsx:109-138</code></a> The interactive canvas processes collaborator state to display remote user cursors and selections. For each collaborator with an active pointer, it converts their scene coordinates to viewport coordinates and passes them to the renderer.</p>
+
+<h3 id="memoization-strategy">Memoization Strategy</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/InteractiveCanvas.tsx#L276-L305"><code>packages/excalidraw/components/canvases/InteractiveCanvas.tsx:276-305</code></a> The component uses custom memoization comparing specific app state properties rather than all properties. This prevents rerenders when unrelated app state changes, such as cursor movements. The comparison extracts only <code>InteractiveCanvasAppState</code>-relevant properties to determine if a rerender is needed.</p>
+
+<h2 id="staticcanvas-scene-content-rendering">StaticCanvas: Scene Content Rendering</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/StaticCanvas.tsx#L33-L75"><code>packages/excalidraw/components/canvases/StaticCanvas.tsx:33-75</code></a> StaticCanvas renders the main drawing content. It initializes by setting up canvas dimensions and then renders the static scene on every effect run. The canvas element is stored in a wrapper div.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/StaticCanvas.tsx#L38-L42"><code>packages/excalidraw/components/canvases/StaticCanvas.tsx:38-42</code></a> Canvas size is set via both CSS (for display) and canvas properties (for rendering), scaled by <code>devicePixelRatio</code>.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/StaticCanvas.tsx#L108-L132"><code>packages/excalidraw/components/canvases/StaticCanvas.tsx:108-132</code></a> Like InteractiveCanvas, it uses selective memoization to only rerender when relevant properties change, tracking <code>canvasNonce</code>, <code>scale</code>, <code>elementsMap</code>, and <code>visibleElements</code>.</p>
+
+<h2 id="newelementcanvas-in-progress-element-rendering">NewElementCanvas: In-Progress Element Rendering</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/canvases/NewElementCanvas.tsx#L25-L58"><code>packages/excalidraw/components/canvases/NewElementCanvas.tsx:25-58</code></a> This lightweight canvas renders only the element currently being created. It shares the same canvas dimensions as the static canvas but renders a single <code>newElement</code> when present.</p>
+
+<h2 id="renderer-scene-element-management">Renderer: Scene Element Management</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/scene/Renderer.ts#L40-L87"><code>packages/excalidraw/scene/Renderer.ts:40-87</code></a> The <code>Renderer</code> class handles determining which elements are visible and should be rendered. Its <code>getVisibleCanvasElements</code> method filters the scene’s elements based on viewport bounds, zoom level, and scroll position.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/scene/Renderer.ts#L89-L117"><code>packages/excalidraw/scene/Renderer.ts:89-117</code></a> The <code>getRenderableElementsMap</code> method builds a map of elements to render, excluding:</p>
+<ul>
+  <li>Elements being edited as text (rendered separately)</li>
+  <li>New elements that belong to a frame (rendered by NewElementCanvas)</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/scene/Renderer.ts#L208-L254"><code>packages/excalidraw/scene/Renderer.ts:208-254</code></a> When dragging elements over a frame, the renderer reorders visible elements so selected items render on top, creating the visual effect of moving into the frame without modifying the permanent z-order until the drop completes.</p>
+
+<h2 id="interactive-scene-rendering">Interactive Scene Rendering</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1700-L2111"><code>packages/excalidraw/renderer/interactiveScene.ts:1700-2111</code></a> The <code>renderInteractiveScene</code> function renders all UI overlays on the interactive canvas. It handles:</p>
+
+<ul>
+  <li><strong>Selection boxes</strong> for individual and multiple selected elements <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1828-L1929"><code>packages/excalidraw/renderer/interactiveScene.ts:1828-1929</code></a></li>
+  <li><strong>Transform handles</strong> for resizing and rotating <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1931-L2020"><code>packages/excalidraw/renderer/interactiveScene.ts:1931-2020</code></a></li>
+  <li><strong>Linear element point handles</strong> for editing arrow and line endpoints <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1110-L1233"><code>packages/excalidraw/renderer/interactiveScene.ts:1110-1233</code></a></li>
+  <li><strong>Binding highlights</strong> showing where arrows can attach <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L916-L961"><code>packages/excalidraw/renderer/interactiveScene.ts:916-961</code></a></li>
+  <li><strong>Focus point indicators</strong> for arrow connections <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1283-L1373"><code>packages/excalidraw/renderer/interactiveScene.ts:1283-1373</code></a></li>
+  <li><strong>Text element boxes</strong> showing text editing boundaries <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1523-L1545"><code>packages/excalidraw/renderer/interactiveScene.ts:1523-1545</code></a></li>
+  <li><strong>Text tool hover affordances</strong> showing what a click would act on <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1531-L1577"><code>packages/excalidraw/renderer/interactiveScene.ts:1531-1577</code></a></li>
+  <li><strong>Search result highlights</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L2024-L2065"><code>packages/excalidraw/renderer/interactiveScene.ts:2024-2065</code></a></li>
+  <li><strong>Snap lines</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L2067"><code>packages/excalidraw/renderer/interactiveScene.ts:2067</code></a></li>
+  <li><strong>Remote cursors and selected elements</strong> from collaborators <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L2071-L2077"><code>packages/excalidraw/renderer/interactiveScene.ts:2071-2077</code></a></li>
+  <li><strong>Scrollbars</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L2079-L2105"><code>packages/excalidraw/renderer/interactiveScene.ts:2079-2105</code></a></li>
+</ul>
+
+<h3 id="text-tool-hover-rendering">Text Tool Hover Rendering</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1500-L1577"><code>packages/excalidraw/renderer/interactiveScene.ts:1500-1577</code></a> The text tool hover state is rendered through <code>renderTextToolHover</code>, which displays three types of affordances:</p>
+<ul>
+  <li>A dashed box around text elements the tool would edit</li>
+  <li>A binding outline around empty containers the tool would label</li>
+  <li>A point highlight on arrow anchors (endpoints or midpoint label) the tool would attach text to</li>
+</ul>
+
+<p>This consolidates the previous separate renderers for hovered arrow text anchors and provides a unified preview of what a text-tool click would do.</p>
+
+<h3 id="animation-state-management">Animation State Management</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/interactiveScene.ts#L1686-L1704"><code>packages/excalidraw/renderer/interactiveScene.ts:1686-1704</code></a> Binding highlight animations are tracked across frames, with the animation state persisted and returned for the next frame. When binding is active, the animation state is updated; otherwise it’s cleared.</p>
+
+<h2 id="static-scene-rendering">Static Scene Rendering</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/staticScene.ts#L236-L508"><code>packages/excalidraw/renderer/staticScene.ts:236-508</code></a> The <code>renderStaticScene</code> function renders the main canvas content:</p>
+
+<ol>
+  <li><strong>Canvas bootstrap</strong> with background color <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/helpers.ts#L32-L86"><code>packages/excalidraw/renderer/helpers.ts:32-86</code></a></li>
+  <li><strong>Grid rendering</strong> if enabled <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/staticScene.ts#L271-L283"><code>packages/excalidraw/renderer/staticScene.ts:271-283</code></a></li>
+  <li><strong>Element rendering</strong> with frame clipping when needed <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/staticScene.ts#L307-L392"><code>packages/excalidraw/renderer/staticScene.ts:307-392</code></a></li>
+  <li><strong>Link icons</strong> for elements with hyperlinks <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/staticScene.ts#L169-L235"><code>packages/excalidraw/renderer/staticScene.ts:169-235</code></a></li>
+  <li><strong>Embeddable elements</strong> (iframes) rendered on top <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/staticScene.ts#L394-L468"><code>packages/excalidraw/renderer/staticScene.ts:394-468</code></a></li>
+</ol>
+
+<p>Frame rendering applies canvas clipping via <code>frameClip</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/staticScene.ts#L133-L157"><code>packages/excalidraw/renderer/staticScene.ts:133-157</code></a> to ensure elements don’t render outside their containing frame boundaries.</p>
+
+<h2 id="canvas-bootstrap-and-preparation">Canvas Bootstrap and Preparation</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/helpers.ts#L32-L86"><code>packages/excalidraw/renderer/helpers.ts:32-86</code></a> The <code>bootstrapCanvas</code> function prepares a canvas for rendering by:</p>
+
+<ol>
+  <li>Resetting transform and applying device pixel ratio scaling</li>
+  <li>Intelligently handling background colors—skipping <code>clearRect</code> for opaque colors since fill operations repaint every pixel anyway</li>
+  <li>Preventing ghosting artifacts from corrupted color values by always clearing when color validity is uncertain</li>
+</ol>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/helpers.ts#L24-L30"><code>packages/excalidraw/renderer/helpers.ts:24-30</code></a> Canvas dimensions are normalized by dividing by the scale factor to get logical pixel dimensions independent of device pixel ratio.</p>
+
+<h2 id="viewport-management">Viewport Management</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/viewport.ts#L1-L137"><code>packages/excalidraw/viewport.ts:1-137</code></a> Viewport management handles panning and zooming constraints. The system supports scroll locks that constrain the viewport to a specific region, with configurable overscroll (rubberband) for elastic boundaries.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/viewport.ts#L145-L201"><code>packages/excalidraw/viewport.ts:145-201</code></a> <code>constrainScrollState</code> clamps scroll position against active locks while preserving zoom constraints. When multiple constraints exist, scroll is clamped per-axis with independent offset handling.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/viewport.ts#L204-L265"><code>packages/excalidraw/viewport.ts:204-265</code></a> Zoom operations preserve the focal point under the cursor while respecting scroll constraints, allowing zoom and constraint snap-back to compose without cancelling each other visually.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/viewport.ts#L281-L360"><code>packages/excalidraw/viewport.ts:281-360</code></a> <code>zoomToFitBounds</code> calculates appropriate zoom and scroll to fit elements in the viewport with three fitting modes:</p>
+<ul>
+  <li><code>scale-down</code>: zoom out so target fits, never exceeding 100%</li>
+  <li><code>contain</code>: fill viewport (may exceed 100%)</li>
+  <li><code>none</code>: keep current zoom, only center target</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/viewport.ts#L426-L481"><code>packages/excalidraw/viewport.ts:426-481</code></a> <code>scrollBoundsIntoView</code> brings bounds into the viewport by the least movement, accounting for UI offsets (screen pixels covering edges or room to leave). Along an axis where bounds don’t fit, their start (left/top) is brought in instead, or that axis keeps its scroll with the <code>tooLarge: "leave"</code> option.</p>
+
+<h2 id="pan-navigation-state">Pan Navigation State</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.pan.ts#L60-L69"><code>packages/excalidraw/components/App.pan.ts:60-69</code></a> The <code>AppPan</code> class provides an <code>isNavigating</code> method that returns whether the pointer is navigating the viewport rather than acting on the scene. It accounts for space being held to pan, an active pan session, scrollbar dragging, or the hand tool being active. When navigating, hover and cursor states belong to the navigation gesture rather than scene interaction.</p>
+
+<h2 id="animation-controller">Animation Controller</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/animation.ts#L14-L166"><code>packages/excalidraw/renderer/animation.ts:14-166</code></a> The <code>AnimationController</code> manages all animation loops in the application. It:</p>
+
+<ul>
+  <li>Schedules frames using <code>requestAnimationFrame</code> when render throttling is enabled, otherwise <code>setTimeout</code> for immediate processing</li>
+  <li>Tracks multiple named animations simultaneously</li>
+  <li>Calls each animation function with elapsed time and current state</li>
+  <li>Automatically cancels the frame scheduler when no animations are running</li>
+  <li>Allows animations to be cancelled or replaced mid-loop</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/animation.ts#L64-L80"><code>packages/excalidraw/renderer/animation.ts:64-80</code></a> Frame scheduling adapts to render throttling settings—respecting browser refresh rates when throttling is on, or using immediate scheduling when off.</p>
+
+<h2 id="snap-line-rendering">Snap Line Rendering</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/renderSnaps.ts#L13-L61"><code>packages/excalidraw/renderer/renderSnaps.ts:13-61</code></a> Snap lines provide visual feedback during element alignment. The renderer draws:</p>
+
+<ul>
+  <li><strong>Point snap lines</strong>: connecting vertical/horizontal lines through aligned points <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/renderSnaps.ts#L63-L78"><code>packages/excalidraw/renderer/renderSnaps.ts:63-78</code></a></li>
+  <li><strong>Pointer snap lines</strong>: showing distance from cursor to alignment target <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/renderSnaps.ts#L80-L89"><code>packages/excalidraw/renderer/renderSnaps.ts:80-89</code></a></li>
+  <li><strong>Gap snap lines</strong>: indicating equal spacing between elements <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/renderSnaps.ts#L123-L209"><code>packages/excalidraw/renderer/renderSnaps.ts:123-209</code></a></li>
+</ul>
+
+<p>Colors and sizes adapt to theme and zoom level for visibility at all magnifications.</p>
+
+<h2 id="performance-optimizations">Performance Optimizations</h2>
+
+<p>Rendering uses several strategies to maintain performance:</p>
+
+<ul>
+  <li><strong>Memoization on visibility</strong>: Only rerenders when visible elements, nonces, or critical app state changes</li>
+  <li><strong>Throttling</strong>: Static scene rendering is throttled to animation frame rate via <code>renderStaticSceneThrottled</code></li>
+  <li><strong>Selective rendering</strong>: Elements outside the viewport are filtered out before rendering</li>
+  <li><strong>Canvas reuse</strong>: Link icon canvases are cached and only regenerated when zoom changes <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/staticScene.ts#L159-L235"><code>packages/excalidraw/renderer/staticScene.ts:159-235</code></a></li>
+  <li><strong>Efficient clearing</strong>: Background rendering skips redundant clear operations</li>
+  <li><strong>New element nonce folding</strong>: A new element being drag-sized is mutated in place without updating scene nonce. Its own <code>versionNonce</code> is folded into <code>canvasNonce</code> to trigger redraws on the interactive canvas when the text box changes size, and on the static canvas when a framed element is being created. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/scene/Renderer.ts#L361-L373"><code>packages/excalidraw/scene/Renderer.ts:361-373</code></a></li>
+</ul>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Text tool hover consolidation</strong> (commit c10499eebb62): The text tool’s hover affordances were previously tracked through three separate AppState fields (<code>elementsToHighlight</code>, <code>suggestedBinding</code>, <code>hoveredArrowTextAnchor</code>) and rendered through multiple branches, leading to inconsistencies where the affordance could promise different behavior than the click would deliver. A new unified <code>textToolHover</code> field and <code>renderTextToolHover</code> function now resolve the target once — endpoint → text → empty centered container (unless Ctrl/Cmd) → free — and feed the hover, cursor, and pointerdown through the same logic. The renderer now gates on the single field instead of three, eliminating affordance mismatch bugs.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mathematical Utilities and Geometry · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html" aria-current="page">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="mathematical-utilities-and-geometry">Mathematical Utilities and Geometry</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>This module provides geometric primitives, vector operations, curve calculations, and mathematical helper functions. It powers point-in-shape testing, intersection detection, and transformations across the editor.</p>
+
+<h2 id="core-types-and-structures">Core Types and Structures</h2>
+
+<p>The math library defines branded types to distinguish between different coordinate spaces and geometric objects: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/types.ts#L1-L162"><code>packages/math/src/types.ts:1-162</code></a></p>
+
+<ul>
+  <li><strong>Points</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/types.ts#L30-L64"><code>packages/math/src/types.ts:30-64</code></a> <code>GlobalPoint</code> (world/canvas space) and <code>LocalPoint</code> (local space) are 2D coordinates with type safety via branding.</li>
+  <li><strong>Vectors</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/types.ts#L88-L93"><code>packages/math/src/types.ts:88-93</code></a> A 2D vector <code>[u, v]</code> representing displacement or direction.</li>
+  <li><strong>Curves</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/types.ts#L131-L141"><code>packages/math/src/types.ts:131-141</code></a> Cubic Bézier curves defined by four control points.</li>
+  <li><strong>Ellipses</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/types.ts#L154-L160"><code>packages/math/src/types.ts:154-160</code></a> Defined by center point, half-width, and half-height.</li>
+  <li><strong>Geometric shapes</strong>: Lines, line segments, triangles, rectangles, and polygons are all branded types built from points.</li>
+</ul>
+
+<h2 id="points-and-basic-operations">Points and Basic Operations</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/point.ts"><code>packages/math/src/point.ts</code></a> provides point creation and manipulation:</p>
+
+<ul>
+  <li><code>pointFrom()</code> creates a point from x/y coordinates or objects <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/point.ts#L22-L42"><code>packages/math/src/point.ts:22-42</code></a></li>
+  <li><code>pointDistance()</code> and <code>pointDistanceSq()</code> calculate Euclidean distance <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/point.ts#L195-L219"><code>packages/math/src/point.ts:195-219</code></a></li>
+  <li><code>pointRotateRads()</code> and <code>pointRotateDegs()</code> rotate points around a center <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/point.ts#L125-L155"><code>packages/math/src/point.ts:125-155</code></a></li>
+  <li><code>pointTranslate()</code> applies vector translation <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/point.ts#L170-L175"><code>packages/math/src/point.ts:170-175</code></a></li>
+  <li><code>pointCenter()</code> finds the midpoint between two points <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/point.ts#L184-L186"><code>packages/math/src/point.ts:184-186</code></a></li>
+  <li><code>isPointWithinBounds()</code> tests if a point lies within a bounding rectangle <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/point.ts#L244-L255"><code>packages/math/src/point.ts:244-255</code></a></li>
+</ul>
+
+<h2 id="vectors">Vectors</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts"><code>packages/math/src/vector.ts</code></a> implements vector arithmetic and operations:</p>
+
+<ul>
+  <li><code>vector()</code> creates a vector from coordinates <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L10-L17"><code>packages/math/src/vector.ts:10-17</code></a></li>
+  <li><code>vectorFromPoint()</code> converts a point to a vector relative to an origin <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L28-L41"><code>packages/math/src/vector.ts:28-41</code></a></li>
+  <li><code>vectorAdd()</code> and <code>vectorSubtract()</code> perform component-wise operations <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L91-L107"><code>packages/math/src/vector.ts:91-107</code></a></li>
+  <li><code>vectorDot()</code> computes the dot product <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L63-L65"><code>packages/math/src/vector.ts:63-65</code></a></li>
+  <li><code>vectorCross()</code> computes the 2D cross product (returns scalar directed area) <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L51-L53"><code>packages/math/src/vector.ts:51-53</code></a></li>
+  <li><code>vectorScale()</code> multiplies a vector by a scalar <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L116-L118"><code>packages/math/src/vector.ts:116-118</code></a></li>
+  <li><code>vectorMagnitude()</code> and <code>vectorMagnitudeSq()</code> calculate vector length <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L127-L139"><code>packages/math/src/vector.ts:127-139</code></a></li>
+  <li><code>vectorNormalize()</code> creates a unit vector <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L147-L155"><code>packages/math/src/vector.ts:147-155</code></a></li>
+  <li><code>vectorNormal()</code> returns a perpendicular vector <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/vector.ts#L160"><code>packages/math/src/vector.ts:160</code></a></li>
+</ul>
+
+<h2 id="angles-and-rotations">Angles and Rotations</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/angle.ts"><code>packages/math/src/angle.ts</code></a> handles angle conversions and comparisons:</p>
+
+<ul>
+  <li><code>degreesToRadians()</code> and <code>radiansToDegrees()</code> convert angle units <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/angle.ts#L29-L35"><code>packages/math/src/angle.ts:29-35</code></a></li>
+  <li><code>normalizeRadians()</code> wraps angles to [0, 2π) <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/angle.ts#L11-L14"><code>packages/math/src/angle.ts:11-14</code></a></li>
+  <li><code>cartesian2Polar()</code> converts x/y coordinates to radius and angle <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/angle.ts#L21-L27"><code>packages/math/src/angle.ts:21-27</code></a></li>
+  <li><code>isRightAngleRads()</code> tests if an angle is 90° <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/angle.ts#L43-L45"><code>packages/math/src/angle.ts:43-45</code></a></li>
+  <li><code>radiansBetweenAngles()</code> checks if an angle falls within a range, handling wraparound <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/angle.ts#L47-L62"><code>packages/math/src/angle.ts:47-62</code></a></li>
+  <li><code>radiansDifference()</code> computes the shortest angular difference <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/angle.ts#L64-L77"><code>packages/math/src/angle.ts:64-77</code></a></li>
+</ul>
+
+<h2 id="curves-and-bézier-operations">Curves and Bézier Operations</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts"><code>packages/math/src/curve.ts</code></a> provides cubic Bézier curve calculations:</p>
+
+<ul>
+  <li><code>curve()</code> constructs a curve from four control points <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L15-L22"><code>packages/math/src/curve.ts:15-22</code></a></li>
+  <li><code>bezierEquation()</code> evaluates the curve at parameter t ∈ [0, 1] <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L115-L128"><code>packages/math/src/curve.ts:115-128</code></a></li>
+  <li><code>curveTangent()</code> computes the tangent vector at parameter t <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L316-L334"><code>packages/math/src/curve.ts:316-334</code></a></li>
+  <li><code>curveIntersectLineSegment()</code> finds intersection points between a curve and line segment using Newton-Raphson iteration <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L168-L212"><code>packages/math/src/curve.ts:168-212</code></a></li>
+  <li><code>curveClosestParameter()</code> finds the parameter on the curve whose point is closest to a given point <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L223-L267"><code>packages/math/src/curve.ts:223-267</code></a></li>
+  <li><code>curveClosestPoint()</code> finds the point on the curve nearest to a given point <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L277-L283"><code>packages/math/src/curve.ts:277-283</code></a></li>
+  <li><code>curvePointDistance()</code> computes the shortest distance from a point to the curve <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L292-L298"><code>packages/math/src/curve.ts:292-298</code></a></li>
+</ul>
+
+<h3 id="curve-length-and-arc-length-parameterization">Curve Length and Arc-Length Parameterization</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L450-L560"><code>packages/math/src/curve.ts:450-560</code></a> uses Legendre-Gauss quadrature for accurate calculations:</p>
+
+<ul>
+  <li><code>curveLength()</code> approximates total curve length <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L450-L467"><code>packages/math/src/curve.ts:450-467</code></a></li>
+  <li><code>curveLengthAtParameter()</code> computes length from the start to parameter t <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L477-L506"><code>packages/math/src/curve.ts:477-506</code></a></li>
+  <li><code>curvePointAtLength()</code> finds the point at a specific percentage of the curve’s total length using binary search <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L516-L560"><code>packages/math/src/curve.ts:516-560</code></a></li>
+</ul>
+
+<p>The quadrature weights and nodes <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/constants.ts"><code>packages/math/src/constants.ts</code></a> enable precise arc-length calculations for smooth interpolation.</p>
+
+<h3 id="curve-approximation">Curve Approximation</h3>
+
+<ul>
+  <li><code>curveCatmullRomQuadraticApproxPoints()</code> approximates a curve with quadratic Bézier segments <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L336-L359"><code>packages/math/src/curve.ts:336-359</code></a></li>
+  <li><code>curveCatmullRomCubicApproxPoints()</code> approximates with cubic segments <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L361-L392"><code>packages/math/src/curve.ts:361-392</code></a></li>
+  <li><code>curveOffsetPoints()</code> and <code>offsetPointsForQuadraticBezier()</code> generate points offset from a curve by a given distance <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/curve.ts#L394-L439"><code>packages/math/src/curve.ts:394-439</code></a></li>
+</ul>
+
+<h2 id="ellipses">Ellipses</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/ellipse.ts"><code>packages/math/src/ellipse.ts</code></a> handles elliptical geometry:</p>
+
+<ul>
+  <li><code>ellipse()</code> constructs an ellipse from center and half-dimensions <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/ellipse.ts#L33-L43"><code>packages/math/src/ellipse.ts:33-43</code></a></li>
+  <li><code>ellipseIncludesPoint()</code> tests if a point is inside or on the ellipse <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/ellipse.ts#L52-L61"><code>packages/math/src/ellipse.ts:52-61</code></a></li>
+  <li><code>ellipseTouchesPoint()</code> checks if a point is on the outline within a threshold <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/ellipse.ts#L72-L78"><code>packages/math/src/ellipse.ts:72-78</code></a></li>
+  <li><code>ellipseDistanceFromPoint()</code> computes the shortest distance to the outline <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/ellipse.ts#L88-L150"><code>packages/math/src/ellipse.ts:88-150</code></a></li>
+  <li><code>ellipseSegmentInterceptPoints()</code> finds where a line segment intersects an ellipse <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/ellipse.ts#L156-L208"><code>packages/math/src/ellipse.ts:156-208</code></a></li>
+  <li><code>ellipseLineIntersectionPoints()</code> finds intersections with an infinite line <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/ellipse.ts#L210-L244"><code>packages/math/src/ellipse.ts:210-244</code></a></li>
+</ul>
+
+<h2 id="lines-and-segments">Lines and Segments</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/line.ts"><code>packages/math/src/line.ts</code></a> provides line operations:</p>
+
+<ul>
+  <li><code>line()</code> creates a line from two points <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/line.ts#L11-L13"><code>packages/math/src/line.ts:11-13</code></a></li>
+  <li><code>linesIntersectAt()</code> finds the intersection of two infinite lines <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/line.ts#L23-L39"><code>packages/math/src/line.ts:23-39</code></a></li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts"><code>packages/math/src/segment.ts</code></a> handles finite line segments:</p>
+
+<ul>
+  <li><code>lineSegment()</code> constructs a segment <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts#L28-L33"><code>packages/math/src/segment.ts:28-33</code></a></li>
+  <li><code>segmentsIntersectAt()</code> finds intersection of two segments <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts#L72-L103"><code>packages/math/src/segment.ts:72-103</code></a></li>
+  <li><code>pointOnLineSegment()</code> tests if a point lies on a segment <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts#L105-L117"><code>packages/math/src/segment.ts:105-117</code></a></li>
+  <li><code>distanceToLineSegment()</code> computes the shortest distance from a point to a segment <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts#L119-L127"><code>packages/math/src/segment.ts:119-127</code></a></li>
+  <li><code>lineSegmentPointAt()</code> returns the point at parameter <code>t</code> along the segment, where <code>t = 0</code> is the start and <code>t = 1</code> is the end <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts#L133-L140"><code>packages/math/src/segment.ts:133-140</code></a></li>
+  <li><code>lineSegmentClosestParameter()</code> finds the parameter on the segment closest to a point <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts#L185-L204"><code>packages/math/src/segment.ts:185-204</code></a></li>
+  <li><code>lineSegmentIntersectionPoints()</code> combines line and segment tests <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts#L149-L167"><code>packages/math/src/segment.ts:149-167</code></a></li>
+  <li><code>lineSegmentsDistance()</code> finds the shortest distance between two segments <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/segment.ts#L169-L183"><code>packages/math/src/segment.ts:169-183</code></a></li>
+</ul>
+
+<h2 id="polygons">Polygons</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/polygon.ts"><code>packages/math/src/polygon.ts</code></a> supports polygon operations:</p>
+
+<ul>
+  <li><code>polygon()</code> and <code>polygonFromPoints()</code> create closed polygons <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/polygon.ts#L6-L16"><code>packages/math/src/polygon.ts:6-16</code></a></li>
+  <li><code>polygonIncludesPoint()</code> uses the ray-casting algorithm for point-in-polygon testing <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/polygon.ts#L18-L41"><code>packages/math/src/polygon.ts:18-41</code></a></li>
+  <li><code>polygonIncludesPointNonZero()</code> uses winding number algorithm for more robust testing <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/polygon.ts#L43-L69"><code>packages/math/src/polygon.ts:43-69</code></a></li>
+  <li><code>polygonSignedArea()</code> and <code>polygonArea()</code> compute polygon area via the shoelace formula <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/polygon.ts#L92-L111"><code>packages/math/src/polygon.ts:92-111</code></a></li>
+  <li><code>convexHull()</code> computes the convex hull using Andrew’s monotone chain algorithm <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/polygon.ts#L119-L152"><code>packages/math/src/polygon.ts:119-152</code></a></li>
+  <li><code>simplifyConvexPolygon()</code> reduces vertices by dropping shallow turns <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/polygon.ts#L162-L201"><code>packages/math/src/polygon.ts:162-201</code></a></li>
+</ul>
+
+<h2 id="principal-component-analysis">Principal Component Analysis</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/pca.ts"><code>packages/math/src/pca.ts</code></a> provides statistical analysis for point clouds:</p>
+
+<ul>
+  <li><code>centroid()</code> computes the mean position of points <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/pca.ts#L37-L47"><code>packages/math/src/pca.ts:37-47</code></a></li>
+  <li><code>principalAxes()</code> performs eigendecomposition of the covariance matrix to find major and minor axes <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/pca.ts#L58-L103"><code>packages/math/src/pca.ts:58-103</code></a></li>
+  <li><code>principalCoords()</code> expresses points in the principal axes frame <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/pca.ts#L109-L123"><code>packages/math/src/pca.ts:109-123</code></a></li>
+  <li><code>orientPrincipalAxes()</code> resolves the 180° sign ambiguity of eigenvectors <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/pca.ts#L132-L142"><code>packages/math/src/pca.ts:132-142</code></a></li>
+  <li><code>elongation()</code> computes the variance ratio for shape analysis <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/pca.ts#L150-L154"><code>packages/math/src/pca.ts:150-154</code></a></li>
+  <li><code>standardizedMoment()</code>, <code>skewness()</code>, and <code>kurtosis()</code> provide statistical moments <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/pca.ts#L162-L202"><code>packages/math/src/pca.ts:162-202</code></a></li>
+</ul>
+
+<h2 id="ranges-and-utilities">Ranges and Utilities</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/range.ts"><code>packages/math/src/range.ts</code></a> handles 1D ranges:</p>
+
+<ul>
+  <li><code>rangeInclusive()</code> and <code>rangeInclusiveFromPair()</code> create ranges <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/range.ts#L12-L24"><code>packages/math/src/range.ts:12-24</code></a></li>
+  <li><code>rangesOverlap()</code> tests if two ranges intersect <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/range.ts#L34-L47"><code>packages/math/src/range.ts:34-47</code></a></li>
+  <li><code>rangeIntersection()</code> returns the overlapping portion <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/range.ts#L57-L69"><code>packages/math/src/range.ts:57-69</code></a></li>
+  <li><code>rangeIncludesValue()</code> checks membership <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/range.ts#L78-L83"><code>packages/math/src/range.ts:78-83</code></a></li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/utils.ts"><code>packages/math/src/utils.ts</code></a> provides general math helpers:</p>
+
+<ul>
+  <li><code>clamp()</code> restricts a value to a range <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/utils.ts#L3-L5"><code>packages/math/src/utils.ts:3-5</code></a></li>
+  <li><code>round()</code> and <code>roundToStep()</code> provide configurable rounding <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/utils.ts#L7-L24"><code>packages/math/src/utils.ts:7-24</code></a></li>
+  <li><code>average()</code> computes the mean of two numbers <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/utils.ts#L26"><code>packages/math/src/utils.ts:26</code></a></li>
+  <li><code>isFiniteNumber()</code> type-checks for valid numbers <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/utils.ts#L28-L30"><code>packages/math/src/utils.ts:28-30</code></a></li>
+  <li><code>isCloseTo()</code> compares numbers within <code>PRECISION</code> tolerance <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/math/src/utils.ts#L32-L33"><code>packages/math/src/utils.ts:32-33</code></a></li>
+</ul>
+
+<h2 id="integration-with-editor">Integration with Editor</h2>
+
+<p>Point operations are used throughout the editor:</p>
+
+<ul>
+  <li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a> uses point containment and distance tests to determine if elements are selected.</li>
+  <li><a href="element-transformation.html">Element Transformation and Manipulation</a> applies rotation and translation using point and vector utilities.</li>
+  <li><a href="shape-generation.html">Shape Generation and Drawing</a> constructs curves and polygons.</li>
+  <li><a href="arrows-bindings.html">Arrows and Bindings</a> computes intersection points between curves and shape boundaries.</li>
+  <li><a href="snapping-guides.html">Snapping and Alignment Guides</a> rounds points to grids using rounding utilities.</li>
+</ul>
+
+<h2 id="bounds-type">Bounds Type</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/bounds.ts"><code>packages/common/src/bounds.ts</code></a> defines a rectangular bounding box:</p>
+
+<pre><code class="language-typescript">type Bounds = readonly [minX, minY, maxX, maxY]
+</code></pre>
+
+<p>The <code>isBounds()</code> type guard validates this structure.</p>
+
+<h2 id="point-utilities-for-free-drawing">Point Utilities for Free Drawing</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/points.ts"><code>packages/common/src/points.ts</code></a> provides higher-level point operations:</p>
+
+<ul>
+  <li><code>getSizeFromPoints()</code> computes width and height from a set of points <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/points.ts#L10-L19"><code>packages/common/src/points.ts:10-19</code></a></li>
+  <li><code>rescalePoints()</code> scales points along one dimension with optional normalization <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/points.ts#L22-L66"><code>packages/common/src/points.ts:22-66</code></a></li>
+  <li><code>getGridPoint()</code> snaps a point to a grid when grid snapping is active <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/points.ts#L69-L81"><code>packages/common/src/points.ts:69-81</code></a></li>
+</ul>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Arc-length parameterization for arrow label positioning</strong> — Arrow labels can be dragged along their arrow’s path and their position is stored as a normalized arc-length parameter (0–1) over the arrow’s entire path. This approach keeps labels in place when points are dragged, when midpoints are inserted or removed, and when the arrow is resized. The parameter covers the whole path rather than a single segment. (<a href="https://github.com/excalidraw/excalidraw/pull/10947">PR #10947</a>)</p>
+
+<p><strong>Refactored curve and segment distance calculations</strong> — Extracted <code>curveClosestParameter()</code> and <code>lineSegmentClosestParameter()</code> as separate functions to compute parameters rather than just points. This supports arc-length parameterization for labels and provides better composability. <code>curvePointDistance()</code> gained an optional <code>tolerance</code> parameter, and <code>curvePointAtLength()</code> gained an optional <code>totalLength</code> parameter to skip recomputation when the length is already known. (<a href="https://github.com/excalidraw/excalidraw/pull/10947">PR #10947</a>)</p>
+
+<p><strong>Improved ellipse distance calculation robustness</strong> — Added early-exit handling for circles (when <code>a === b</code>) to avoid iteration errors, and added a check for <code>q === 0</code> during the iterative algorithm to prevent division errors. Fixed sign mapping of closest points on axes to use conditional expressions instead of <code>Math.sign()</code>, which correctly handles points exactly on an axis. (<a href="https://github.com/excalidraw/excalidraw/pull/10753">PR #10753</a>)</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

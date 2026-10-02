@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Application State Management · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html" aria-current="page">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="application-state-management">Application State Management</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Global application state in Excalidraw encompasses UI settings, tool configuration, viewport properties, and transient state during user interactions. This page covers how state is initialized, persisted selectively across storage types, and observed for changes.</p>
+
+<h2 id="state-structure">State Structure</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/appState.ts#L24-L147"><code>packages/excalidraw/appState.ts:24-147</code></a> <code>getDefaultAppState()</code> defines the complete initial state. State divides into several categories:</p>
+
+<ul>
+  <li><strong>Drawing tool state</strong>: <code>activeTool</code>, <code>currentItemStrokeColor</code>, <code>currentItemFontSize</code>, <code>currentItemStickynoteStrokeColor</code>, <code>currentItemStickynoteBackgroundColor</code>, and related properties that persist the user’s current drawing preferences</li>
+  <li><strong>UI state</strong>: <code>theme</code>, <code>zenModeEnabled</code>, <code>openMenu</code>, <code>openDialog</code>, <code>openSidebar</code>, <code>showHints</code> that track visible panels and modes</li>
+  <li><strong>Viewport state</strong>: <code>scrollX</code>, <code>scrollY</code>, <code>zoom</code> for canvas navigation</li>
+  <li><strong>Selection state</strong>: <code>selectedElementIds</code>, <code>selectedGroupIds</code>, <code>hoveredElementIds</code> for tracking which elements are currently selected or hovered</li>
+  <li><strong>Transient state</strong>: <code>isLoading</code>, <code>isResizing</code>, <code>isRotating</code>, <code>multiElement</code> that exist only during specific user actions</li>
+  <li><strong>Element manipulation</strong>: <code>editingTextElement</code>, <code>editingGroupId</code>, <code>resizingElement</code> for in-progress operations</li>
+  <li><strong>Input state</strong>: <code>inputDevice</code> to track the user’s input device preference</li>
+  <li><strong>Text tool state</strong>: <code>textToolHover</code> to track what element the text tool would act on when hovering</li>
+</ul>
+
+<p>See <a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a> for selection-related state, <a href="element-transformation.html">Element Transformation and Manipulation</a> for transformation state, and <a href="toolbar-tools.html">Toolbar and Tools</a> for active tool management.</p>
+
+<h2 id="storage-configuration">Storage Configuration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/appState.ts#L153-L291"><code>packages/excalidraw/appState.ts:153-291</code></a> <code>APP_STATE_STORAGE_CONF</code> defines which state properties persist to different storage destinations. Each property has three boolean flags:</p>
+
+<ul>
+  <li><strong><code>browser</code></strong>: persists to localStorage or IndexedDB for the current browser session</li>
+  <li><strong><code>export</code></strong>: included when saving to files or local exports</li>
+  <li><strong><code>server</code></strong>: sent to servers during collaboration or share links</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/appState.ts#L317-L327"><code>packages/excalidraw/appState.ts:317-327</code></a> Three helper functions filter state based on destination:</p>
+
+<ul>
+  <li><code>clearAppStateForLocalStorage()</code> keeps only browser-compatible state</li>
+  <li><code>cleanAppStateForExport()</code> strips state for file export (most UI and transient state removed)</li>
+  <li><code>clearAppStateForDatabase()</code> prepares state for server sync</li>
+</ul>
+
+<p>For example, <code>theme</code> is <code>browser: true, export: false, server: false</code> — it saves locally but never leaves the browser. Grid settings are <code>browser: true, export: true, server: true</code> — they persist everywhere. Current tool state like <code>activeTool</code> is <code>browser: true, export: false, server: false</code> — the user’s drawing preferences stay local. Sticky note colors (<code>currentItemStickynoteStrokeColor</code>, <code>currentItemStickynoteBackgroundColor</code>) and input device preference are also <code>browser: true, export: false, server: false</code>. Color and font top picks are <code>browser: true, export: false, server: false</code>. The <code>textToolHover</code> state is <code>browser: false, export: false, server: false</code> — it is transient and never persisted. See <a href="storage-persistence.html">Storage and Persistence</a> and <a href="file-formats-restore.html">File Formats and Data Restoration</a> for storage implementation details.</p>
+
+<h2 id="state-observation">State Observation</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/AppStateObserver.ts#L62-L208"><code>packages/excalidraw/components/AppStateObserver.ts:62-208</code></a> <code>AppStateObserver</code> provides a flexible subscription API to detect and react to state changes. It decouples state updates from consumers, allowing UI components and systems to respond reactively.</p>
+
+<h3 id="subscription-patterns">Subscription Patterns</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/AppStateObserver.ts#L31-L60"><code>packages/excalidraw/components/AppStateObserver.ts:31-60</code></a> <code>OnStateChange</code> supports multiple subscription modes:</p>
+
+<ol>
+  <li><strong>Single property</strong>: <code>onStateChange("theme", (theme, appState) =&gt; ...)</code> triggers when <code>theme</code> changes</li>
+  <li><strong>Multiple properties</strong>: <code>onStateChange(["scrollX", "scrollY"], (appState) =&gt; ...)</code> triggers when any of these keys change</li>
+  <li><strong>Computed selector</strong>: <code>onStateChange(appState =&gt; appState.zoom.value, (value) =&gt; ...)</code> triggers when the computed value changes</li>
+  <li><strong>Predicate</strong>: <code>onStateChange({ predicate: appState =&gt; appState.viewModeEnabled, callback: (...) =&gt; ... })</code> triggers when the predicate transitions from false to true</li>
+</ol>
+
+<h3 id="callback-vs-promise">Callback vs. Promise</h3>
+
+<p>Each subscription mode can work in two ways:</p>
+
+<ul>
+  <li><strong>With callback</strong>: Returns an <code>UnsubscribeCallback</code> to stop listening. Called immediately if the condition matches and <code>matchesImmediately</code> is true <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/AppStateObserver.ts#L150-L159"><code>packages/excalidraw/components/AppStateObserver.ts:150-159</code></a></li>
+  <li><strong>Without callback</strong>: Returns a <code>Promise</code> that resolves with the value when the condition first matches <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/AppStateObserver.ts#L169-L180"><code>packages/excalidraw/components/AppStateObserver.ts:169-180</code></a></li>
+</ul>
+
+<h3 id="notification-flow">Notification Flow</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/AppStateObserver.ts#L183-L203"><code>packages/excalidraw/components/AppStateObserver.ts:183-203</code></a> <code>flush(prevState)</code> is called after state changes to notify all registered listeners. For each listener:</p>
+
+<ol>
+  <li>Its predicate is evaluated against current and previous state</li>
+  <li>If true, the callback fires with the selected value</li>
+  <li>If <code>once: true</code>, the listener is removed after firing</li>
+  <li>Otherwise, it remains for future changes</li>
+</ol>
+
+<p>This pattern integrates with the <a href="actions-system.html">Actions and Command System</a> and <a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a> to trigger redraws and handler updates when state changes.</p>
+
+<h2 id="tool-state-helpers">Tool State Helpers</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/appState.ts#L329-L341"><code>packages/excalidraw/appState.ts:329-341</code></a> Two utility functions check the active tool:</p>
+
+<ul>
+  <li><code>isEraserActive()</code> returns true if <code>activeTool.type === "eraser"</code></li>
+  <li><code>isHandToolActive()</code> returns true if <code>activeTool.type === "hand"</code></li>
+</ul>
+
+<p>These are used throughout the codebase to conditionally enable tool-specific behavior. See <a href="toolbar-tools.html">Toolbar and Tools</a> for tool management and <a href="actions-system.html">Actions and Command System</a> for action dispatching.</p>
+
+<h2 id="input-device-resolution">Input Device Resolution</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/appState.ts#L352-L355"><code>packages/excalidraw/appState.ts:352-355</code></a> <code>resolveInputDevice()</code> resolves the user’s input device preference to a concrete device type. The <code>inputDevice</code> app state property tracks this preference with value <code>"auto"</code> (default) or a specific device. The function maps <code>"auto"</code> to <code>"trackpad"</code> — the traditional editor mapping — while other values pass through unchanged. Automatic device detection from wheel events is planned but not yet implemented.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Text tool hover state renamed from <code>hoveredArrowTextAnchor</code> to <code>textToolHover</code></strong> (c10499eebb62): The text tool’s hover affordance was generalized beyond arrow text anchors to cover all text tool targets (endpoint text bindings, existing text elements, and empty containers). The state was renamed to reflect its broader scope, and a single <code>textToolHover</code> field now manages all text tool hover highlights instead of multiple state fields (<code>hoveredArrowTextAnchor</code>, <code>elementsToHighlight</code>, <code>suggestedBinding</code>). This simplifies the hover UI and ensures consistency between what the affordance shows and what a click will do.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

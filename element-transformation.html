@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Element Transformation and Manipulation · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html" aria-current="page">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="element-transformation-and-manipulation">Element Transformation and Manipulation</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>This page covers spatial transformations of elements: resizing, rotating, flipping, aligning, and distributing. These operations are fundamental to the editor’s ability to position and reshape content on the canvas.</p>
+
+<h2 id="resizing">Resizing</h2>
+
+<p>Resizing is handled by the <code>transformElements</code> function, which dispatches to single or multiple element resize logic based on selection. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L94-L208"><code>packages/element/src/resizeElements.ts:94-208</code></a></p>
+
+<p>For a single element, <code>resizeSingleElement</code> computes the new dimensions and adjusts the element’s position based on which resize handle was dragged. The position adjustment accounts for the resize anchor point (which corner or side is fixed) and element rotation. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L729-L986"><code>packages/element/src/resizeElements.ts:729-986</code></a></p>
+
+<p>For text elements, resizing scales the font size proportionally and reflows text to fit the new width. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L317-L409"><code>packages/element/src/resizeElements.ts:317-409</code></a></p>
+
+<p>When resizing multiple selected elements, <code>resizeMultipleElements</code> scales all elements uniformly relative to their common bounding box. It also handles flipping (when dimensions become negative) by mirroring element points and adjusting bindings for <a href="arrows-bindings.html">arrows</a>. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L1209-L1594"><code>packages/element/src/resizeElements.ts:1209-1594</code></a></p>
+
+<p>Key concepts:</p>
+<ul>
+  <li><strong>Aspect ratio locking</strong>: When enabled, maintains the original width-to-height ratio by adjusting one dimension when the other changes. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L1062-L1074"><code>packages/element/src/resizeElements.ts:1062-1074</code></a></li>
+  <li><strong>Resize from center</strong>: When enabled, resizing grows or shrinks the element from its center rather than from the opposite corner. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L1056-L1059"><code>packages/element/src/resizeElements.ts:1056-1059</code></a></li>
+  <li><strong>Point rescaling</strong>: For linear and free-draw elements, points are rescaled proportionally during resize. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L275-L290"><code>packages/element/src/resizeElements.ts:275-290</code></a></li>
+  <li><strong>Sticky note sizing</strong>: Sticky notes enforce a minimum size to fit one line at their label’s font ceiling. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L768-L803"><code>packages/element/src/resizeElements.ts:768-803</code></a></li>
+</ul>
+
+<h2 id="rotation">Rotation</h2>
+
+<p>Rotation is performed on single or multiple elements. For a single element, the angle is computed from the pointer position relative to the element’s center. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L210-L273"><code>packages/element/src/resizeElements.ts:210-273</code></a></p>
+
+<p>For multiple elements, all are rotated around their common center while their individual centers orbit around that point. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L411-L495"><code>packages/element/src/resizeElements.ts:411-495</code></a></p>
+
+<p>Discrete angle snapping is applied when the shift key is held, restricting rotation to increments defined by <code>SHIFT_LOCKING_ANGLE</code>. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L229-L233"><code>packages/element/src/resizeElements.ts:229-233</code></a></p>
+
+<p>When elements with <a href="text-editing.html">bound text</a> are rotated, the text follows and rotates with them. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L256-L272"><code>packages/element/src/resizeElements.ts:256-272</code></a></p>
+
+<p><a href="arrows-bindings.html">Arrows</a> unbind from their targets when rotated, preventing distortion. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L241-L252"><code>packages/element/src/resizeElements.ts:241-252</code></a></p>
+
+<h2 id="flipping">Flipping</h2>
+
+<p>Flipping occurs implicitly when a resize results in negative dimensions. The element’s position is adjusted and, for linear elements, points are mirrored. For <a href="image-handling.html">images</a>, the scale property is inverted. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L886-L902"><code>packages/element/src/resizeElements.ts:886-902</code></a></p>
+
+<p>For <a href="arrows-bindings.html">elbow arrows</a>, fixed point bindings are mirrored when flipped. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L1446-L1482"><code>packages/element/src/resizeElements.ts:1446-1482</code></a></p>
+
+<h2 id="alignment">Alignment</h2>
+
+<p>The <code>alignElements</code> function positions selected elements relative to their common bounding box. It supports three alignment positions: start (top/left), center, or end (bottom/right), along either the x or y axis. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/align.ts#L19-L52"><code>packages/element/src/align.ts:19-52</code></a></p>
+
+<p>Alignment respects <a href="frames-groups.html">groups</a> (treating grouped elements as atomic units) and updates <a href="arrows-bindings.html">bound elements</a> after moving. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/align.ts#L25-L51"><code>packages/element/src/align.ts:25-51</code></a></p>
+
+<p>The translation needed is calculated by comparing each element’s bounding box to the selection’s common bounding box. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/align.ts#L54-L82"><code>packages/element/src/align.ts:54-82</code></a></p>
+
+<h2 id="distribution">Distribution</h2>
+
+<p>The <code>distributeElements</code> function spaces multiple selected elements evenly along an axis. Currently only “between” distribution is supported, which creates equal gaps between consecutive elements. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/distribute.ts#L19-L114"><code>packages/element/src/distribute.ts:19-114</code></a></p>
+
+<p>Distribution handles two cases:</p>
+
+<ol>
+  <li>
+    <p><strong>Positive step</strong> (elements fit with space to distribute): Elements are repositioned to create equal spacing from the start of the first to the end of the last. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/distribute.ts#L88-L113"><code>packages/element/src/distribute.ts:88-113</code></a></p>
+  </li>
+  <li>
+    <p><strong>Negative step</strong> (elements overlap): Elements are redistributed by their center points, fixing the start and end elements and moving the middle ones. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/distribute.ts#L48-L86"><code>packages/element/src/distribute.ts:48-86</code></a></p>
+  </li>
+</ol>
+
+<p>Elements are sorted by their position along the distribution axis before spacing is applied. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/distribute.ts#L39"><code>packages/element/src/distribute.ts:39</code></a></p>
+
+<h2 id="grid-positioning">Grid Positioning</h2>
+
+<p><code>positionElementsOnGrid</code> arranges elements in a roughly square grid layout, centered around a given point. It accepts either flat arrays or grouped elements and computes grid dimensions to minimize row count. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/positionElementsOnGrid.ts#L7-L29"><code>packages/element/src/positionElementsOnGrid.ts:7-29</code></a></p>
+
+<p>Rows are centered horizontally and the entire grid is centered vertically around the provided center coordinates. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/positionElementsOnGrid.ts#L77-L110"><code>packages/element/src/positionElementsOnGrid.ts:77-110</code></a></p>
+
+<h2 id="dragging-elements">Dragging Elements</h2>
+
+<p>The <code>dragSelectedElements</code> function translates multiple selected elements together. To avoid redundant calculations, it builds the moved-element array once per drag step and passes the same array instance to every <code>updateBoundElements</code> call. This reuses the per-array ID-set cache (via <code>getSimultaneouslyUpdatedElementIds</code>) for unbinding checks and bound element updates, ensuring linear performance in the number of dragged elements. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/tests/dragElements.test.ts#L78-L97"><code>packages/element/tests/dragElements.test.ts:78-97</code></a></p>
+
+<p>Dragging respects <a href="frames-groups.html">frames</a> and <a href="frames-groups.html">groups</a>, moving their children once without duplication even when a child is also selected. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/tests/dragElements.test.ts#L141-L159"><code>packages/element/tests/dragElements.test.ts:141-159</code></a></p>
+
+<p>When an arrow and its bound element are dragged together, bindings are preserved and points remain unchanged. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/tests/dragElements.test.ts#L184-L199"><code>packages/element/tests/dragElements.test.ts:184-199</code></a> When only an arrow is dragged away from its bound element, the binding is removed and the element’s <code>boundElements</code> list is cleared. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/tests/dragElements.test.ts#L201-L208"><code>packages/element/tests/dragElements.test.ts:201-208</code></a></p>
+
+<h2 id="bound-element-updates">Bound Element Updates</h2>
+
+<p>All transformations trigger <code>updateBoundElements</code>, which updates <a href="arrows-bindings.html">arrows</a> connected to the transformed element and repositions <a href="text-editing.html">bound text</a>. The function is called with the <code>simultaneouslyUpdated</code> set to avoid redundant recalculations when multiple elements in a group are transformed together. Sticky notes delegate to <code>updateStickyNoteLayout</code> which handles label fitting and content correction before the arrow pass. [[cite:packages/element/src/resizeElements.ts:954-967, 1536-1551]]</p>
+
+<h2 id="integration-with-scene-and-state">Integration with Scene and State</h2>
+
+<p>Transformations use the <code>Scene</code> API to mutate elements, ensuring consistency with the <a href="element-data-model.html">element model</a> and triggering <a href="app-state.html">observers</a>. [[cite:packages/element/src/resizeElements.ts:108, 187, 254]]</p>
+
+<p>Original element state is preserved during interactive transforms (stored in <code>pointerDownState</code>) to compute correct delta changes. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L94-L154"><code>packages/element/src/resizeElements.ts:94-154</code></a></p>
+
+<h2 id="element-skeleton-conversion">Element Skeleton Conversion</h2>
+
+<p>The <code>convertToExcalidrawElements</code> function transforms element skeletons (user-provided data) into full Excalidraw elements. For sticky notes, it accepts a <code>ValidStickyNote</code> skeleton that specifies type, position, optional dimensions, and an optional label. [[cite:packages/element/src/transform.ts:208-213, 699-713]]</p>
+
+<p>Sticky note skeletons are normalized through <code>normalizeStickyNoteGeometry</code>, enforcing minimum size and base height constraints. The label binding, if provided, runs the sticky note fit calculation (via <code>redrawTextBoundingBox</code>), which sets the label’s font size as the ceiling that the fit shrinks from. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/transform.ts#L704-L757"><code>packages/element/src/transform.ts:704-757</code></a></p>
+
+<p>Bound text elements (labels on containers) are created with shared ink coloring: a sticky note label that provides a stroke color gives it to the note (the footer paints with it), while transparent labels fall back to the note’s stroke. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/transform.ts#L264-L295"><code>packages/element/src/transform.ts:264-295</code></a></p>
+
+<h2 id="decisions">Decisions</h2>
+
+<ul>
+  <li>
+    <p><strong>Grouped element handling</strong>: Alignment and distribution treat grouped elements as single units rather than transforming each individually. This preserves group cohesion and respects <a href="frames-groups.html">frame</a> boundaries. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/align.ts#L25-L29"><code>packages/element/src/align.ts:25-29</code></a></p>
+  </li>
+  <li>
+    <p><strong>Sticky note resizing</strong>: When resizing sticky notes, font scaling is delegated to <code>updateStickyNoteLayout</code> instead of the generic bound-text handler. The layout function runs the fit calculation (shrinking the label’s font from its ceiling) and handles content correction (pinning the corner where the drag originates). [[cite:packages/element/src/resizeElements.ts:954-967, 1536-1551]]</p>
+  </li>
+  <li>
+    <p><strong>Text scaling on resize</strong>: For regular text containers, when resizing with aspect ratio locked, font size is adjusted proportionally. For text elements themselves and other containers without aspect ratio locking, the font size is capped at <code>MIN_FONT_SIZE</code>. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/resizeElements.ts#L806-L834"><code>packages/element/src/resizeElements.ts:806-834</code></a></p>
+  </li>
+  <li>
+    <p><strong>Creation timestamps on import</strong>: When element skeletons are converted via <code>convertToExcalidrawElements</code> with regenerated IDs, all resulting elements share a single creation timestamp, marking them as a cohesive import batch. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/transform.ts#L584-L592"><code>packages/element/src/transform.ts:584-592</code></a></p>
+  </li>
+  <li>
+    <p><strong>Efficient drag updates</strong>: When dragging multiple selected elements, the moved-element array is built once per drag step and reused across all <code>updateBoundElements</code> calls. This avoids rebuilding the selection-sized ID-set cache for every element, making drag performance linear in the number of moved elements rather than quadratic (commit 74423812ec59, #12183). <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/tests/dragElements.test.ts#L78-L97"><code>packages/element/tests/dragElements.test.ts:78-97</code></a></p>
+  </li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

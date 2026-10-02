@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clipboard and Data Export · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html" aria-current="page">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="clipboard-and-data-export">Clipboard and Data Export</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Clipboard operations enable users to copy, paste, and export content between Excalidraw and external applications. The system handles multiple data formats including Excalidraw elements, JSON, images, HTML, and mixed content.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p>The clipboard handling was refactored out of the main App component into a dedicated <code>AppClipboard</code> class (e283f724c89a, #12197). This separation moves cut, copy, and paste operations into a focused module (<code>packages/excalidraw/components/App.clipboard.ts</code>), reducing App.tsx complexity while maintaining the same functionality. The paste state flags (<code>IS_PLAIN_PASTE</code>, <code>IS_PLAIN_PASTE_TIMER</code>) remain module-level for tracking whether Ctrl/Cmd+Shift+V (plain paste with Shift) was used, allowing content to be inserted without formatting or with reduced formatting where applicable.</p>
+
+<h2 id="core-components">Core Components</h2>
+
+<h3 id="clipboard-data-types">Clipboard Data Types</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L39-L54"><code>packages/excalidraw/clipboard.ts:39-54</code></a> defines the internal clipboard representation. <code>ElementsClipboard</code> contains serialized Excalidraw elements and associated binary files. <code>ClipboardData</code> is the unified interface for paste operations, supporting elements, files, plain text, mixed HTML/image content, and error messages.</p>
+
+<h3 id="serialization">Serialization</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L143-L193"><code>packages/excalidraw/clipboard.ts:143-193</code></a> The <code>serializeAsClipboardJSON</code> function prepares elements for clipboard storage. It handles frame membership: when copying elements inside a frame without the frame itself, the <code>frameId</code> is cleared to make elements self-contained. Associated binary files are included only if they exist in the files map.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L195-L210"><code>packages/excalidraw/clipboard.ts:195-210</code></a> <code>copyToClipboard</code> serializes elements to JSON and stores them as both <code>excalidrawClipboard</code> and plain text MIME types in the system clipboard, allowing content to be pasted into other applications as formatted text.</p>
+
+<h3 id="copy-and-cut-events">Copy and Cut Events</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.clipboard.ts#L81-L94"><code>packages/excalidraw/components/App.clipboard.ts:81-94</code></a> and <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.clipboard.ts#L96-L109"><code>packages/excalidraw/components/App.clipboard.ts:96-109</code></a> The <code>onCut</code> and <code>onCopy</code> methods handle document-level cut and copy events (triggered by Ctrl/Cmd+C and Ctrl/Cmd+X). They check that Excalidraw is active and not focused on a writable element, then delegate to the corresponding actions (<code>actionCut</code> and <code>actionCopy</code>).</p>
+
+<h3 id="reading-from-system-clipboard">Reading from System Clipboard</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L257-L326"><code>packages/excalidraw/clipboard.ts:257-326</code></a> <code>readSystemClipboard</code> uses the Clipboard API with fallbacks for browser compatibility. It attempts <code>navigator.clipboard.read()</code> first, then falls back to <code>readText()</code>. The function filters results by allowed MIME types and handles images by creating File objects.</p>
+
+<h3 id="paste-event-parsing">Paste Event Parsing</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L467-L518"><code>packages/excalidraw/clipboard.ts:467-518</code></a> <code>parseDataTransferEvent</code> converts clipboard and drag events into a normalized <code>ParsedDataTranferList</code>. It handles both file items (images) and string data (text, HTML, JSON). The resulting list provides helper methods: <code>findByType()</code> for locating specific string data, <code>getData()</code> for retrieving values, and <code>getFiles()</code> for extracting all files.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L331-L364"><code>packages/excalidraw/clipboard.ts:331-364</code></a> <code>parseClipboardEventTextData</code> attempts to extract structured data from HTML content. If HTML contains only text nodes, it returns plain text; otherwise it returns mixed content (text and image URLs). Falls back to plain text extraction if HTML parsing fails.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L523-L555"><code>packages/excalidraw/clipboard.ts:523-555</code></a> <code>parseClipboard</code> is the main entry point for paste handling. It parses event data, attempts to deserialize as Excalidraw JSON, and returns either structured element data or fallback content (text or mixed).</p>
+
+<h3 id="pasting-content">Pasting Content</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.clipboard.ts#L287-L296"><code>packages/excalidraw/components/App.clipboard.ts:287-296</code></a> <code>onPasteShortcut</code> marks whether a paste will be “plain” (when Shift is held with Ctrl/Cmd+V). This flag influences how content is formatted when inserted.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.clipboard.ts#L304-L362"><code>packages/excalidraw/components/App.clipboard.ts:304-362</code></a> <code>pasteFromClipboard</code> is the main entry point for paste events. It validates that Excalidraw is active and under the cursor, extracts data from the clipboard event (calling <code>parseDataTransferEvent</code> and <code>parseClipboard</code>), invokes the host’s <code>onPaste</code> callback if provided, and delegates to <code>insertClipboardContent</code> to insert the parsed data.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.clipboard.ts#L112-L281"><code>packages/excalidraw/components/App.clipboard.ts:112-281</code></a> <code>insertClipboardContent</code> routes pasted data to appropriate handlers based on content type: error messages, mixed content (text and images), spreadsheets (opens charts dialog), images or SVG code, Excalidraw elements, Mermaid definitions, embeddable URLs, or plain text. Plain paste mode (<code>isPlainPaste</code>) skips format-rich handling (e.g., Mermaid parsing) and retains seeds on pasted elements.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.clipboard.ts#L366-L415"><code>packages/excalidraw/components/App.clipboard.ts:366-415</code></a> <code>addElementsFromMixedContentPaste</code> handles pasted content with both text and images. If images are supported and not a plain paste, it fetches image URLs and inserts them; otherwise it extracts and pastes text nodes.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.clipboard.ts#L417-L611"><code>packages/excalidraw/components/App.clipboard.ts:417-611</code></a> <code>addTextFromPaste</code> creates text elements from pasted text. Each line becomes a separate text element (unless it’s a plain paste, where all text is one element). Text wraps to viewport bounds and is positioned relative to viewport scrolling and UI panels (e.g., stats panel). A toast notification offers plain paste as an alternative when multiple text elements are created.</p>
+
+<h3 id="writing-to-system-clipboard">Writing to System Clipboard</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L587-L637"><code>packages/excalidraw/clipboard.ts:587-637</code></a> <code>copyTextToSystemClipboard</code> attempts multiple strategies in order: direct clipboardEvent.setData(), navigator.clipboard.writeText(), and finally document.execCommand(“copy”). This ensures maximum compatibility across browsers and contexts.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L557-L585"><code>packages/excalidraw/clipboard.ts:557-585</code></a> <code>copyBlobToClipboardAsPng</code> writes image data to clipboard. It handles Safari’s requirement for synchronous ClipboardItem construction using Promise-based blobs, with fallback to awaited blobs if the first attempt fails.</p>
+
+<h2 id="data-export">Data Export</h2>
+
+<h3 id="json-export">JSON Export</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/json.ts#L52-L75"><code>packages/excalidraw/data/json.ts:52-75</code></a> <code>serializeAsJSON</code> creates a complete JSON representation of drawing state, including elements, app state, and files. It strips deleted element references to keep exports clean. The <code>type</code> parameter determines whether to export for local storage (with minimal app state) or database (with minimal serialization).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/json.ts#L77-L100"><code>packages/excalidraw/data/json.ts:77-100</code></a> <code>saveAsJSON</code> serializes data and saves to disk using the file save dialog, preserving file handles for future saves to the same location.</p>
+
+<h3 id="library-export">Library Export</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/json.ts#L137-L145"><code>packages/excalidraw/data/json.ts:137-145</code></a> <code>serializeLibraryAsJSON</code> exports library items to a versioned JSON format for sharing asset collections.</p>
+
+<h3 id="multi-format-export">Multi-Format Export</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/utils/src/export.ts#L42-L104"><code>packages/utils/src/export.ts:42-104</code></a> <code>exportToCanvas</code> renders elements to an HTML canvas element. It restores elements and app state, then delegates to the scene rendering system with optional frame export and custom dimension handling.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/utils/src/export.ts#L106-L168"><code>packages/utils/src/export.ts:106-168</code></a> <code>exportToBlob</code> converts canvas rendering to an image blob (PNG, JPEG, WebP). It warns when quality settings are incompatible with the format and optionally embeds scene data into PNG metadata via <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/utils/src/export.ts#L149-L160"><code>packages/utils/src/export.ts:149-160</code></a>. When embedding scene metadata, elements are restored to preserve creation timestamps and other restored properties.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/utils/src/export.ts#L170-L203"><code>packages/utils/src/export.ts:170-203</code></a> <code>exportToSvg</code> produces vector output, supporting font inlining, embeddable rendering, and frame-specific exports.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/utils/src/export.ts#L205-L225"><code>packages/utils/src/export.ts:205-225</code></a> <code>exportToClipboard</code> exports to clipboard in multiple formats: SVG as HTML string, PNG as blob, or JSON as serialized elements. For JSON export, elements are restored before being converted to non-deleted elements to preserve restored properties.</p>
+
+<h2 id="html-content-parsing">HTML Content Parsing</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L212-L231"><code>packages/excalidraw/clipboard.ts:212-231</code></a> <code>parseHTMLTree</code> recursively traverses pasted HTML to extract plain text nodes and HTTP image URLs. This supports pasting rich content (e.g., from web pages) and extracting usable parts.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L233-L251"><code>packages/excalidraw/clipboard.ts:233-251</code></a> <code>maybeParseHTMLDataItem</code> wraps the HTML parsing with error handling and returns mixed content only if parsing succeeds and yields results.</p>
+
+<h2 id="helper-utilities">Helper Utilities</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L62-L72"><code>packages/excalidraw/clipboard.ts:62-72</code></a> Browser capability detection flags (<code>probablySupportsClipboardReadText</code>, <code>probablySupportsClipboardWriteText</code>, <code>probablySupportsClipboardBlob</code>) guide which clipboard APIs are safe to use.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L90-L141"><code>packages/excalidraw/clipboard.ts:90-141</code></a> <code>createPasteEvent</code> constructs synthetic clipboard events for testing, supporting both string and File data items.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/clipboard.ts#L682-L691"><code>packages/excalidraw/clipboard.ts:682-691</code></a> <code>isClipboardEvent</code> distinguishes clipboard events from other event types by checking for paste, copy, or cut event types.</p>
+
+<h2 id="data-encoding">Data Encoding</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encode.ts#L14-L26"><code>packages/excalidraw/data/encode.ts:14-26</code></a> <code>toByteString</code> converts strings and binary data to byte strings for safe clipboard transport. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encode.ts#L49-L51"><code>packages/excalidraw/data/encode.ts:49-51</code></a> <code>stringToBase64</code> encodes strings to base64.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encode.ts#L322-L354"><code>packages/excalidraw/data/encode.ts:322-354</code></a> <code>compressData</code> and <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encode.ts#L374-L412"><code>packages/excalidraw/data/encode.ts:374-412</code></a> <code>decompressData</code> handle encryption and compression of exported data, using pako for zlib compression and AES-GCM for encryption. The binary format includes versioning and metadata for forward compatibility.</p>
+
+<h2 id="related-pages">Related Pages</h2>
+
+<ul>
+  <li><a href="file-formats-restore.html">File Formats and Data Restoration</a> — JSON structure validation and data migration</li>
+  <li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a> — Identifying elements to copy</li>
+  <li><a href="frames-groups.html">Frames and Groups</a> — Frame handling during copy operations</li>
+  <li><a href="image-handling.html">Image Support</a> — Image file management in clipboard operations</li>
+  <li><a href="storage-persistence.html">Storage and Persistence</a> — File saving mechanisms</li>
+  <li><a href="element-data-model.html">Element Data Model and Types</a> — Element structure in serialized format</li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

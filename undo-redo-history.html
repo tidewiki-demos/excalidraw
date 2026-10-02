@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Undo/Redo and History · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html" aria-current="page">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="undoredo-and-history">Undo/Redo and History</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The undo/redo system captures state changes through a <strong>snapshot and delta model</strong>, storing inverse deltas in separate undo and redo stacks. Changes are categorized by when they should be recorded: immediately (most user actions), never (remote or initialization updates), or eventually (async processes like text editing or freedrawing).</p>
+
+<h2 id="store-capturing-changes">Store: Capturing Changes</h2>
+
+<p>The <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L78"><code>packages/element/src/store.ts:78</code></a> <code>Store</code> class observes changes to elements and application state, emitting increments that classify changes as either durable (recordable in history) or ephemeral (transient). The store processes scheduled actions in phases:</p>
+
+<ol>
+  <li><strong>Micro-actions</strong> execute first (batched internal updates)</li>
+  <li><strong>Macro-actions</strong> execute next (typically user-initiated)</li>
+  <li><strong>Increments</strong> are emitted based on action type</li>
+</ol>
+
+<h3 id="capture-update-actions">Capture Update Actions</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L38-L69"><code>packages/element/src/store.ts:38-69</code></a> Three action types control whether changes enter the undo/redo stack:</p>
+
+<ul>
+  <li><strong><code>IMMEDIATELY</code></strong>: Most user operations (drawing, resizing, typing). Creates a <code>DurableIncrement</code> that immediately pushes to undo stack.</li>
+  <li><strong><code>NEVER</code></strong>: Remote updates, scene initialization. Creates an <code>EphemeralIncrement</code>, never recorded locally.</li>
+  <li><strong><code>EVENTUALLY</code></strong>: Async multi-step processes (freedraw completion, text finalization, image loading). Creates <code>EphemeralIncrement</code> initially; bundled with the next <code>IMMEDIATELY</code> action.</li>
+</ul>
+
+<h3 id="snapshot-model">Snapshot Model</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L643-L659"><code>packages/element/src/store.ts:643-659</code></a> A <code>StoreSnapshot</code> captures immutable copies of elements and application state at specific moments. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L761-L811"><code>packages/element/src/store.ts:761-811</code></a> The <code>maybeClone()</code> method efficiently creates new snapshots only when changes are detected, using reference checks and hash comparisons for performance.</p>
+
+<p>Snapshots track metadata indicating whether elements or app state changed, enabling delta calculation optimization. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L842-L965"><code>packages/element/src/store.ts:842-965</code></a> Change detection uses version comparisons on elements and deep equality checks on app state properties, skipping uninitialized image elements.</p>
+
+<h3 id="state-changes-and-deltas">State Changes and Deltas</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L432-L449"><code>packages/element/src/store.ts:432-449</code></a> <code>StoreChange</code> represents which elements and app state properties changed between two snapshots. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L497-L637"><code>packages/element/src/store.ts:497-637</code></a> <code>StoreDelta</code> captures the actual value differences, storing added/removed/updated elements and app state deltas.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L216-L246"><code>packages/element/src/store.ts:216-246</code></a> When a durable increment is emitted, a <code>StoreDelta</code> is calculated or provided (avoiding recalculation for history entries). The store distinguishes between pre-calculated deltas and computed ones <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L232-L238"><code>packages/element/src/store.ts:232-238</code></a> to prevent redundant computation during undo/redo operations.</p>
+
+<h2 id="history-recording-and-playback">History: Recording and Playback</h2>
+
+<p>The <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L90"><code>packages/excalidraw/history.ts:90</code></a> <code>History</code> class maintains two stacks of <code>HistoryDelta</code> entries—one for undo, one for redo—and records durable increments as inverse deltas.</p>
+
+<h3 id="recording-history">Recording History</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L117-L137"><code>packages/excalidraw/history.ts:117-137</code></a> <code>History.record()</code> receives a <code>StoreDelta</code> from the store and inverts it <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L123"><code>packages/excalidraw/history.ts:123</code></a> before pushing to the undo stack. Non-element changes (e.g., selection) do not clear the redo stack, preserving redo history during simple interactions like deselection.</p>
+
+<h3 id="undo-and-redo">Undo and Redo</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L139-L155"><code>packages/excalidraw/history.ts:139-155</code></a> Both <code>undo()</code> and <code>redo()</code> call a private <code>perform()</code> method that:</p>
+
+<ol>
+  <li>Pops a <code>HistoryDelta</code> from the appropriate stack</li>
+  <li>Applies the delta to current elements and app state</li>
+  <li>Detects visible changes; skips invisible entries (e.g., intermediate states)</li>
+  <li>Updates the snapshot and schedules a micro-action for immediate capture</li>
+  <li>Pushes the inverted entry to the opposite stack</li>
+</ol>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L157-L229"><code>packages/excalidraw/history.ts:157-229</code></a> The <code>perform()</code> method wraps iteration in a loop <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L179-L219"><code>packages/excalidraw/history.ts:179-219</code></a> to skip history entries that produce no visible changes, ensuring users see meaningful undo/redo operations. After applying a history delta, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L192-L196"><code>packages/excalidraw/history.ts:192-196</code></a> <code>applyLatestChanges()</code> regenerates the delta to incorporate any remote changes that occurred since the action was recorded, maintaining consistency in collaborative environments.</p>
+
+<h3 id="historydelta-specialization">HistoryDelta Specialization</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L15-L81"><code>packages/excalidraw/history.ts:15-81</code></a> <code>HistoryDelta</code> extends <code>StoreDelta</code> with custom <code>applyTo()</code> behavior. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L19-L46"><code>packages/excalidraw/history.ts:19-46</code></a> It excludes <code>version</code> and <code>versionNonce</code> properties when applying to elements, treating each undo/redo as a new user action that requires fresh versioning for collaboration.</p>
+
+<h2 id="transaction-handling">Transaction Handling</h2>
+
+<p>Changes flow through micro and macro action phases to ensure atomicity:</p>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L117-L175"><code>packages/element/src/store.ts:117-175</code></a> <code>scheduleMicroAction()</code> allows precise control over delta calculation, accepting pre-computed changes or computing them against current state. This prevents mutations during batching.</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L183-L201"><code>packages/element/src/store.ts:183-201</code></a> <code>commit()</code> flushes all micro-actions before processing a single macro-action, ensuring ordered execution and consistent snapshot updates.</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L305-L315"><code>packages/element/src/store.ts:305-315</code></a> Micro-actions are processed in order, with errors logged but not interrupting the queue.</li>
+</ul>
+
+<h2 id="events-and-listeners">Events and Listeners</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/store.ts#L80-L84"><code>packages/element/src/store.ts:80-84</code></a> The store emits increments via two emitters:</p>
+<ul>
+  <li><code>onDurableIncrementEmitter</code>: Used internally by history to record undoable changes</li>
+  <li><code>onStoreIncrementEmitter</code>: Public API for external listeners to observe all changes</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/history.ts#L91-L93"><code>packages/excalidraw/history.ts:91-93</code></a> <code>History</code> emits <code>HistoryChangedEvent</code> with undo/redo stack states, allowing UI components to update button enabled/disabled states.</p>
+
+<h2 id="related-systems">Related Systems</h2>
+
+<ul>
+  <li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a> — Manages the main editor loop that triggers store commits</li>
+  <li><a href="element-data-model.html">Element Data Model and Types</a> — Defines element structure and versions used in delta calculation</li>
+  <li><a href="element-transformation.html">Element Transformation and Manipulation</a> — Operations that trigger <code>scheduleCapture()</code></li>
+  <li><a href="text-editing.html">Text Editing and Typography</a> — Uses <code>EVENTUALLY</code> captures for async text finalization</li>
+  <li><a href="collaboration.html">Real-Time Collaboration</a> — Coordinates undo/redo with remote changes via <code>applyLatestChanges()</code></li>
+  <li><a href="storage-persistence.html">Storage and Persistence</a> — May serialize undo/redo stacks for session recovery</li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

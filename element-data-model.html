@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Element Data Model and Types · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html" aria-current="page">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="element-data-model-and-types">Element Data Model and Types</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The element data model defines the core data structures for all drawable objects in Excalidraw. Every element on the canvas is represented as an immutable, JSON-serializable object that can be shared between peers in collaborative scenarios. This page covers type definitions, element creation, and runtime type checking.</p>
+
+<h2 id="base-element-structure">Base Element Structure</h2>
+
+<p>All Excalidraw elements inherit from <code>_ExcalidrawElementBase</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L40-L87"><code>packages/element/src/types.ts:40-87</code></a>, which provides common properties:</p>
+
+<ul>
+  <li><strong>Identity &amp; versioning</strong>: <code>id</code>, <code>version</code>, <code>versionNonce</code> for reconciliation during collaboration</li>
+  <li><strong>Position &amp; dimensions</strong>: <code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>, <code>angle</code> (rotation in radians)</li>
+  <li><strong>Visual properties</strong>: <code>strokeColor</code>, <code>backgroundColor</code>, <code>fillStyle</code>, <code>strokeWidth</code>, <code>strokeStyle</code>, <code>roughness</code>, <code>opacity</code>, <code>roundness</code></li>
+  <li><strong>Organization</strong>: <code>groupIds</code> (nested from deepest to shallowest), <code>frameId</code>, <code>index</code> (fractional for ordering), <code>isDeleted</code></li>
+  <li><strong>Metadata</strong>: <code>seed</code> (for deterministic shape rendering), <code>updated</code> (epoch timestamp), <code>created</code> (element creation time, preserved across edits), <code>link</code>, <code>locked</code>, <code>customData</code></li>
+  <li><strong>Bindings</strong>: <code>boundElements</code> (other elements bound to this one, like text or arrows)</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L241-L251"><code>packages/element/src/types.ts:241-251</code></a> defines utility types for element state: <code>Ordered&lt;T&gt;</code> ensures an element has a valid fractional index, and <code>NonDeleted&lt;T&gt;</code> is a type guard marking elements where <code>isDeleted: false</code>.</p>
+
+<h2 id="element-categories">Element Categories</h2>
+
+<h3 id="generic-shapes">Generic Shapes</h3>
+
+<p>Basic drawable shapes: <code>rectangle</code>, <code>diamond</code>, <code>ellipse</code>. These are the simplest element type and contain no additional properties beyond the base structure. See <a href="shape-generation.html">Shape Generation and Drawing</a> for rendering details.</p>
+
+<h3 id="sticky-notes">Sticky Notes</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L97-L105"><code>packages/element/src/types.ts:97-105</code></a> <code>ExcalidrawStickyNoteElement</code> is a rectangular container with a <code>baseHeight</code> property. The <code>baseHeight</code> is the height the user set, from which the layout derives the actual <code>height</code>: the note grows above it to fit its label and never shrinks below it. Created via <code>newStickyNoteElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L230-L243"><code>packages/element/src/newElement.ts:230-243</code></a>, which applies style invariants (never-transparent colors, solid fill). Sticky notes are bindable elements and text containers, and support the same text binding as other shapes.</p>
+
+<h3 id="text-elements">Text Elements</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L253-L291"><code>packages/element/src/types.ts:253-291</code></a> <code>ExcalidrawTextElement</code> adds typography properties: <code>fontSize</code>, <code>fontFamily</code>, <code>text</code>, <code>textAlign</code>, <code>verticalAlign</code>, <code>containerId</code> (if bound to a shape), <code>originalText</code>, <code>autoResize</code>, <code>lineHeight</code> (unitless, W3C-aligned), <code>baseFontSize</code> (the font size the user picked; only sticky note labels have one today), and <code>labelPosition</code> (for text bound to a linear element).</p>
+
+<p>Text creation is handled by <code>newTextElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L335-L391"><code>packages/element/src/newElement.ts:335-391</code></a>. The function measures text using <code>measureText()</code> and computes position offsets based on text alignment anchors via <code>getTextAnchorRatios()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L303-L314"><code>packages/element/src/newElement.ts:303-314</code></a>. This ensures the anchor point stays fixed as text is edited. When text resizes, <code>refreshTextDimensions()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L533-L581"><code>packages/element/src/newElement.ts:533-581</code></a> recalculates dimensions and handles wrapping for constrained text. It now accepts a <code>maxWidth</code> parameter: when set for free text that grows with its content (<code>autoResize</code>), the text stops growing and wraps at this width once it exceeds that limit, anchored to its alignment point.</p>
+
+<p>See <a href="text-editing.html">Text Editing and Typography</a> for text interaction details.</p>
+
+<h3 id="linear-elements-arrows--lines">Linear Elements (Arrows &amp; Lines)</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L369-L377"><code>packages/element/src/types.ts:369-377</code></a> <code>ExcalidrawLinearElement</code> is the base for arrows and lines. It contains:</p>
+<ul>
+  <li><code>points</code>: array of <code>[x, y]</code> coordinates</li>
+  <li><code>startBinding</code> / <code>endBinding</code>: fixed-point binding information for connecting to other elements</li>
+  <li><code>startArrowhead</code> / <code>endArrowhead</code>: arrowhead styles</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L379-L383"><code>packages/element/src/types.ts:379-383</code></a> <code>ExcalidrawLineElement</code> extends this with a <code>polygon</code> boolean to close the shape back to the first point.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L391-L395"><code>packages/element/src/types.ts:391-395</code></a> <code>ExcalidrawArrowElement</code> adds the <code>elbowed</code> boolean flag. When true, the element is an <code>ExcalidrawElbowArrowElement</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L397-L421"><code>packages/element/src/types.ts:397-421</code></a>, which includes <code>fixedSegments</code>, <code>startIsSpecial</code>, and <code>endIsSpecial</code> for orthogonal arrow routing.</p>
+
+<p>Arrow creation uses <code>newArrowElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L633-L671"><code>packages/element/src/newElement.ts:633-671</code></a>, which returns different types based on the <code>elbowed</code> parameter. Linear element creation (for both arrows and lines) uses <code>newLinearElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L604-L631"><code>packages/element/src/newElement.ts:604-631</code></a>.</p>
+
+<p>See <a href="arrows-bindings.html">Arrows and Bindings</a> for binding mechanics.</p>
+
+<h3 id="free-draw-elements">Free-Draw Elements</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L430-L437"><code>packages/element/src/types.ts:430-437</code></a> <code>ExcalidrawFreeDrawElement</code> stores freehand strokes as:</p>
+<ul>
+  <li><code>points</code>: array of sampled coordinates</li>
+  <li><code>pressures</code>: pressure values per point (for stylus input)</li>
+  <li><code>simulatePressure</code>: whether pressure is simulated</li>
+  <li><code>strokeOptions</code>: variability (“variable” or “constant”) and streamline factor</li>
+</ul>
+
+<p>Created via <code>newFreeDrawElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L583-L602"><code>packages/element/src/newElement.ts:583-602</code></a>.</p>
+
+<h3 id="image-elements">Image Elements</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L161-L171"><code>packages/element/src/types.ts:161-171</code></a> <code>ExcalidrawImageElement</code> represents embedded images:</p>
+<ul>
+  <li><code>fileId</code>: reference to the image file (null if pending upload)</li>
+  <li><code>status</code>: “pending”, “saved”, or “error”</li>
+  <li><code>scale</code>: <code>[x, y]</code> factors for flipping</li>
+  <li><code>crop</code>: crop region or null</li>
+</ul>
+
+<p>Created via <code>newImageElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L673-L692"><code>packages/element/src/newElement.ts:673-692</code></a>. See <a href="image-handling.html">Image Support</a>.</p>
+
+<h3 id="frames-and-magic-frames">Frames and Magic Frames</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L178-L186"><code>packages/element/src/types.ts:178-186</code></a> Frames (<code>ExcalidrawFrameElement</code>) and magic frames (<code>ExcalidrawMagicFrameElement</code>) are containers with a <code>name</code> property. Both are created by <code>newFrameElement()</code> and <code>newMagicFrameElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L263-L295"><code>packages/element/src/newElement.ts:263-295</code></a>.</p>
+
+<p>See <a href="frames-groups.html">Frames and Groups</a>.</p>
+
+<h3 id="embeddable--iframe-elements">Embeddable &amp; Iframe Elements</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L115-L136"><code>packages/element/src/types.ts:115-136</code></a> <code>ExcalidrawEmbeddableElement</code> and <code>ExcalidrawIframeElement</code> embed external content. Iframes support optional <code>customData</code> for AI generation state.</p>
+
+<p>See <a href="ui-components.html">UI Components Library</a>.</p>
+
+<h2 id="type-checking">Type Checking</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts"><code>packages/element/src/typeChecks.ts</code></a> provides runtime type guards for safe element discrimination:</p>
+
+<p><strong>Element type checks:</strong></p>
+<ul>
+  <li><code>isTextElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L67-L71"><code>packages/element/src/typeChecks.ts:67-71</code></a></li>
+  <li><code>isStickyNoteElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L73-L77"><code>packages/element/src/typeChecks.ts:73-77</code></a></li>
+  <li><code>isArrowElement()</code>, <code>isLineElement()</code>, <code>isLinearElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L112-L128"><code>packages/element/src/typeChecks.ts:112-128</code></a></li>
+  <li><code>isFreeDrawElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L100-L104"><code>packages/element/src/typeChecks.ts:100-104</code></a></li>
+  <li><code>isFrameElement()</code>, <code>isFrameLikeElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L79-L98"><code>packages/element/src/typeChecks.ts:79-98</code></a></li>
+  <li><code>isImageElement()</code>, <code>isInitializedImageElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L35-L45"><code>packages/element/src/typeChecks.ts:35-45</code></a></li>
+  <li><code>isIframeElement()</code>, <code>isIframeLikeElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L53-L65"><code>packages/element/src/typeChecks.ts:53-65</code></a></li>
+</ul>
+
+<p><strong>Capability checks:</strong></p>
+<ul>
+  <li><code>isBindableElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L184-L202"><code>packages/element/src/typeChecks.ts:184-202</code></a> — shapes, sticky notes, images, frames, unbound text that arrows can bind to</li>
+  <li><code>isBindingElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L167-L176"><code>packages/element/src/typeChecks.ts:167-176</code></a> — arrows (the elements that bind to others)</li>
+  <li><code>isTextBindableContainer()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L240-L253"><code>packages/element/src/typeChecks.ts:240-253</code></a> — shapes, sticky notes, and arrows that can contain text</li>
+  <li><code>isBoundToContainer()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L307-L316"><code>packages/element/src/typeChecks.ts:307-316</code></a> — text with a non-null <code>containerId</code></li>
+</ul>
+
+<p><strong>Arrow subtypes:</strong></p>
+<ul>
+  <li><code>isElbowArrow()</code> — orthogonal arrows</li>
+  <li><code>isSimpleArrow()</code> — sharp or curved (not elbow)</li>
+  <li><code>isSharpArrow()</code> — straight arrow</li>
+  <li><code>isCurvedArrow()</code> — rounded arrow
+<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L130-L157"><code>packages/element/src/typeChecks.ts:130-157</code></a></li>
+</ul>
+
+<p><strong>Utility checks:</strong></p>
+<ul>
+  <li><code>canApplyRoundnessTypeToElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L334-L355"><code>packages/element/src/typeChecks.ts:334-355</code></a> — determines which roundness modes (adaptive vs proportional) apply to an element</li>
+  <li><code>getDefaultRoundnessTypeForElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L357-L373"><code>packages/element/src/typeChecks.ts:357-373</code></a></li>
+  <li><code>isValidPolygon()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L397-L401"><code>packages/element/src/typeChecks.ts:397-401</code></a> — checks if line points form a closed polygon</li>
+  <li><code>getLinearElementSubType()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/typeChecks.ts#L375-L388"><code>packages/element/src/typeChecks.ts:375-388</code></a> — classifies linear elements (“line”, “sharpArrow”, “curvedArrow”, “elbowArrow”)</li>
+</ul>
+
+<h2 id="element-creation">Element Creation</h2>
+
+<p>The factory function <code>newElement()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L174-L179"><code>packages/element/src/newElement.ts:174-179</code></a> creates generic elements. Type-specific factories use <code>_newElementBase()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L87-L172"><code>packages/element/src/newElement.ts:87-172</code></a>, which:</p>
+<ol>
+  <li>Validates position/size are not extreme (logs errors if outside ±1e6) <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L114-L132"><code>packages/element/src/newElement.ts:114-132</code></a></li>
+  <li>Assigns default values for styling, dimensions, and metadata</li>
+  <li>Generates a random <code>id</code> if not provided, <code>seed</code> for rendering, and initial <code>version</code>/<code>versionNonce</code></li>
+  <li>Sets <code>created</code> to the current timestamp on element creation, or preserves an explicit value when reconstructing a legacy element with its id <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L134-L166"><code>packages/element/src/newElement.ts:134-166</code></a></li>
+  <li>Returns an immutable element with <code>isDeleted: false</code></li>
+</ol>
+
+<p>The <code>ElementConstructorOpts</code> type <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L61-L85"><code>packages/element/src/newElement.ts:61-85</code></a> makes most visual properties optional, filling in defaults from <code>DEFAULT_ELEMENT_PROPS</code>.</p>
+
+<h2 id="sticky-note-normalization">Sticky Note Normalization</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L181-L243"><code>packages/element/src/newElement.ts:181-243</code></a> defines invariant functions for sticky notes:</p>
+
+<ul>
+  <li><code>normalizeStickyNoteStyle()</code> ensures never-transparent colors and solid fill. Applied by the constructor and every normalization pass; returns the same object when nothing needs fixing.</li>
+  <li><code>normalizeStickyNoteGeometry()</code> enforces minimum size and <code>baseHeight ≤ height</code>. Deliberately not part of the constructor — a pointer-down draft starts at 0×0 like every other tool and is previewed at its true dragged size; pointer-up, restore, the skeleton path and the action post-passes enforce this.</li>
+  <li><code>normalizeStickyNote()</code> applies all invariants (style + finalized geometry).</li>
+</ul>
+
+<h2 id="element-dimensions-and-position">Element Dimensions and Position</h2>
+
+<p>Text positioning is anchor-based. <code>getTextAnchorRatios()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L303-L314"><code>packages/element/src/newElement.ts:303-314</code></a> converts alignment settings to normalized ratios (e.g., center = 0.5, right = 1). The actual x/y position is offset from the text content’s bounding box so the anchor stays fixed when the text changes size.</p>
+
+<p>For resizing text with rotation, <code>adjustXYWithRotation()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L486-L531"><code>packages/element/src/newElement.ts:486-531</code></a> applies rotation-aware deltas to grow the text away from its alignment anchors.</p>
+
+<h2 id="element-collections">Element Collections</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/types.ts#L448-L486"><code>packages/element/src/types.ts:448-486</code></a> defines typed element maps:</p>
+<ul>
+  <li><code>ElementsMap</code>: unspecified deleted status, possibly a subset</li>
+  <li><code>NonDeletedElementsMap</code>: only non-deleted elements</li>
+  <li><code>SceneElementsMap</code>: all scene elements (includes deleted)</li>
+  <li><code>NonDeletedSceneElementsMap</code>: all non-deleted scene elements</li>
+  <li><code>ElementsMapOrArray</code>: union for flexible APIs accepting either structure</li>
+</ul>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Immutable data model</strong>: Elements are <code>Readonly</code> types to enforce immutability at the type level, supporting deterministic reconciliation and safe multi-peer collaboration. Mutations use factory functions that return new element instances rather than modifying in place.</p>
+
+<p><strong>Anchor-based text positioning</strong>: Text elements pin their position to alignment anchors (top-left, center, bottom-right, etc.) rather than the bounding box corner. This keeps the user’s intended attachment point stable as text is edited, improving UX especially for constrained text in shapes or arrow labels. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/newElement.ts#L297-L391"><code>packages/element/src/newElement.ts:297-391</code></a></p>
+
+<p><strong>Type-safe element discrimination</strong>: Runtime type guards complement TypeScript’s static types, enabling safe pattern matching on elements without explicit type casts. This is critical in collaborative scenarios where elements are transmitted and validated across peers.</p>
+
+<p><strong>Element creation timestamps</strong>: Every element has a <code>created</code> timestamp initialized on creation and preserved across edits and undo/redo. The timestamp is not included in element updates (see <code>ElementUpdate</code> / <code>newElementWith</code> / <code>mutateElement</code>), so it stays stable as a metadata field separate from versioning. Duplicating an element starts a new lifetime. From commit 854d00c31b71.</p>
+
+<p><strong>Arrow label positioning</strong>: Text bound to a linear element (such as an arrow) stores its position as <code>labelPosition</code>, a normalized arc-length parameter (0–1) along the container’s whole path. This is independent of how the path is segmented, so the label survives midpoint insertion, removal, and other geometry changes. From commit 214cd6e6e8ac.</p>
+
+<p><strong>Text tool hover state and target resolution</strong>: The text tool resolves what a click at the hovered position would act on — a text element to edit, an empty container to label, or an arrow anchor — once per pointer movement, unified into a single <code>textToolHover</code> AppState field (replacing the separate <code>hoveredArrowTextAnchor</code>, <code>elementsToHighlight</code>, and <code>suggestedBinding</code> affordances). This resolves inconsistencies where the hover promised one action but the click delivered another. From c10499eebb62.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

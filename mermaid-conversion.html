@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mermaid Diagram Conversion · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html" aria-current="page">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="mermaid-diagram-conversion">Mermaid Diagram Conversion</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Conversion from Mermaid syntax to Excalidraw elements, including parsing, diagram generation, and element transformation.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>The <code>@excalidraw/mermaid-to-excalidraw</code> package converts Mermaid diagram definitions into Excalidraw elements that can be rendered in the editor. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L3"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:3</code></a> The conversion happens in two steps: first, <code>parseMermaidToExcalidraw()</code> parses the Mermaid syntax and returns skeleton elements; then <code>convertToExcalidrawElements()</code> converts those skeleton elements into fully qualified Excalidraw elements. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L5"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:5</code></a></p>
+
+<h2 id="supported-diagram-types">Supported Diagram Types</h2>
+
+<h3 id="flowcharts">Flowcharts</h3>
+
+<p>Currently, only flowcharts are fully supported. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L29"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:29</code></a></p>
+
+<p><strong>Fully supported shapes:</strong></p>
+<ul>
+  <li>Rectangles, circles, diamonds, and arrows <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L35"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:35</code></a></li>
+  <li>Subgraphs, which map to Excalidraw groups <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L59"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:59</code></a></li>
+</ul>
+
+<p><strong>Shapes with fallbacks:</strong></p>
+<ul>
+  <li>Subroutine, cylindrical, asymmetric, hexagon, parallelogram, and trapezoid shapes fall back to rectangles <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L79"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:79</code></a></li>
+  <li>Markdown strings in text fall back to regular text <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L96"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:96</code></a></li>
+  <li>FontAwesome icons are not rendered and are omitted <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L106"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:106</code></a></li>
+  <li>Cross arrow heads fall back to bar arrow heads <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L118"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:118</code></a></li>
+</ul>
+
+<h3 id="unsupported-diagram-types">Unsupported Diagram Types</h3>
+
+<p>All other Mermaid diagram types (ER, gitGraph, sequence, class, state, etc.) are rendered as images in Excalidraw. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L129"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:129</code></a></p>
+
+<h2 id="parsing-pipeline">Parsing Pipeline</h2>
+
+<pre><code class="language-mermaid">graph TD
+    A["Mermaid Syntax"] --&gt; B["Process with Options"]
+    B --&gt; C["Render to SVG"]
+    C --&gt; D{Supported?}
+    D --&gt;|No| E["Convert to Image"]
+    D --&gt;|Yes| F["Parse Diagram"]
+    F --&gt; G["Extract Vertices"]
+    F --&gt; H["Extract Edges"]
+    F --&gt; I["Extract Subgraphs"]
+    G --&gt; J["Parse Vertex Positions"]
+    H --&gt; K["Parse Edge Positions"]
+    I --&gt; L["Parse Subgraph Bounds"]
+    J --&gt; M["Convert to Skeleton"]
+    K --&gt; M
+    L --&gt; M
+    E --&gt; N["ExcalidrawElements"]
+    M --&gt; O["Convert to Excalidraw"]
+    O --&gt; N
+</code></pre>
+
+<h3 id="step-1-mermaid-processing">Step 1: Mermaid Processing</h3>
+
+<p>The input Mermaid definition is processed with options (e.g., <code>fontSize</code>) and combined with Mermaid directives. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx#L38"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx:38</code></a></p>
+
+<h3 id="step-2-svg-rendering">Step 2: SVG Rendering</h3>
+
+<p>The Mermaid library’s <code>mermaid.render</code> API generates an SVG representation of the diagram. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx#L28"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx:28</code></a> For unsupported diagrams, this SVG is converted to a <code>dataURL</code> and rendered as an image.</p>
+
+<h3 id="step-3-diagram-parsing">Step 3: Diagram Parsing</h3>
+
+<p>For supported diagram types, the Mermaid diagram is parsed using <code>mermaid.mermaidAPI.getDiagramFromText()</code> to extract the diagram structure. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx#L45"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx:45</code></a></p>
+
+<h2 id="flowchart-parser-details">Flowchart Parser Details</h2>
+
+<p>The flowchart parser extracts three key components from the Mermaid parser:</p>
+
+<h3 id="vertices">Vertices</h3>
+
+<p>Vertices are extracted using <code>diagram.parser.yy.getVertices()</code>. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx#L19"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx:19</code></a> The <code>parseVertex</code> function augments this data by extracting position and dimensions from the SVG. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx#L45"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx:45</code></a></p>
+
+<h3 id="edges">Edges</h3>
+
+<p>Edges (lines and arrows) are extracted using <code>diagram.parser.yy.getEdges()</code>. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx#L80"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx:80</code></a> The <code>parseEdge</code> function computes start and end coordinates, reflection points for curved paths, and arrow styling. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx#L97"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx:97</code></a></p>
+
+<h3 id="subgraphs">Subgraphs</h3>
+
+<p>Subgraphs are extracted using <code>diagram.parser.yy.getSubgraphs()</code> and represent groups of elements. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx#L135"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx:135</code></a> The <code>parseSubgraph</code> function computes bounding box positions and dimensions from the SVG. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx#L153"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/flowchart.mdx:153</code></a></p>
+
+<h2 id="conversion-to-excalidrawelementskeleton">Conversion to ExcalidrawElementSkeleton</h2>
+
+<p>After parsing, the diagram data is transformed into <code>ExcalidrawElementSkeleton</code> format. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx#L58"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx:58</code></a> For flowcharts, the <code>FlowChartToExcalidrawSkeletonConverter</code> performs this transformation. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx#L63"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/parser/parser.mdx:63</code></a></p>
+
+<h2 id="api-usage">API Usage</h2>
+
+<pre><code class="language-ts">import { parseMermaidToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
+import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
+
+try {
+  const { elements, files } = await parseMermaidToExcalidraw(mermaidSyntax, {
+    fontSize: number,
+  });
+  const excalidrawElements = convertToExcalidrawElements(elements);
+  // Render elements and files on Excalidraw
+} catch (e) {
+  // Parse error handling
+}
+</code></pre>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx#L13-L25"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/api.mdx:13-25</code></a></p>
+
+<h2 id="adding-new-diagram-types">Adding New Diagram Types</h2>
+
+<p>To support a new Mermaid diagram type:</p>
+
+<ol>
+  <li>
+    <p>Add the diagram type to <code>SUPPORTED_DIAGRAM_TYPES</code> constant <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx#L17"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx:17</code></a></p>
+  </li>
+  <li>
+    <p>Create a parser file <code>{{diagramType}}.ts</code> in <code>src/parser</code> that implements <code>parseMermaid{{diagramType}}Diagram()</code>. This parser must determine element connections and use the SVG to extract positions and dimensions. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx#L25"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx:25</code></a></p>
+  </li>
+  <li>
+    <p>Add the diagram type to the switch case in <code>parseMermaid()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx#L37"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx:37</code></a></p>
+  </li>
+  <li>
+    <p>Create a converter <code>{{diagramType}}ToExcalidrawSkeletonConverter</code> that transforms parsed data into <code>ExcalidrawElementSkeleton</code> format <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx#L43"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx:43</code></a></p>
+  </li>
+  <li>
+    <p>Add test cases to the playground <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx#L49"><code>dev-docs/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type.mdx:49</code></a></p>
+  </li>
+</ol>
+
+<h2 id="related-pages">Related Pages</h2>
+
+<ul>
+  <li><a href="shape-generation.html">Shape Generation and Drawing</a> — Element creation for Mermaid shapes</li>
+  <li><a href="arrows-bindings.html">Arrows and Bindings</a> — Handling arrow creation and connections</li>
+  <li><a href="frames-groups.html">Frames and Groups</a> — Mapping Mermaid subgraphs to Excalidraw groups</li>
+  <li><a href="element-data-model.html">Element Data Model and Types</a> — ExcalidrawElementSkeleton format</li>
+  <li><a href="text-editing.html">Text Editing and Typography</a> — Text handling in converted diagrams</li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Element Selection and Bounding Boxes · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html" aria-current="page">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="element-selection-and-bounding-boxes">Element Selection and Bounding Boxes</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Selection and bounding box calculations are core to the editor’s ability to let users interact with shapes. This page covers how elements are selected, their bounds computed, collision detection performed, and elements queried.</p>
+
+<h2 id="element-selection">Element Selection</h2>
+
+<p>The selection system tracks which elements are currently selected through <code>AppState.selectedElementIds</code>. The <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/Scene.ts#L178-L222"><code>packages/element/src/Scene.ts:178-222</code></a> <code>Scene.getSelectedElements()</code> method retrieves selected elements with caching for performance. It supports options to include bound text elements and elements within frames.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/selection.ts#L161-L213"><code>packages/element/src/selection.ts:161-213</code></a> <code>getSelectedElements()</code> filters the element collection to return only those whose IDs are in the selection map. It can optionally include:</p>
+<ul>
+  <li>Bound text elements (text attached to containers)</li>
+  <li>All children of selected frames</li>
+</ul>
+
+<p>The selection is cached by a hash of the selection options to avoid recomputing the same query repeatedly.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/selection.ts#L70-L99"><code>packages/element/src/selection.ts:70-99</code></a> <code>getElementsWithinSelection()</code> determines which elements fall within a selection box during drag-selection. It uses absolute coordinates to define a bounding region and delegates to <code>elementsOverlappingBBox()</code> to find overlapping or contained elements, respecting box selection mode (“contain” or “overlap”).</p>
+
+<h2 id="bounding-box-calculations">Bounding Box Calculations</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L85-L240"><code>packages/element/src/bounds.ts:85-240</code></a> The <code>ElementBounds</code> class computes and caches bounding boxes for each element. Bounds are cached using a WeakMap keyed by element, with version checking to invalidate when the element changes. Two variants are computed:</p>
+<ul>
+  <li>Rotated bounds: the actual bounding box after rotation</li>
+  <li>Non-rotated bounds: bounds as if the element has no rotation (useful for selection feedback)</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L147-L239"><code>packages/element/src/bounds.ts:147-239</code></a> <code>calculateBounds()</code> handles different element types:</p>
+<ul>
+  <li><strong>Free draw</strong>: bounds from the rotated point cloud</li>
+  <li><strong>Linear elements</strong> (lines, arrows): uses Bezier curve operations to find extremes</li>
+  <li><strong>Diamond</strong>: rotates the four cardinal points and finds min/max</li>
+  <li><strong>Ellipse</strong>: uses trigonometry on the semi-axes</li>
+  <li><strong>Other rectanguloids</strong>: rotates the four corners and finds their bounding box</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L246-L287"><code>packages/element/src/bounds.ts:246-287</code></a> <code>getElementAbsoluteCoords()</code> returns element coordinates in <code>[x1, y1, x2, y2, cx, cy]</code> format (corners and center). For linear elements bound to containers (text on arrows), it adjusts coordinates based on the container’s text position.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L1005-L1029"><code>packages/element/src/bounds.ts:1005-1029</code></a> <code>getCommonBounds()</code> finds the bounding box encompassing multiple elements by iterating their individual bounds.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L1128-L1144"><code>packages/element/src/bounds.ts:1128-1144</code></a> <code>getCommonBoundingBox()</code> wraps common bounds in a <code>BoundingBox</code> object with derived properties like width, height, and midpoint.</p>
+
+<h2 id="collision-detection-and-hit-testing">Collision Detection and Hit Testing</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L137-L230"><code>packages/element/src/collision.ts:137-230</code></a> <code>hitElementItself()</code> performs precise hit testing with caching. It first checks if a point is in the rotated bounding box (fast rejection), then runs expensive shape-specific tests. The result is cached, accounting for threshold changes and element version. Hit testing considers:</p>
+<ul>
+  <li>The frame’s name label (if present)</li>
+  <li>Whether the point is inside or on the outline, depending on element type</li>
+  <li>For freedraw elements, an additional threshold accounting for stroke radius</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L232-L248"><code>packages/element/src/collision.ts:232-248</code></a> <code>isPointInRotatedBounds()</code> rotates a point by the inverse of the element’s angle, then checks it against axis-aligned bounds—avoiding expensive rotation of the bounds themselves.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L250-L268"><code>packages/element/src/collision.ts:250-268</code></a> <code>hitElementBoundingBox()</code> and <code>hitElementBoundingBoxOnly()</code> test whether a point hits only the bounding box area (outside the shape itself).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L269-L285"><code>packages/element/src/collision.ts:269-285</code></a> <code>hitElementBoundText()</code> checks if a point hits the text element bound to a container. It uses <code>getTextElementWithAccuratePosition()</code> to handle stale coordinates for arrow labels.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L495-L559"><code>packages/element/src/collision.ts:495-559</code></a> <code>intersectElementWithLineSegment()</code> computes intersection points between a line and an element’s shape. It dispatches to type-specific handlers:</p>
+<ul>
+  <li>Rectanguloid elements (rectangles, frames, images, <strong>sticky notes</strong>)</li>
+  <li>Diamonds</li>
+  <li>Ellipses</li>
+  <li>Linear or free-draw elements</li>
+</ul>
+
+<p>Each handler uses geometric primitives from the math library to find precise intersections, with early exit options for performance.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L830-L885"><code>packages/element/src/collision.ts:830-885</code></a> <code>isPointInElement()</code> determines if a point is inside a shape. For freedraw elements, it uses the smoothed fill polygon and the even-odd rule. For other elements, it uses the ray-casting algorithm: cast a ray from the point and count intersections with the shape’s boundary. An odd count means the point is inside.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L887-L943"><code>packages/element/src/collision.ts:887-943</code></a> <code>isBindableElementInsideOtherBindable()</code> checks if one element is fully contained within another by testing all corner points.</p>
+
+<h2 id="element-querying">Element Querying</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L1273-L1553"><code>packages/element/src/bounds.ts:1273-1553</code></a> <code>elementsOverlappingBBox()</code> is the high-level helper for finding elements within a bounding box. It:</p>
+<ol>
+  <li>Adds stroke width to element bounds for accurate hit detection</li>
+  <li>Clips element bounds by their containing frame if present</li>
+  <li>Checks if the selection box wraps the element (fast path)</li>
+  <li>Checks for label/text overlap</li>
+  <li>For partial overlaps, tests actual element outlines using line-segment intersections</li>
+  <li>Handles group membership: elements are added/removed together if in a group</li>
+  <li>Excludes elements inside selected frames (respects frame hierarchy)</li>
+</ol>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/Scene.ts#L397-L407"><code>packages/element/src/Scene.ts:397-407</code></a> <code>Scene.getElementsFromId()</code> retrieves elements by ID, checking both individual elements and groups (since groups are identified by a group ID that multiple elements can share).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L427-L435"><code>packages/element/src/collision.ts:427-435</code></a> <code>getAllHoveredElementAtPoint()</code> returns all bindable elements at a point, sorted by distance and z-index. It uses <code>getBindingCandidates()</code> to gather candidates, stopping early if a non-transparent element with a background is found.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L437-L485"><code>packages/element/src/collision.ts:437-485</code></a> <code>getHoveredElementForBinding()</code> selects a single element for arrow binding. It sorts by distance to the point and prefers smaller elements that overlap significantly, but only when the point is inside them; otherwise the closest outline wins.</p>
+
+<h2 id="supporting-utilities">Supporting Utilities</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L1164-L1168"><code>packages/element/src/bounds.ts:1164-1168</code></a> <code>getCenterForBounds()</code> computes the center point of a bounding box.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L1229-L1245"><code>packages/element/src/bounds.ts:1229-1245</code></a> <code>pointInsideBounds()</code> and <code>pointInsideBoundsInclusive()</code> test point containment (exclusive and inclusive variants).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L1246-L1258"><code>packages/element/src/bounds.ts:1246-1258</code></a> <code>doBoundsIntersect()</code> checks if two bounding boxes overlap using axis-aligned intersection logic.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L1555-L1571"><code>packages/element/src/bounds.ts:1555-1571</code></a> <code>elementCenterPoint()</code> computes an element’s center, handling linear and free-draw elements specially by averaging their absolute coordinates.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L299-L415"><code>packages/element/src/bounds.ts:299-415</code></a> <code>getElementLineSegments()</code> decomposes an element into line segments for precise collision testing. Different element types use different strategies: curves are approximated with Bezier points, rectangles decompose into sides and corners, etc.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Caching strategy for bounds</strong>: Element bounds are cached in a WeakMap keyed by the element object itself, with version checking. This allows garbage collection when elements are deleted and avoids invalidating on unrelated changes. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bounds.ts#L86-L99"><code>packages/element/src/bounds.ts:86-99</code></a></p>
+
+<p><strong>Hit test caching</strong>: The collision module caches the result of the most recent hit test, accounting for threshold changes. A cached hit is valid for any larger threshold (larger = more lenient), while a cached miss is valid only for equal or smaller thresholds. This trades memory for common repeated tests at the same point. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L137-L168"><code>packages/element/src/collision.ts:137-168</code></a></p>
+
+<p><strong>Ray casting for point-in-shape</strong>: The <code>isPointInElement()</code> function uses the ray-casting algorithm (count boundary intersections) rather than winding number, as it is simpler to implement and sufficient for convex and most common non-convex shapes. For freedraw elements specifically, it tests against the smoothed fill polygon using the even-odd rule, which matches how they are rendered. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L843-L861"><code>packages/element/src/collision.ts:843-861</code></a></p>
+
+<p><strong>Binding candidate filtering</strong>: The binding system filters candidates by distance and opacity, using <code>getBindingCandidates()</code> to gather elements within binding distance from front to back in z-order. It stops at the first opaque element containing the point, as it hides everything behind it. This is used by both <code>getAllHoveredElementAtPoint()</code> and <code>getHoveredElementForBinding()</code>. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/collision.ts#L357-L421"><code>packages/element/src/collision.ts:357-421</code></a></p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Search and Command Palette · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html" aria-current="page">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="search-and-command-palette">Search and Command Palette</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Quick search and command discovery functionality for navigating actions, tools, and library items in the editor.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>The search and command palette system consists of two main components:</p>
+
+<ul>
+  <li><strong>Command Palette</strong>: A modal dialog (opened with Ctrl/Cmd+Shift+P or Ctrl/Cmd+/) that provides a unified interface to discover and execute editor actions, tools, and library items with fuzzy search matching.</li>
+  <li><strong>Search Menu</strong>: A persistent sidebar panel (opened with Ctrl/Cmd+F) that searches for text content and frame names across the canvas, with navigation and preview functionality.</li>
+</ul>
+
+<p>These systems use different search strategies: the command palette searches action metadata and labels, while the search menu searches actual content within text elements and frame names.</p>
+
+<h2 id="command-palette">Command Palette</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L154-L198"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:154-198</code></a></p>
+
+<p>The Command Palette is a modal dialog that aggregates commands from multiple sources and makes them discoverable through keyword and fuzzy search. It integrates with the <a href="actions-system.html">Actions and Command System</a> to execute editor actions and can be extended with custom commands.</p>
+
+<h3 id="command-sources">Command Sources</h3>
+
+<p>Commands are built from four main sources:</p>
+
+<ol>
+  <li>
+    <p><strong>Editor Actions</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L360-L377"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:360-377</code></a>: Core editing operations like undo/redo, zoom, grid mode, view mode, element operations (group, cut, copy, align, flip, etc.), and export functions.</p>
+  </li>
+  <li>
+    <p><strong>Additional Commands</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L423-L604"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:423-604</code></a>: Supplementary actions including theme toggle, library sidebar toggle, search menu toggle, shape switch, color pickers, tool selection, and AI-powered features (text-to-diagram, mermaid conversion).</p>
+  </li>
+  <li>
+    <p><strong>Library Items</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L223-L248"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:223-248</code></a>: Named library items are converted to commands that insert them on the canvas when executed.</p>
+  </li>
+  <li>
+    <p><strong>Custom Commands</strong>: Applications can pass additional <code>customCommandPaletteItems</code> to extend the palette with domain-specific commands.</p>
+  </li>
+</ol>
+
+<h3 id="command-structure">Command Structure</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/types.ts"><code>packages/excalidraw/components/CommandPalette/types.ts</code></a></p>
+
+<p>Each command item contains:</p>
+
+<ul>
+  <li><code>label</code>: Display name, translated via the i18n system</li>
+  <li><code>keywords</code>: Additional search terms appended to the searchable haystack</li>
+  <li><code>haystack</code>: Pre-computed searchable text (deburred label + keywords)</li>
+  <li><code>icon</code>: Visual representation (static or dynamic based on app state)</li>
+  <li><code>category</code>: Grouping category for organization</li>
+  <li><code>order</code>: Sort position within its category</li>
+  <li><code>predicate</code>: Boolean or function determining if the command is available in the current context</li>
+  <li><code>shortcut</code>: Optional keyboard shortcut string</li>
+  <li><code>viewMode</code>: If false, command is disabled in view mode</li>
+  <li><code>perform</code>: Function executed when the command is selected</li>
+</ul>
+
+<h3 id="filtering-and-search">Filtering and Search</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L815-L880"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:815-880</code></a></p>
+
+<p>Commands are filtered and ranked by availability and search relevance:</p>
+
+<ol>
+  <li>
+    <p><strong>Predicate Evaluation</strong>: Commands check their predicate function to determine availability. For element-related commands, the predicate typically requires selected elements. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L346-L357"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:346-357</code></a></p>
+  </li>
+  <li>
+    <p><strong>Fuzzy Matching</strong>: When a search query is entered, the fuzzy library filters commands against their haystack using fuzzy matching and scores by relevance. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L862-L870"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:862-870</code></a></p>
+  </li>
+  <li>
+    <p><strong>Category Ordering</strong>: Commands are organized by predefined category order (App → Export → Editor → Tools → Elements → Links) to surface commonly-used commands first. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L87-L114"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:87-114</code></a></p>
+  </li>
+  <li>
+    <p><strong>Last-Used Tracking</strong>: When no search is active, the previously executed command is highlighted and can be quickly re-executed by pressing Enter. [[cite:packages/excalidraw/components/CommandPalette/CommandPalette.tsx:85,845-858]]</p>
+  </li>
+</ol>
+
+<h3 id="keyboard-navigation">Keyboard Navigation</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L692-L803"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:692-803</code></a></p>
+
+<p>The palette supports keyboard-driven navigation:</p>
+
+<ul>
+  <li><strong>Arrow Up/Down</strong>: Cycle through filtered commands, with special handling for the last-used command position</li>
+  <li><strong>Enter</strong>: Execute the currently selected command</li>
+  <li><strong>Escape</strong>: Close the palette</li>
+  <li><strong>Alphanumeric keys</strong>: Focus the search input (if not already focused or in a writable element)</li>
+  <li><strong>Ctrl/Cmd+Shift+P or Ctrl/Cmd+/</strong>: Toggle palette open/closed <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L141-L148"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:141-148</code></a></li>
+</ul>
+
+<h3 id="styling-and-display">Styling and Display</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.scss"><code>packages/excalidraw/components/CommandPalette/CommandPalette.scss</code></a></p>
+
+<p>The command palette modal uses a flexible layout:</p>
+
+<ul>
+  <li>Maximum height of 750px on screens wider than 861px, otherwise responsive</li>
+  <li>Commands are organized into collapsible categories with titles</li>
+  <li>Selected items highlight with <code>--color-surface-mid</code> background</li>
+  <li>Disabled commands show reduced opacity (0.3) and are not clickable</li>
+  <li>Library items display at a larger size (2.75rem) with larger icons (1.5rem)</li>
+  <li>Shortcuts are displayed as styled keyboard key badges</li>
+  <li>On mobile (phone form factor), shortcuts are hidden to save space</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L901-L913"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:901-913</code></a></p>
+
+<h2 id="search-menu">Search Menu</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/SearchMenu.tsx#L82-L431"><code>packages/excalidraw/components/SearchMenu.tsx:82-431</code></a></p>
+
+<p>The Search Menu is a persistent sidebar panel that searches for text content within text elements and frame names, displaying matches with context previews.</p>
+
+<h3 id="search-behavior">Search Behavior</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/SearchMenu.tsx#L781-L870"><code>packages/excalidraw/components/SearchMenu.tsx:781-870</code></a></p>
+
+<p>The <code>handleSearch</code> function performs content search:</p>
+
+<ol>
+  <li><strong>Query Normalization</strong>: The search query is escaped to treat special regex characters literally</li>
+  <li><strong>Element Filtering</strong>: Only text elements and frame-like elements are searched</li>
+  <li><strong>Match Finding</strong>: A case-insensitive regex scan finds all occurrences of the query</li>
+  <li><strong>Match Metadata</strong>: For each match, the system extracts:
+    <ul>
+      <li>Preview text with surrounding context (up to 2 words before and 5 after)</li>
+      <li>Matched line information including pixel offsets for canvas highlighting</li>
+      <li>Whether the match occurs in a frame name or text element</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="match-preview-generation">Match Preview Generation</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/SearchMenu.tsx#L545-L592"><code>packages/excalidraw/components/SearchMenu.tsx:545-592</code></a></p>
+
+<p>Preview text is generated by:</p>
+
+<ol>
+  <li>Extracting words before the match (up to 2 words, max 20 characters)</li>
+  <li>Including the matched query text</li>
+  <li>Extracting words after the match (up to 5 words or 6 if the query splits a word)</li>
+  <li>Marking with “…” if there is more text before or after</li>
+</ol>
+
+<p>For example, searching “mall” in “small plastic ball” shows: “small <strong>mall</strong> plastic”.</p>
+
+<h3 id="canvas-integration">Canvas Integration</h3>
+
+<p>When a match is focused, the Search Menu automatically adjusts the viewport to show it:</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/SearchMenu.tsx#L194-L254"><code>packages/excalidraw/components/SearchMenu.tsx:194-254</code></a></p>
+
+<ul>
+  <li>Calculates the match’s bounding box using text metrics</li>
+  <li>Zooms to “contain” if text is too small to read (font size × zoom &lt; 14px)</li>
+  <li>Otherwise scales down to fit without exceeding 100% zoom</li>
+  <li>Uses smooth animation (300ms duration) for the viewport transition</li>
+  <li>Applies offsets for UI elements to avoid obscuring results</li>
+</ul>
+
+<h3 id="match-categorization">Match Categorization</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/SearchMenu.tsx#L481-L543"><code>packages/excalidraw/components/SearchMenu.tsx:481-543</code></a></p>
+
+<p>Matches are grouped and displayed separately:</p>
+
+<ul>
+  <li><strong>Frame Matches</strong>: Search results in frame names, shown with a frame icon</li>
+  <li><strong>Text Matches</strong>: Search results in text element content, shown with a text icon</li>
+  <li>A divider separates the two groups if both contain results</li>
+</ul>
+
+<h3 id="keyboard-navigation-1">Keyboard Navigation</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/SearchMenu.tsx#L274-L336"><code>packages/excalidraw/components/SearchMenu.tsx:274-336</code></a></p>
+
+<ul>
+  <li><strong>Ctrl/Cmd+F</strong>: Open/focus the search input; closes any open dialog first</li>
+  <li><strong>Enter</strong>: Move to next match</li>
+  <li><strong>Arrow Up</strong>: Move to previous match</li>
+  <li><strong>Arrow Down</strong>: Move to next match</li>
+  <li><strong>Escape</strong>: Close the search panel (when no dialog is open)</li>
+</ul>
+
+<p>The search input has special handling: if Ctrl/Cmd+F is pressed and the search panel is not focused, it opens the panel and focuses the input without closing any open dialogs. If the panel is already focused, the shortcut selects all text in the input.</p>
+
+<h2 id="text-wrapping-and-line-calculation">Text Wrapping and Line Calculation</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/SearchMenu.tsx#L594-L734"><code>packages/excalidraw/components/SearchMenu.tsx:594-734</code></a></p>
+
+<p>Text in elements may be wrapped across multiple lines. The search system carefully handles this:</p>
+
+<ol>
+  <li><strong>Normalization</strong>: The wrapped text (with newlines) is normalized against the original unwrapped text to preserve accurate character positions</li>
+  <li><strong>Line Ranges</strong>: For each line, the system tracks start/end indices in the original text</li>
+  <li><strong>Multi-Line Matches</strong>: If a search query spans multiple wrapped lines, the system calculates offsets and dimensions for each line segment</li>
+  <li><strong>Canvas Highlighting</strong>: Matched text regions are highlighted on canvas using the calculated line offsets and dimensions</li>
+</ol>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Command Palette Stability During Search</strong>: Commands are computed once when the palette opens and are not updated while searching, even though the underlying app state changes. This prevents cascading state resets that would interrupt user searching. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/CommandPalette/CommandPalette.tsx#L250-L256"><code>packages/excalidraw/components/CommandPalette/CommandPalette.tsx:250-256</code></a></p>
+
+<p><strong>Separate Search Systems</strong>: Quick search (Command Palette) and content search (Search Menu) are implemented as distinct systems. The command palette focuses on action discovery with fuzzy matching, while the search menu focuses on finding content within elements with pixel-accurate canvas highlighting. This separation allows each to be optimized for its use case.</p>
+
+<p><strong>Show Hints in Command Palette</strong>: The <code>showHints</code> preference is now routed through the action system as <code>actionToggleShowHints</code> (commit 2d3707b). This allows it to appear in the command palette and integrate with the full action system features (tracking, view mode declaration, etc.), whereas previously it only flipped <code>appState</code> directly and had no keyboard shortcut or command palette entry.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

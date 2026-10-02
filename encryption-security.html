@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>End-to-End Encryption · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html" aria-current="page">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="end-to-end-encryption">End-to-End Encryption</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>This page covers how data is encrypted and decrypted, how encryption keys are managed, and how encrypted state is handled throughout the application.</p>
+
+<h2 id="encryption-algorithm-and-parameters">Encryption Algorithm and Parameters</h2>
+
+<p>The application uses <strong>AES-GCM</strong> (Advanced Encryption Standard in Galois/Counter Mode) for symmetric encryption. AES-GCM is chosen because it provides both confidentiality and authenticity—it detects if the ciphertext has been modified by an attacker <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encryption.ts#L66-L67"><code>packages/excalidraw/data/encryption.ts:66-67</code></a>.</p>
+
+<p>Encryption keys are generated with a fixed length of <code>ENCRYPTION_KEY_BITS</code> (defined in <code>@excalidraw/common</code>). Each encryption operation uses a unique <strong>initialization vector (IV)</strong> of 12 bytes, generated with cryptographically secure random values [[cite:packages/excalidraw/data/encryption.ts:5,7-10]].</p>
+
+<h2 id="key-generation">Key Generation</h2>
+
+<p>The <code>generateEncryptionKey</code> function creates a new encryption key using the Web Crypto API <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encryption.ts#L12-L30"><code>packages/excalidraw/data/encryption.ts:12-30</code></a>. The function can return the key in two formats:</p>
+
+<ul>
+  <li><strong><code>"cryptoKey"</code></strong>: Returns a <code>CryptoKey</code> object ready for immediate use in encryption/decryption operations</li>
+  <li><strong><code>"string"</code></strong>: Exports the key in JWK (JSON Web Key) format, encoding it as a string for storage or transmission</li>
+</ul>
+
+<p>The key is marked as extractable during generation, allowing it to be exported for storage, but is non-extractable when imported for use [[cite:packages/excalidraw/data/encryption.ts:22,46]].</p>
+
+<h2 id="key-import-and-management">Key Import and Management</h2>
+
+<p>The <code>getCryptoKey</code> function converts a stored key string back into a <code>CryptoKey</code> object <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encryption.ts#L32-L48"><code>packages/excalidraw/data/encryption.ts:32-48</code></a>. It accepts a <code>usage</code> parameter (<code>"encrypt"</code> or <code>"decrypt"</code>) to restrict the key’s purpose in that specific operation. The key is imported in JWK format with algorithm details matching the AES-GCM specification.</p>
+
+<h2 id="encryption">Encryption</h2>
+
+<p>The <code>encryptData</code> function encrypts data of various types—strings, <code>Uint8Array</code>, <code>ArrayBuffer</code>, <code>Blob</code>, or <code>File</code>—into an encrypted buffer and IV <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encryption.ts#L50-L78"><code>packages/excalidraw/data/encryption.ts:50-78</code></a>.</p>
+
+<p>The function:</p>
+<ol>
+  <li>Converts the key to a <code>CryptoKey</code> if provided as a string</li>
+  <li>Generates a fresh IV for this encryption</li>
+  <li>Normalizes input data to an <code>ArrayBuffer</code> or <code>Uint8Array</code> (converting strings via <code>TextEncoder</code>, blobs via <code>blobToArrayBuffer</code>)</li>
+  <li>Encrypts the buffer using AES-GCM</li>
+  <li>Returns both the encrypted buffer and the IV (the IV must be stored or transmitted alongside the ciphertext since it is not secret)</li>
+</ol>
+
+<h2 id="decryption">Decryption</h2>
+
+<p>The <code>decryptData</code> function reverses encryption, taking an IV, encrypted data, and the private key string <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/encryption.ts#L80-L94"><code>packages/excalidraw/data/encryption.ts:80-94</code></a>. It imports the key, then decrypts using AES-GCM. On successful decryption, it returns the plaintext <code>ArrayBuffer</code>. If the ciphertext has been tampered with, the AES-GCM algorithm will fail the authentication check and throw an error.</p>
+
+<h2 id="integration-with-storage-and-collaboration">Integration with Storage and Collaboration</h2>
+
+<p>Encrypted data must be paired with its IV for later decryption. When persisting encrypted documents or transmitting them over the network in <a href="collaboration.html">Real-Time Collaboration</a>, both the ciphertext and IV are required. The <a href="file-formats-restore.html">File Formats and Data Restoration</a> page describes how encrypted state is structured in saved documents.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

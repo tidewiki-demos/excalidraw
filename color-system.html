@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Color Picker and Color System · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html" aria-current="page">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="color-picker-and-color-system">Color Picker and Color System</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The color system manages color representation, transformation, palette management, and the interactive color picker interface used throughout the application. It handles color normalization, dark mode filtering, theme colors, custom colors, and provides utilities for color analysis. Sticky notes are their own color domain with separate defaults and top-pick slots.</p>
+
+<h2 id="color-utilities-and-transformation">Color Utilities and Transformation</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L1-L160"><code>packages/common/src/colors.ts:1-160</code></a> provides core color utilities including dark mode transformation and color validation. The system uses the <code>tinycolor2</code> library for color parsing and manipulation.</p>
+
+<h3 id="dark-mode-filter">Dark Mode Filter</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L12-L122"><code>packages/common/src/colors.ts:12-122</code></a> implements dark mode color transformation by combining two CSS filters: inversion and hue rotation. The <code>applyDarkModeFilter</code> function <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L86-L122"><code>packages/common/src/colors.ts:86-122</code></a> applies a 93% invert followed by a 180-degree hue rotation, with results cached to avoid recomputation. The reverse transformation <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L141-L160"><code>packages/common/src/colors.ts:141-160</code></a> restores original colors by reversing these operations in inverse order.</p>
+
+<p>The color rotation uses a standard matrix-based approach <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L19-L60"><code>packages/common/src/colors.ts:19-60</code></a> that applies luminance-preserving hue shifts to RGB values.</p>
+
+<h3 id="color-validation-and-normalization">Color Validation and Normalization</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L351-L431"><code>packages/common/src/colors.ts:351-431</code></a> provides functions to validate and normalize colors:</p>
+<ul>
+  <li><code>colorToHex</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L351-L358"><code>packages/common/src/colors.ts:351-358</code></a> converts any valid color format to <code>#RRGGBB</code> or <code>#RRGGBBAA</code> hex notation</li>
+  <li><code>normalizeInputColor</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L415-L431"><code>packages/common/src/colors.ts:415-431</code></a> attempts to preserve user input while making minimal adjustments (trimming whitespace, adding <code>#</code> prefix)</li>
+  <li><code>isTransparent</code> and <code>isOpaqueColor</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L360-L373"><code>packages/common/src/colors.ts:360-373</code></a> check alpha channel values</li>
+  <li><code>setColorAlpha</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L363-L375"><code>packages/common/src/colors.ts:363-375</code></a> replaces a color’s alpha channel while preserving RGB</li>
+</ul>
+
+<h3 id="color-contrast-and-brightness">Color Contrast and Brightness</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L379-L405"><code>packages/common/src/colors.ts:379-405</code></a> implements color contrast analysis using the YIQ algorithm. The <code>isColorDark</code> function determines if a color is dark enough to require light text, useful for ensuring text readability over colored backgrounds.</p>
+
+<h2 id="color-palette-system">Color Palette System</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L179-L323"><code>packages/common/src/colors.ts:179-323</code></a> defines the color palette structure and provides palette constants.</p>
+
+<h3 id="palette-structure">Palette Structure</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L179-L212"><code>packages/common/src/colors.ts:179-212</code></a> defines the <code>COLOR_PALETTE</code> constant with named color groups. Each color has 5 shades (weights 50, 200, 400, 600, 800 from open-color). Available colors include: gray, red, pink, grape, violet, blue, cyan, teal, green, yellow, orange, and bronze, plus transparent, black, and white.</p>
+
+<p>Types and constants:</p>
+<ul>
+  <li><code>ColorTuple</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L179"><code>packages/common/src/colors.ts:179</code></a> represents 5-element color arrays</li>
+  <li><code>ColorPaletteCustom</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L182"><code>packages/common/src/colors.ts:182</code></a> allows custom color palettes</li>
+  <li><code>DEFAULT_ELEMENT_STROKE_COLOR_PALETTE</code> and <code>DEFAULT_ELEMENT_BACKGROUND_COLOR_PALETTE</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L299-L319"><code>packages/common/src/colors.ts:299-319</code></a> provide default palettes for different use cases</li>
+</ul>
+
+<h3 id="quick-picks">Quick Picks</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L230-L294"><code>packages/common/src/colors.ts:230-294</code></a> defines “quick pick” arrays — frequently-used color selections shown in a compact strip:</p>
+<ul>
+  <li><code>DEFAULT_ELEMENT_STROKE_PICKS</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L239-L245"><code>packages/common/src/colors.ts:239-245</code></a> — black and four accent colors</li>
+  <li><code>DEFAULT_ELEMENT_BACKGROUND_PICKS</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L248-L254"><code>packages/common/src/colors.ts:248-254</code></a> — transparent and four accent colors</li>
+  <li><code>BUCKET_FILL_BACKGROUND_PICKS</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L259-L265"><code>packages/common/src/colors.ts:259-265</code></a> — white instead of transparent for fill tool</li>
+  <li><code>DEFAULT_CANVAS_BACKGROUND_PICKS</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L284-L294"><code>packages/common/src/colors.ts:284-294</code></a> — light backgrounds for canvas</li>
+  <li><code>STICKY_NOTE_STROKE_PICKS</code> and <code>STICKY_NOTE_BACKGROUND_PICKS</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L270-L281"><code>packages/common/src/colors.ts:270-281</code></a> — sticky notes use their own domain with yellow as the default background; transparent is excluded from the background picks</li>
+</ul>
+
+<p>The <code>COLOR_TOP_PICKS_SLOTS</code> constant <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L236"><code>packages/common/src/colors.ts:236</code></a> defines that the strip has exactly 5 swatches.</p>
+
+<h2 id="sticky-notes-color-domain">Sticky Notes Color Domain</h2>
+
+<p>Sticky notes are their own color domain with separate defaults, palettes, and top-pick slots. This separation prevents mixing with regular element colors.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L267-L281"><code>packages/common/src/colors.ts:267-281</code></a> defines sticky-note-specific colors:</p>
+<ul>
+  <li><code>DEFAULT_STICKY_NOTE_BG</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/colors.ts#L268"><code>packages/common/src/colors.ts:268</code></a> is <code>#ffdf6b</code> (yellow)</li>
+  <li><code>STICKY_NOTE_STROKE_PICKS</code> reuses the regular stroke picks</li>
+  <li><code>STICKY_NOTE_BACKGROUND_PICKS</code> uses classic note colors (yellow, pink, green, blue, orange) with transparent excluded</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/constants.ts#L225-L270"><code>packages/common/src/constants.ts:225-270</code></a> adds sticky-note geometry and styling constants including font sizes, padding, footer layout, and shadow properties.</p>
+
+<h2 id="text-wrapping-limits">Text Wrapping Limits</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/constants.ts#L25-L30"><code>packages/common/src/constants.ts:25-30</code></a> defines constants for text sizing and wrapping behavior:</p>
+<ul>
+  <li><code>TEXT_VIEWPORT_PADDING</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/constants.ts#L27"><code>packages/common/src/constants.ts:27</code></a> is 20px — room left at each side of the visible canvas when a text stops growing at its width or is brought into view once it wraps</li>
+  <li><code>TEXT_MAX_WRAP_WIDTH</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/common/src/constants.ts#L30"><code>packages/common/src/constants.ts:30</code></a> is 800px (in scene units, zoom-independent) — the maximum width a typed or pasted text can reach before it wraps</li>
+</ul>
+
+<h2 id="color-target-resolution">Color Target Resolution</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/colorTargets.ts"><code>packages/excalidraw/actions/colorTargets.ts</code></a> introduces a color targeting system that determines which domain (regular, sticky, or mixed) a color pick applies to.</p>
+
+<p><code>resolveColorTarget</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/colorTargets.ts#L103-L175"><code>packages/excalidraw/actions/colorTargets.ts:103-175</code></a> resolves at execution time:</p>
+<ul>
+  <li>Identifies selected elements that support the color property (stroke or background)</li>
+  <li>Includes bound text elements for stroke (a note’s visible text is its label)</li>
+  <li>Determines the domain: sticky notes target the sticky domain, regular elements target the regular domain, mixed selections target both</li>
+  <li>Returns the appropriate palette, top picks, and current-item defaults for the target kind</li>
+  <li>Provides <code>excludedColors</code> for sticky backgrounds (transparent is hidden, not removed)</li>
+</ul>
+
+<p><code>getColorTargetAppStateUpdates</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/colorTargets.ts#L177-L192"><code>packages/excalidraw/actions/colorTargets.ts:177-192</code></a> normalizes color values when writing to app state defaults — sticky stroke defaults must be dark, sticky background defaults must be opaque.</p>
+
+<h2 id="color-picker-interface">Color Picker Interface</h2>
+
+<p>The color picker UI is structured as a modal dialog with multiple sections: quick picks strip, hex input, base colors grid, shades, and custom colors.</p>
+
+<h3 id="main-color-picker-component">Main Color Picker Component</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L350-L494"><code>packages/excalidraw/components/ColorPicker/ColorPicker.tsx:350-494</code></a> renders the complete color picker interface. It manages popup visibility, theme application, and coordinates between multiple sub-components. The component uses memoization <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L509-L537"><code>packages/excalidraw/components/ColorPicker/ColorPicker.tsx:509-537</code></a> to avoid unnecessary re-renders during canvas interactions.</p>
+
+<h3 id="color-picker-trigger">Color Picker Trigger</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L267-L348"><code>packages/excalidraw/components/ColorPicker/ColorPicker.tsx:267-348</code></a> renders the trigger button showing the current color as an active swatch. It displays a slash icon when no color is selected and applies dark mode filtering to the displayed color. The trigger can be dragged onto the top-picks strip to pin the current color.</p>
+
+<h3 id="color-input">Color Input</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/ColorInput.tsx#L41-L59"><code>packages/excalidraw/components/ColorPicker/ColorInput.tsx:41-59</code></a> provides a hex color input field with validation and an eye dropper trigger. It normalizes input using <code>normalizeInputColor</code> and shows specific error messages for invalid hex lengths versus completely invalid colors.</p>
+
+<h3 id="picker-content-sections">Picker Content Sections</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/Picker.tsx#L49-L227"><code>packages/excalidraw/components/ColorPicker/Picker.tsx:49-227</code></a> coordinates the main picker sections:</p>
+<ul>
+  <li><strong>Custom Colors</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/CustomColorList.tsx"><code>packages/excalidraw/components/ColorPicker/CustomColorList.tsx</code></a> — shows up to 5 most-used custom colors detected from canvas elements</li>
+  <li><strong>Base Colors</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/PickerColorList.tsx"><code>packages/excalidraw/components/ColorPicker/PickerColorList.tsx</code></a> — displays all palette colors at the current shade level</li>
+  <li><strong>Shades</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/ShadeList.tsx"><code>packages/excalidraw/components/ColorPicker/ShadeList.tsx</code></a> — shows all 5 shades of the selected base color</li>
+</ul>
+
+<p>Each section displays keyboard hotkey labels for quick selection <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/HotkeyLabel.tsx"><code>packages/excalidraw/components/ColorPicker/HotkeyLabel.tsx</code></a>.</p>
+
+<h3 id="top-picks-strip">Top Picks Strip</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/TopPicks.tsx"><code>packages/excalidraw/components/ColorPicker/TopPicks.tsx</code></a> renders the quick picks strip with optional right-click context menu for resetting to defaults. When drag &amp; drop is enabled, it shows a “marching ants” outline during active drags.</p>
+
+<h2 id="custom-colors-and-most-used-tracking">Custom Colors and Most-Used Tracking</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/colorPickerUtils.ts#L55-L93"><code>packages/excalidraw/components/ColorPicker/colorPickerUtils.ts:55-93</code></a> implements <code>getMostUsedCustomColors</code> which scans canvas elements and identifies the 5 most frequently used colors not in the palette. This allows users to quickly re-access custom colors they’ve applied.</p>
+
+<p>The <code>isCustomColor</code> function <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/colorPickerUtils.ts#L44-L53"><code>packages/excalidraw/components/ColorPicker/colorPickerUtils.ts:44-53</code></a> determines whether a color is custom (not in the active palette).</p>
+
+<h2 id="keyboard-navigation">Keyboard Navigation</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/keyboardNavHandlers.ts"><code>packages/excalidraw/components/ColorPicker/keyboardNavHandlers.ts</code></a> implements keyboard shortcuts for the color picker:</p>
+
+<ul>
+  <li><strong>Number keys (1-5)</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/keyboardNavHandlers.ts#L87-L94"><code>packages/excalidraw/components/ColorPicker/keyboardNavHandlers.ts:87-94</code></a> select custom colors</li>
+  <li><strong>Letter keys</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/keyboardNavHandlers.ts#L96-L114"><code>packages/excalidraw/components/ColorPicker/keyboardNavHandlers.ts:96-114</code></a> select base colors using QWERTY layout mapped to grid positions</li>
+  <li><strong>Shift + Number</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/keyboardNavHandlers.ts#L74-L84"><code>packages/excalidraw/components/ColorPicker/keyboardNavHandlers.ts:74-84</code></a> selects specific shades</li>
+  <li><strong>Arrow keys</strong> navigate within sections</li>
+  <li><strong>Tab</strong> cycles between picker sections (custom → base colors → shades → hex input)</li>
+  <li><strong>Alt / I</strong> toggles the eye dropper tool</li>
+  <li><strong>Escape</strong> closes the picker</li>
+</ul>
+
+<p>The <code>colorPickerHotkeyBindings</code> array <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/colorPickerUtils.ts#L38-L42"><code>packages/excalidraw/components/ColorPicker/colorPickerUtils.ts:38-42</code></a> maps keyboard hotkeys to color positions in the palette grid.</p>
+
+<h2 id="drag-and-drop-for-top-picks">Drag and Drop for Top Picks</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx"><code>packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx</code></a> implements custom pointer-based drag &amp; drop for customizing the top picks strip without native HTML5 drag events (which cause flickering).</p>
+
+<p>Key features:</p>
+<ul>
+  <li><strong>Swatch dragging</strong> — drag any color swatch from the picker popup or active-color trigger onto the strip to pin it</li>
+  <li><strong>Pick reordering</strong> — drag picks to reorder them within the strip</li>
+  <li><strong>Duplicate detection</strong> — prevents the same color from occupying multiple slots through value-equality comparison</li>
+  <li><strong>Visual feedback</strong> — animated ghost element follows the pointer, slot highlighting, and “marching ants” outline</li>
+  <li><strong>Threshold handling</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx#L19-L22"><code>packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx:19-22</code></a> — requires 100ms hold + 10px movement to activate drag (prevents accidental drags on fast clicks)</li>
+</ul>
+
+<p>The drag state <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx#L31-L41"><code>packages/excalidraw/components/TopPicksDnD/topPicksDnD.tsx:31-41</code></a> tracks origin (palette swatch vs. strip pick), hover index, and duplicate conflicts.</p>
+
+<p>Color-specific drag &amp; drop is implemented in <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/colorTopPicksDnD.ts"><code>packages/excalidraw/components/ColorPicker/colorTopPicksDnD.ts</code></a> which uses color-equality checking to detect duplicates across different color notations.</p>
+
+<h2 id="theme-integration">Theme Integration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/ColorPicker.tsx#L289-L291"><code>packages/excalidraw/components/ColorPicker/ColorPicker.tsx:289-291</code></a> applies <code>applyDarkModeFilter</code> to display colors appropriately in dark mode. The color picker respects the application theme when rendering swatches and determining text contrast for hotkey labels.</p>
+
+<h2 id="styling">Styling</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/ColorPicker/ColorPicker.scss"><code>packages/excalidraw/components/ColorPicker/ColorPicker.scss</code></a> provides comprehensive styling:</p>
+<ul>
+  <li><strong>Button styling</strong> — swatch buttons with outline indicators, active states, and focus-visible rings</li>
+  <li><strong>Transparent pattern</strong> — data URI PNG checkerboard for transparent swatches</li>
+  <li><strong>DnD animations</strong> — smooth transitions for drag preview scaling and “marching ants” dash animation</li>
+  <li><strong>Grid layout</strong> — 5-column layout for palette colors with responsive sizing on mobile</li>
+</ul>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Dark mode filtering moved from CSS to JavaScript</strong> (commit f1a79b73df5b): The interactive canvas was filtered via CSS in dark mode, costing performance on software-rendered browsers. Colors are now mapped in JavaScript via <code>applyDarkModeFilter</code>, with hardcoded equivalents of the previous filter results. This fixes performance on Firefox/Zen and allows collaborator cursors and selection outlines to render in actual colors instead of inverted ones.</p>
+
+<p><strong>Sticky notes are their own color domain</strong> (commit afa3a653fc5d, decision D2): Sticky notes have separate <code>currentItemStickynoteStrokeColor</code> and <code>currentItemStickynoteBackgroundColor</code> defaults, their own top-pick slots, and transparent is excluded from background picks. The <code>resolveColorTarget</code> function determines at execution time which domain a pick targets, enabling mixed selections to write both domains.</p>
+
+<h2 id="related-pages">Related Pages</h2>
+
+<ul>
+  <li><a href="actions-system.html">Actions and Command System</a> — color changes trigger element updates</li>
+  <li><a href="properties-panel.html">Properties and Stats Panel</a> — color picker integrated in properties panel</li>
+  <li><a href="toolbar-tools.html">Toolbar and Tools</a> — color selection in drawing tools</li>
+  <li><a href="element-data-model.html">Element Data Model and Types</a> — elements store strokeColor and backgroundColor</li>
+  <li><a href="app-state.html">Application State Management</a> — colorTopPicks stored in appState for persistence</li>
+  <li><a href="text-editing.html">Text Editing and Typography</a> — text wrapping uses viewport padding and max width constants</li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

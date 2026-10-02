@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shape Generation and Drawing · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html" aria-current="page">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><p>The diff shows several changes across multiple files. Let me identify what needs updating in the wiki page:</p>
+
+<ol>
+  <li><strong>convertToShape.ts</strong>: Added <code>created</code> timestamp tracking to preview elements (lines 800-803)</li>
+  <li><strong>dragElements.ts</strong>: Logic refactoring in arrow binding checks (lines 141-146) - but this doesn’t affect the wiki’s accuracy</li>
+  <li><strong>shape.ts</strong>:
+    <ul>
+      <li>New imports: <code>pointsOnBezierCurves</code> and <code>polygonFromPoints</code> (line 1, 19)</li>
+      <li>New functions: <code>getFreedrawFillCurvePoints</code>, <code>getFreedrawFillPolygon</code> (lines 579-619)</li>
+      <li>Updated <code>generateLinearCollisionShape</code> for freedraw (lines 720-759) - completely rewritten</li>
+      <li>Added <code>stickynote</code> case to <code>_generateElementShape</code> (lines 998)</li>
+      <li>Added <code>stickynote</code> case to <code>getElementShape</code> (line 1093)</li>
+      <li>New constant and function: <code>CONSTANT_WIDTH_FREEDRAW.COLLISION_SIMPLIFY_TOLERANCE</code> and <code>getFreedrawMaxStrokeRadius</code> (lines 1207-1292)</li>
+    </ul>
+  </li>
+  <li><strong>App.drawshape.ts</strong>: Function signature changes for <code>getHoveredElementForBinding</code> (zoom parameter instead of bindingDistance) and <code>bindBindingElement</code> (added zoom parameter)</li>
+</ol>
+
+<p>Now I’ll update the page:</p>
+
+<h1 id="shape-generation-and-drawing">Shape Generation and Drawing</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>This page covers the algorithms and systems for creating shapes from freehand input, recognizing user intent, and converting strokes into structured drawing elements like rectangles, diamonds, ellipses, lines, and arrows.</p>
+
+<h2 id="shape-recognition">Shape Recognition</h2>
+
+<p>The shape recognizer is a moment-based statistical classifier that analyzes strokes in feature space rather than requiring rotation-invariant or scale-invariant matching. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L62-L65"><code>packages/element/src/convertToShape.ts:62-65</code></a></p>
+
+<h3 id="feature-extraction">Feature Extraction</h3>
+
+<p>Shape recognition starts by resampling input points to exactly 64 evenly-spaced points along the stroke path, independent of drawing speed. [[cite:packages/element/src/convertToShape.ts:90-91,139-189]] This normalization ensures that fast strokes don’t crowd samples near slow sections.</p>
+
+<p>The system then extracts six statistical features from the resampled points: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L193-L229"><code>packages/element/src/convertToShape.ts:193-229</code></a></p>
+
+<ul>
+  <li><strong>gapRatio</strong>: ratio of straight-line distance between endpoints to the stroke’s path length (~0 for closed shapes, ~1 for straight lines)</li>
+  <li><strong>elongation</strong>: point cloud elongation along the major axis</li>
+  <li><strong>majorSkew</strong>: skew of points projected onto the major axis (signed)</li>
+  <li><strong>hullFillRatio</strong>: convex hull area divided by axis-aligned bounding box area (~1 for rectangles, ~π/4 for ellipses, ~0.5 for diamonds)</li>
+  <li><strong>cornerTurnShare</strong>: fraction of total turning concentrated in the 4 strongest corners (~1 for quadrilaterals, ~0.5 for ellipses)</li>
+  <li><strong>kurtosisProduct</strong>: product of x and y kurtosis in screen frame (distinguishes rectangles, diamonds, and ellipses)</li>
+  <li><strong>shaftDeviationRatio</strong>: how far a stroke strays from the chord between start and tip, exempting an arrowhead zone</li>
+</ul>
+
+<h3 id="classification">Classification</h3>
+
+<p>After extracting features, the stroke is classified into one of six types: rectangle, diamond, ellipse, line, arrow, or freedraw (default). <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L434-L438"><code>packages/element/src/convertToShape.ts:434-438</code></a></p>
+
+<p><strong>Closed vs. open detection</strong> uses the gap ratio threshold: if endpoints are more than 15% of path length apart, the stroke is open. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L102-L105"><code>packages/element/src/convertToShape.ts:102-105</code></a></p>
+
+<p><strong>Closed shape classification</strong> uses 3D feature space matching against prototypes (rectangle, diamond, ellipse), computing distance in normalized feature coordinates. The stroke is classified as freedraw if no prototype is close enough. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L364-L420"><code>packages/element/src/convertToShape.ts:364-420</code></a></p>
+
+<p><strong>Open stroke classification</strong> checks straightness: if elongation exceeds 0.25 or shaft deviation exceeds 0.15, the stroke becomes freedraw. Otherwise, the major skew determines arrow vs. line — skew magnitude ≥ 0.3 indicates an arrow. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L422-L432"><code>packages/element/src/convertToShape.ts:422-432</code></a></p>
+
+<h3 id="size-gate-and-recognition-thresholds">Size Gate and Recognition Thresholds</h3>
+
+<p>Recognition only runs on strokes with bounding box dimension ≥ 25 pixels (at current zoom), below which the stroke reads as accidental scribble. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L93-L100"><code>packages/element/src/convertToShape.ts:93-100</code></a></p>
+
+<p>For arrows, the arrowhead zone within 50% of the start→tip distance is exempt from shaft straightness checks, allowing realistic arrowhead variation. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L110-L112"><code>packages/element/src/convertToShape.ts:110-112</code></a></p>
+
+<h3 id="arrow-endpoint-selection">Arrow Endpoint Selection</h3>
+
+<p>When a stroke is recognized as an arrow, the actual tip is determined by finding the perimeter point of the bounding box farthest from the start, then selecting the closest original input point to that ideal tip. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L442-L495"><code>packages/element/src/convertToShape.ts:442-495</code></a> This ensures the arrow endpoint lies on the bounding box rather than following raw hand-drawn deviation.</p>
+
+<h2 id="element-conversion">Element Conversion</h2>
+
+<p>The <code>convertToShape</code> function transforms recognition results into concrete element objects positioned in the scene. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L535-L728"><code>packages/element/src/convertToShape.ts:535-728</code></a></p>
+
+<p>For rectangles, diamonds, and ellipses, a bounding-box-based element is created with position, dimensions, and styling from app state. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L568-L593"><code>packages/element/src/convertToShape.ts:568-593</code></a></p>
+
+<p>For arrows and lines, points are normalized via <code>LinearElementEditor.getNormalizeElementPointsAndCoords()</code> to ensure consistent internal representation. Short arrows (&lt; 60 pixels) are converted to lines instead. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L594-L684"><code>packages/element/src/convertToShape.ts:594-684</code></a></p>
+
+<p>Frame membership is determined by finding frame-like elements that contain the stroke’s bounding box. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L551-L557"><code>packages/element/src/convertToShape.ts:551-557</code></a></p>
+
+<h2 id="shape-drawing-and-rendering">Shape Drawing and Rendering</h2>
+
+<h3 id="roughjs-shape-generation">Rough.js Shape Generation</h3>
+
+<p>The <code>ShapeCache</code> class wraps RoughJS shape generation with caching. When an element is modified or deleted, its cached shape is invalidated. During export, shapes are always regenerated to guarantee the latest version. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L82-L165"><code>packages/element/src/shape.ts:82-165</code></a></p>
+
+<p>Rough options are generated per-element type, handling stroke styles (solid, dashed, dotted), roughness adjustment for small elements, and fill styles. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L195-L260"><code>packages/element/src/shape.ts:195-260</code></a></p>
+
+<h3 id="path-generation">Path Generation</h3>
+
+<p>For rectangles and diamonds with roundness, SVG paths with rounded corners are generated. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L787-L878"><code>packages/element/src/shape.ts:787-878</code></a></p>
+
+<p>Elbow arrows use quadratic curves to smooth corners, with radii clamped to 16 pixels or half the segment length. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L1018-L1081"><code>packages/element/src/shape.ts:1018-1081</code></a></p>
+
+<p>Arrowheads support multiple types (triangle, diamond, circle, cardinality symbols) with different fill and outline styles. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L371-L577"><code>packages/element/src/shape.ts:371-577</code></a></p>
+
+<h3 id="freedraw-geometry">Freedraw Geometry</h3>
+
+<p>Freedraw strokes support two rendering modes:</p>
+
+<ul>
+  <li><strong>Variable width (default)</strong>: pressure-sensitive rendering via perfect-freehand library, with empirically tuned size factor of 4.25× stroke width, thinning of 0.6, and smoothing of 0.5. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L1224-L1245"><code>packages/element/src/shape.ts:1224-1245</code></a></li>
+  <li><strong>Constant width</strong>: uniform laser-pointer geometry with size factor of 1.4×, useful for stylus or pen simulation. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L1259-L1268"><code>packages/element/src/shape.ts:1259-1268</code></a></li>
+</ul>
+
+<p>The rendered outline is converted to an SVG path via quadratic Bézier curves between points, with precision trimmed to 2 decimal places. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L1323-L1346"><code>packages/element/src/shape.ts:1323-1346</code></a></p>
+
+<p>For collision detection, freedraw uses simplified outline points. The constant-width mode applies additional simplification at 0.2 pixel tolerance to reduce vertex density. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L720-L759"><code>packages/element/src/shape.ts:720-759</code></a></p>
+
+<h3 id="freedraw-fill-polygon">Freedraw Fill Polygon</h3>
+
+<p>For freedraw strokes that form closed loops, a filled polygon is computed from the simplified centerline. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L579-L619"><code>packages/element/src/shape.ts:579-619</code></a> The fill follows the rendered curve geometry without roughness jitter, using Bézier interpolation to maintain smoothness. A cache tracks the polygon per element version to avoid recomputation.</p>
+
+<h2 id="drawing-workflow">Drawing Workflow</h2>
+
+<p>The drawing gesture is managed by <code>AppDrawShape</code>, which captures pointer events and maintains the trail of input points. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.drawshape.ts#L40-L49"><code>packages/excalidraw/components/App.drawshape.ts:40-49</code></a></p>
+
+<h3 id="live-preview">Live Preview</h3>
+
+<p>During drawing, <code>convertToShapeHandlePointerMoveFromPointerDown</code> is called on each pointer move to generate a live preview. Lines are skipped from preview (to avoid flicker—nearly every stroke reads as a line early on). The preview element retains a stable ID across frames while the recognized type is unchanged, and preserves its <code>created</code> timestamp across recognition updates. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L767-L821"><code>packages/element/src/convertToShape.ts:767-821</code></a></p>
+
+<h3 id="finalization">Finalization</h3>
+
+<p>On pointer up (or other finalization trigger), <code>finalize()</code> re-recognizes the complete stroke and either uses the cached preview or converts from scratch. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.drawshape.ts#L222-L262"><code>packages/excalidraw/components/App.drawshape.ts:222-262</code></a></p>
+
+<p>For lines touching bindable elements (shapes, images), the line is upgraded to an arrow. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.drawshape.ts#L171-L215"><code>packages/excalidraw/components/App.drawshape.ts:171-215</code></a> Arrow endpoints then bind in “orbit” mode (outline) unless both ends touch the same shape, in which case they bind “inside”. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.drawshape.ts#L90-L162"><code>packages/excalidraw/components/App.drawshape.ts:90-162</code></a></p>
+
+<h2 id="decisions">Decisions</h2>
+
+<ul>
+  <li>
+    <p><strong>Moment-based recognition over template matching</strong>: Allows rotation-aware shape detection without requiring hundreds of training templates. Rectangle vs. diamond is deliberately <em>not</em> rotation invariant—a 45° rotated rectangle is a diamond. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L62-L65"><code>packages/element/src/convertToShape.ts:62-65</code></a></p>
+  </li>
+  <li>
+    <p><strong>Live preview excludes lines</strong>: Nearly every stroke reads as a line at some early point, so previewing them causes excessive flicker. The gesture still commits the line when released. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/convertToShape.ts#L785-L788"><code>packages/element/src/convertToShape.ts:785-788</code></a></p>
+  </li>
+  <li>
+    <p><strong>Freedraw streamline tuning via empirical visual comparison</strong>: The size factors, thinning, and smoothing parameters were tuned by comparing rendered strokes rather than derived analytically, ensuring they feel natural to users. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/shape.ts#L1194-L1205"><code>packages/element/src/shape.ts:1194-1205</code></a></p>
+  </li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

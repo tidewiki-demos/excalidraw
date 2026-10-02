@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrows and Bindings · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html" aria-current="page">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="arrows-and-bindings">Arrows and Bindings</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Arrows in Excalidraw connect elements and can be bound to their endpoints. This system manages arrow creation, endpoint binding to shapes, arrow labels, and routing for elbow arrows.</p>
+
+<h2 id="arrow-element-creation">Arrow Element Creation</h2>
+
+<p>Arrows are <a href="element-data-model.html">linear elements</a> with at least two points: a start and an end. They can have arrowheads at either or both endpoints and support two routing modes: straight lines (simple arrows) and elbow-style (orthogonal) paths.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L117-L118"><code>packages/element/src/binding.ts:117-118</code></a> defines baseline gaps between arrow endpoints and bindable elements, plus a minimum arrow length to prevent inversion.</p>
+
+<h2 id="endpoint-binding-to-elements">Endpoint Binding to Elements</h2>
+
+<p>Arrows bind to other elements (rectangles, diamonds, ellipses) through binding objects stored on the arrow’s <code>startBinding</code> and <code>endBinding</code> properties. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L92-L110"><code>packages/element/src/binding.ts:92-110</code></a> describes the <code>BindingStrategy</code> type, which can create a new binding, break an existing one, or keep it unchanged.</p>
+
+<h3 id="binding-modes">Binding Modes</h3>
+
+<p>Two binding modes exist:</p>
+
+<ul>
+  <li><strong>Inside binding</strong>: The arrow endpoint sits inside the target element’s interior. This is used when both endpoints of an arrow are bound to the same element.</li>
+  <li><strong>Orbit binding</strong>: The arrow endpoint is positioned outside the target element, on or near its outline. The binding gap creates clearance between the outline and the arrowhead.</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L1141-L1185"><code>packages/element/src/binding.ts:1141-1185</code></a> shows <code>bindBindingElement</code>, which establishes a new binding and records it bidirectionally—both on the arrow and in the target element’s <code>boundElements</code> list. For elbow arrows, binding always uses “orbit” mode.</p>
+
+<h3 id="fixed-points">Fixed Points</h3>
+
+<p>Bindings store a <code>fixedPoint</code>—a proportional coordinate <code>[x, y]</code> within the target element’s bounds (typically 0.0–1.0). This allows the arrow endpoint to move with the element if it is resized or rotated. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L2670-L2685"><code>packages/element/src/binding.ts:2670-2685</code></a> converts a fixed point ratio to global coordinates for rendering.</p>
+
+<h3 id="binding-gap-and-snapping">Binding Gap and Snapping</h3>
+
+<p>The binding gap is added to the stroke width. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L125-L131"><code>packages/element/src/binding.ts:125-131</code></a> calculates this. When an arrow endpoint is dragged, it snaps to the nearest point on the target element’s outline, staying <code>gap</code> distance outside. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L1617-L1763"><code>packages/element/src/binding.ts:1617-1763</code></a> implements <code>bindPointToSnapToElementOutline</code>, which uses line intersection to find the correct outline point.</p>
+
+<h2 id="arrow-endpoint-labels">Arrow-Endpoint Labels</h2>
+
+<p>Text elements can be bound to arrow endpoints, reading as labels for the arrow tip. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/arrowEndpointText.ts#L1-L9"><code>packages/element/src/arrowEndpointText.ts:1-9</code></a> explains that the App-side interaction lives elsewhere, but the binding bookkeeping is here.</p>
+
+<h3 id="creating-endpoint-bound-text">Creating Endpoint-Bound Text</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/arrowEndpointText.ts#L133-L252"><code>packages/element/src/arrowEndpointText.ts:133-252</code></a> defines <code>getTextBindingForArrowEndpoint</code>. It:</p>
+
+<ol>
+  <li>Determines the arrow’s direction as it reaches the endpoint, snapped to a cardinal or diagonal axis.</li>
+  <li>Picks the side of the text that points toward the arrowhead.</li>
+  <li>Places the text so that side’s midpoint lands on the arrow endpoint.</li>
+  <li>Returns the alignment and anchor point for text creation.</li>
+</ol>
+
+<p>For elbow arrows, the text binds directly to the endpoint without a gap <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/arrowEndpointText.ts#L189-L191"><code>packages/element/src/arrowEndpointText.ts:189-191</code></a>. For other arrows, it offsets back along the arrow to keep the tip clear.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/arrowEndpointText.ts#L61-L121"><code>packages/element/src/arrowEndpointText.ts:61-121</code></a> finds unbound arrow endpoints under the cursor, filtering for endpoints that are not already bound and have a valid direction.</p>
+
+<h3 id="checking-endpoint-bindings">Checking Endpoint Bindings</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/arrowEndpointText.ts#L260-L276"><code>packages/element/src/arrowEndpointText.ts:260-276</code></a> tests whether a text element is bound as an endpoint label by checking the arrows’ own bindings (the authoritative side).</p>
+
+<h2 id="focus-points-and-binding-updates">Focus Points and Binding Updates</h2>
+
+<p>When dragging an arrow endpoint’s binding interactively, a “focus point” is displayed on the target element. This is the point on the element that the arrow will connect to. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/arrows/focus.ts#L37-L100"><code>packages/element/src/arrows/focus.ts:37-100</code></a> determines visibility of the focus point, hiding it when it overlaps the arrow endpoint itself or when the arrow does not have exactly two points.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/arrows/focus.ts#L211-L340"><code>packages/element/src/arrows/focus.ts:211-340</code></a> handles focus point dragging: it updates the binding on the target element and adjusts the arrow’s endpoints to keep the path correct. If the dragged focus point moves to a new element, the binding is transferred. If it moves away from all bindable elements, the binding is cleared.</p>
+
+<h2 id="elbow-arrow-routing">Elbow Arrow Routing</h2>
+
+<p>Elbow arrows route orthogonally (horizontally and vertically only) between endpoints. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/elbowArrow.ts#L907-L1167"><code>packages/element/src/elbowArrow.ts:907-1167</code></a> shows <code>updateElbowArrowPoints</code>, the main entry point for elbow arrow updates.</p>
+
+<h3 id="routing-algorithm">Routing Algorithm</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/elbowArrow.ts#L1439-L1507"><code>packages/element/src/elbowArrow.ts:1439-1507</code></a> implements <code>routeElbowArrow</code> using the A* pathfinding algorithm. It:</p>
+
+<ol>
+  <li>Builds a non-uniform grid from bounding boxes of bindable elements and the arrow endpoints.</li>
+  <li>Runs A* to find the shortest path avoiding obstacles.</li>
+  <li>Returns waypoints for the arrow, with special handling for “dongles”—short connectors from the arrow endpoint to the grid.</li>
+</ol>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/elbowArrow.ts#L1537-L1646"><code>packages/element/src/elbowArrow.ts:1537-1646</code></a> is the A* implementation, penalizing direction changes (bends) and preventing backward movement along the same segment.</p>
+
+<h3 id="fixed-segments">Fixed Segments</h3>
+
+<p>Elbow arrows support fixed segments—segments the user has manually pinned that should not change during routing. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/elbowArrow.ts#L465-L704"><code>packages/element/src/elbowArrow.ts:465-704</code></a> handles segment moves by adjusting surrounding segments to maintain connectivity. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/elbowArrow.ts#L282-L460"><code>packages/element/src/elbowArrow.ts:282-460</code></a> handles segment release, restoring the automatic routing for the freed space.</p>
+
+<h3 id="special-points">Special Points</h3>
+
+<p>When a fixed segment is added at the start or end, a “special point” flag (<code>startIsSpecial</code> / <code>endIsSpecial</code>) is set, indicating that an extra segment connects the endpoint to the fixed segment. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/elbowArrow.ts#L706-L900"><code>packages/element/src/elbowArrow.ts:706-900</code></a> shows <code>handleEndpointDrag</code>, which manages these special points when endpoints move.</p>
+
+<h2 id="updating-and-rebinding">Updating and Rebinding</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L1431-L1494"><code>packages/element/src/binding.ts:1431-1494</code></a> shows <code>updateArrowBindings</code>, called when a bindable element changes. It iterates through all arrows bound to that element and updates their endpoints so they stay attached.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L1496-L1533"><code>packages/element/src/binding.ts:1496-1533</code></a> is the public <code>updateBindings</code> function, which handles both arrow binding updates (when the arrow moves) and bindable element updates (when the shape moves).</p>
+
+<h2 id="cleanup-and-duplication">Cleanup and Duplication</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L2249-L2319"><code>packages/element/src/binding.ts:2249-2319</code></a> fixes bindings after element duplication, remapping binding IDs to point to the duplicated targets.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L2321-L2335"><code>packages/element/src/binding.ts:2321-2335</code></a> cleans up bindings when elements are deleted, using the <code>BoundElement</code> and <code>BindableElement</code> classes to unbind and rebind affected arrows and shapes bidirectionally.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Simplified binding gap calculation (commits 31df3e6ef245, dc2c16d9e207)</strong>: The <code>getBindingGap</code> function previously took an <code>opts</code> parameter with the <code>elbowed</code> flag and had a separate <code>BASE_BINDING_GAP_ELBOW</code> constant. Both elbow and non-elbow arrows now use <code>BASE_BINDING_GAP</code>, simplifying the API. This was part of follow-ups to the binding hit test rework.</p>
+
+<p><strong>Binding hit test now takes zoom parameter (commit 4850bf336fe0)</strong>: Functions like <code>getHoveredElementForBinding</code> and <code>getAllHoveredElementAtPoint</code> now accept a <code>zoom</code> parameter directly instead of using <code>maxBindingDistance_simple(zoom)</code> at call sites. This centralizes zoom handling and ensures consistent behavior across binding operations.</p>
+
+<p><strong>Reanchoring bindings to outline (commit dc2c16d9e207)</strong>: A new <code>reanchorBindingsToOutline</code> function handles the case where a bindable element changes shape (e.g., via type conversion). For elbow arrows, it recalculates the fixed point using the new outline. For simple arrows, it recomputes the fixed point if the original focus point drifts outside the element or inside it unexpectedly.</p>
+
+<p><strong>Cached ID set for simultaneously updated elements (commits 84e3f5a40c5f, 74423812ec59)</strong>: To avoid O(n²) behavior when updating many elements, <code>getSimultaneouslyUpdatedElementIds</code> now caches the ID set per array in a WeakMap <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/binding.ts#L1545-L1572"><code>packages/element/src/binding.ts:1545-1572</code></a>. Callers must pass a single array instance for all elements in an operation and not modify its membership afterward. This optimization reduced multi-element resize and drag operations by 60–90%.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

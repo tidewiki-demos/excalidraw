@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frames and Groups · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html" aria-current="page">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="frames-and-groups">Frames and Groups</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Frames and groups are two hierarchical organizational systems in Excalidraw that structure elements on the canvas. Frames act as containers that can hold elements and define spatial regions, while groups are logical associations of elements that move and transform together. Both systems interact with the core element model and influence rendering, selection, and manipulation behavior.</p>
+
+<h2 id="frames">Frames</h2>
+
+<p>Frames are container elements that establish a visual and logical boundary on the canvas. Each frame has a unique ID and can contain child elements. Elements belong to a frame through their <code>frameId</code> property <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L440-L445"><code>packages/element/src/frame.ts:440-445</code></a>.</p>
+
+<h3 id="frame-containment-and-relationships">Frame Containment and Relationships</h3>
+
+<p>Several functions determine whether elements are contained within, intersecting with, or overlapping frames:</p>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L75-L91"><code>packages/element/src/frame.ts:75-91</code></a> <code>isElementIntersectingFrame()</code> checks if an element’s line segments intersect with a frame’s boundaries using geometric intersection testing</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L93-L104"><code>packages/element/src/frame.ts:93-104</code></a> <code>getElementsCompletelyInFrame()</code> returns elements wholly contained within a frame’s bounds, filtering out partial group memberships and nested frame-like elements</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L148-L158"><code>packages/element/src/frame.ts:148-158</code></a> <code>elementOverlapsWithFrame()</code> tests multiple overlap conditions: containment, intersection, and complete spatial overlap</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L160-L175"><code>packages/element/src/frame.ts:160-175</code></a> <code>isCursorInFrame()</code> determines if a cursor position lies within frame bounds</li>
+</ul>
+
+<h3 id="frame-children-management">Frame Children Management</h3>
+
+<p>Frame membership is managed through direct element operations:</p>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L242-L253"><code>packages/element/src/frame.ts:242-253</code></a> <code>getFrameChildren()</code> retrieves all elements belonging to a frame by iterating elements and matching <code>frameId</code></li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L226-L240"><code>packages/element/src/frame.ts:226-240</code></a> <code>groupByFrameLikes()</code> creates a map of frame IDs to their child elements, including empty frames</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L271-L281"><code>packages/element/src/frame.ts:271-281</code></a> <code>getRootElements()</code> filters elements that are frame-like themselves or have no frame parent, treating orphaned children (pointing to non-existent frames) as root elements</li>
+</ul>
+
+<h3 id="adding-and-removing-elements-from-frames">Adding and Removing Elements from Frames</h3>
+
+<p>Frame membership changes are handled with operations that preserve element ordering and handle bound text:</p>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L544-L635"><code>packages/element/src/frame.ts:544-635</code></a> <code>addElementsToFrame()</code> adds elements to a frame and reorders them to sit below the frame or above its highest existing child. It automatically includes bound text elements and maintains consistent ordering by syncing fractional indices. If all elements already belong to the target frame (mixed selection), it skips reordering.</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L637-L673"><code>packages/element/src/frame.ts:637-673</code></a> <code>removeElementsFromFrame()</code> removes elements from their frames and clears their <code>frameId</code> property, also handling bound text elements</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L675-L694"><code>packages/element/src/frame.ts:675-694</code></a> <code>replaceAllElementsInFrame()</code> atomically removes all children from a frame and adds a new set, used when resizing or restructuring frame contents</li>
+</ul>
+
+<h3 id="frame-resizing-and-dynamic-membership">Frame Resizing and Dynamic Membership</h3>
+
+<p>When a frame is resized, its child membership can change dynamically:</p>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L283-L378"><code>packages/element/src/frame.ts:283-378</code></a> <code>getElementsInResizingFrame()</code> determines which elements should belong to a frame during resize operations. It preserves elements completely within the frame or containing the frame, removes non-intersecting elements, and respects group membership—if any element in a group intersects the frame, the entire group is kept. This function also handles the special case of elements being edited within groups.</li>
+</ul>
+
+<h3 id="frame-eligibility-and-filtering">Frame Eligibility and Filtering</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L450-L501"><code>packages/element/src/frame.ts:450-501</code></a> <code>filterElementsEligibleAsFrameChildren()</code> identifies which elements can be added to a frame, excluding other frames and their children, ensuring only overlapping ungrouped elements or groups that overlap the frame are eligible</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L395-L434"><code>packages/element/src/frame.ts:395-434</code></a> <code>omitPartialGroups()</code> removes elements from groups that are only partially within a frame, ensuring frame children maintain group integrity</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L747-L784"><code>packages/element/src/frame.ts:747-784</code></a> <code>omitGroupsContainingFrameLikes()</code> filters out entire groups if any member is a frame, preventing frames from being grouped with other elements</li>
+</ul>
+
+<h3 id="frame-queries-and-selection">Frame Queries and Selection</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L503-L519"><code>packages/element/src/frame.ts:503-519</code></a> <code>getCommonFrameId()</code> returns a frame ID shared by all elements, or null if they have different or no frames</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L521-L536"><code>packages/element/src/frame.ts:521-536</code></a> <code>getFrameChildrenInsertionIndex()</code> finds the position in the element array where new frame children should be inserted</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L983-L998"><code>packages/element/src/frame.ts:983-998</code></a> <code>getElementsOverlappingFrame()</code> returns elements that both overlap frame bounds and are either frameless or in the same frame</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L1000-L1011"><code>packages/element/src/frame.ts:1000-1011</code></a> <code>frameAndChildrenSelectedTogether()</code> detects when a frame and its children are both in the selection, which affects how transformations are applied</li>
+</ul>
+
+<h3 id="frame-state-during-interactions">Frame State During Interactions</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L50-L73"><code>packages/element/src/frame.ts:50-73</code></a> <code>bindElementsToFramesAfterDuplication()</code> updates <code>frameId</code> references after duplication, mapping original frame IDs to their duplicates so copied elements point to the correct new frame</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L697-L741"><code>packages/element/src/frame.ts:697-741</code></a> <code>updateFrameMembershipOfSelectedElements()</code> adjusts frame membership of selected elements being dragged, removing elements that no longer overlap their frame</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L790-L813"><code>packages/element/src/frame.ts:790-813</code></a> <code>getTargetFrame()</code> determines which frame an element will be added to or removed from based on selection state and drag operations</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L815-L909"><code>packages/element/src/frame.ts:815-909</code></a> <code>isElementInFrame()</code> is marked as a performance bottleneck but comprehensively checks if an element belongs in a frame, accounting for dragging state, group membership, and nested editing contexts</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L911-L969"><code>packages/element/src/frame.ts:911-969</code></a> <code>shouldApplyFrameClip()</code> determines whether an element should be clipped to frame boundaries during rendering, considering both individual element overlap and group membership</li>
+</ul>
+
+<h3 id="frame-display-and-metadata">Frame Display and Metadata</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L974-L981"><code>packages/element/src/frame.ts:974-981</code></a> <code>getDefaultFrameName()</code> and <code>getFrameLikeTitle()</code> provide frame names, using defaults like “Frame” or “AI Frame” if the frame has no custom name</li>
+</ul>
+
+<h2 id="groups">Groups</h2>
+
+<p>Groups are logical collections of elements that share a <code>groupIds</code> array. An element can belong to multiple nested groups, with the array ordered from outermost to innermost group. Groups enable coordinated selection, transformation, and deletion.</p>
+
+<h3 id="group-selection">Group Selection</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L24-L64"><code>packages/element/src/groups.ts:24-64</code></a> <code>selectGroup()</code> selects all elements in a group, returning updated <code>selectedElementIds</code>, <code>selectedGroupIds</code>, and <code>editingGroupId</code> state. If fewer than two elements are in a group, it deselects rather than selects.</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L66-L209"><code>packages/element/src/groups.ts:66-209</code></a> <code>selectGroupsForSelectedElements()</code> is a memoized function that automatically promotes individual element selections to group selections when appropriate, unless the group is currently being edited. It caches results based on element identity to optimize repeated calls.</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L243-L270"><code>packages/element/src/groups.ts:243-270</code></a> <code>selectGroupsFromGivenElements()</code> derives which groups should be selected from a set of elements, used when building frame children or determining structural updates</li>
+</ul>
+
+<h3 id="group-membership-queries">Group Membership Queries</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L286-L304"><code>packages/element/src/groups.ts:286-304</code></a> <code>getElementsInGroup()</code> retrieves all elements sharing a group ID</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L286-L287"><code>packages/element/src/groups.ts:286-287</code></a> <code>isElementInGroup()</code> checks if an element belongs to a specific group</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L393-L395"><code>packages/element/src/groups.ts:393-395</code></a> <code>isInGroup()</code> tests if an element belongs to any group</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L376-L391"><code>packages/element/src/groups.ts:376-391</code></a> <code>elementsAreInSameGroup()</code> verifies whether all elements share at least one common group</li>
+</ul>
+
+<h3 id="group-selection-state">Group Selection State</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L215-L232"><code>packages/element/src/groups.ts:215-232</code></a> <code>isSelectedViaGroup()</code> and <code>getSelectedGroupForElement()</code> check if an element’s group is selected rather than the element itself, affecting how selection borders are rendered</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L234-L239"><code>packages/element/src/groups.ts:234-239</code></a> <code>getSelectedGroupIds()</code> extracts the list of currently selected group IDs from app state</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L306-L309"><code>packages/element/src/groups.ts:306-309</code></a> <code>getSelectedGroupIdForElement()</code> finds which of an element’s groups (if any) is currently selected</li>
+</ul>
+
+<h3 id="group-hierarchy-and-structure">Group Hierarchy and Structure</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L311-L325"><code>packages/element/src/groups.ts:311-325</code></a> <code>addToGroup()</code> inserts a group ID into an element’s group array, respecting the position of any currently-editing group</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L327-L330"><code>packages/element/src/groups.ts:327-330</code></a> <code>removeFromSelectedGroups()</code> filters out selected group IDs from an element’s group array</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L332-L356"><code>packages/element/src/groups.ts:332-356</code></a> <code>getMaximumGroups()</code> partitions elements into their “maximum” groups—either their outermost group or individual ID if ungrouped—and includes bound text elements with each group</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L358-L374"><code>packages/element/src/groups.ts:358-374</code></a> <code>getNonDeletedGroupIds()</code> collects all group IDs from non-deleted elements, used for cleanup and validation</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L417-L466"><code>packages/element/src/groups.ts:417-466</code></a> <code>getSelectedElementsByGroup()</code> organizes selected elements into buckets by group hierarchy, respecting nested group structure and appending bound text after containers</li>
+</ul>
+
+<h3 id="group-editing">Group Editing</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L272-L284"><code>packages/element/src/groups.ts:272-284</code></a> <code>editGroupForSelectedElement()</code> switches app state into group-editing mode, setting <code>editingGroupId</code> and clearing other selections</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/groups.ts#L397-L413"><code>packages/element/src/groups.ts:397-413</code></a> <code>getNewGroupIdsForDuplication()</code> remaps group IDs during duplication, applying a mapper function to preserve group structure while creating new group instances</li>
+</ul>
+
+<h2 id="container-cache">Container Cache</h2>
+
+<p>Text containers maintain a cache of original heights to support text expansion and layout:</p>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/containerCache.ts#L3-L33"><code>packages/element/src/containerCache.ts:3-33</code></a> The <code>originalContainerCache</code> stores the original height of text containers (like shapes with text). <code>updateOriginalContainerCache()</code> updates the cache, <code>resetOriginalContainerCache()</code> clears entries, and <code>getOriginalContainerHeightFromCache()</code> retrieves cached heights. This supports features like text auto-sizing where the original dimensions are needed to calculate changes.</li>
+</ul>
+
+<h2 id="decisions">Decisions</h2>
+
+<p>Frame and group systems maintain strict separation: frames cannot contain frames, and groups cannot contain frame elements. This is enforced through <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/frame.ts#L747-L784"><code>packages/element/src/frame.ts:747-784</code></a> <code>omitGroupsContainingFrameLikes()</code>, which filters out entire groups if any member is frame-like. This prevents hierarchical confusion and ensures frames remain the primary organizational unit for spatial containment while groups provide logical association.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

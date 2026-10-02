@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI and Text Generation · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html" aria-current="page">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="ai-and-text-generation">AI and Text Generation</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The application provides AI-powered features for generating diagrams from natural language descriptions and converting between text-based diagram formats. These capabilities are integrated through the “Text-to-Diagram” (TTD) dialog system, which combines chat-based AI interaction with diagram preview and conversion.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>The AI and text generation system has two main entry points:</p>
+
+<ol>
+  <li>
+    <p><strong>Text-to-Diagram (TTD) Chat</strong> — An AI-powered chat interface where users describe diagrams in natural language, and an LLM generates Mermaid diagram syntax <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/TextToDiagram.tsx#L1-L50"><code>packages/excalidraw/components/TTDDialog/TextToDiagram.tsx:1-50</code></a></p>
+  </li>
+  <li>
+    <p><strong>Mermaid-to-Excalidraw Conversion</strong> — A manual editor for Mermaid diagram syntax with real-time conversion to Excalidraw elements and live preview <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/MermaidToExcalidraw.tsx#L63-L127"><code>packages/excalidraw/components/TTDDialog/MermaidToExcalidraw.tsx:63-127</code></a></p>
+  </li>
+</ol>
+
+<p>Both features are accessible through a tabbed dialog opened via the TTDDialogTrigger in the UI menu.</p>
+
+<h2 id="text-to-diagram-chat-interface">Text-to-Diagram Chat Interface</h2>
+
+<h3 id="chat-panel-and-messaging">Chat Panel and Messaging</h3>
+
+<p>The chat interface displays a conversation history between the user and an AI assistant. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/Chat/ChatInterface.tsx#L17-L54"><code>packages/excalidraw/components/TTDDialog/Chat/ChatInterface.tsx:17-54</code></a> Messages are rendered via <code>ChatMessage</code> components that handle rendering user prompts, assistant responses, errors, and action buttons.</p>
+
+<p><strong>Message Types</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/types.ts#L26-L39"><code>packages/excalidraw/components/TTDDialog/types.ts:26-39</code></a>:</p>
+<ul>
+  <li><code>user</code> — User-submitted prompts</li>
+  <li><code>assistant</code> — AI-generated Mermaid diagram code</li>
+  <li><code>warning</code> — System messages about rate limits or errors</li>
+</ul>
+
+<p>The chat input textarea auto-expands up to 120px maximum height and supports Shift+Enter for multi-line input, with Ctrl/Cmd+Enter to submit <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/Chat/ChatInterface.tsx#L88-L95"><code>packages/excalidraw/components/TTDDialog/Chat/ChatInterface.tsx:88-95</code></a>.</p>
+
+<h3 id="chat-message-actions">Chat Message Actions</h3>
+
+<p>Assistant messages support several actions when not generating <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/Chat/ChatMessage.tsx#L168-L215"><code>packages/excalidraw/components/TTDDialog/Chat/ChatMessage.tsx:168-215</code></a>:</p>
+
+<ul>
+  <li><strong>Insert</strong> — Add the generated diagram to the canvas</li>
+  <li><strong>View as Mermaid</strong> — Switch to the Mermaid editor tab to edit the diagram syntax</li>
+  <li><strong>Delete</strong> — Remove the message from history</li>
+  <li><strong>Retry</strong> — For network errors only, with a 5-second cooldown between retries <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/Chat/ChatMessage.tsx#L33-L59"><code>packages/excalidraw/components/TTDDialog/Chat/ChatMessage.tsx:33-59</code></a></li>
+  <li><strong>AI Repair</strong> — Request the AI to fix a parse error (only when the error is on the last message) <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/Chat/ChatMessage.tsx#L131-L155"><code>packages/excalidraw/components/TTDDialog/Chat/ChatMessage.tsx:131-155</code></a></li>
+</ul>
+
+<h3 id="chat-history-and-persistence">Chat History and Persistence</h3>
+
+<p>Chat conversations are automatically saved and can be restored. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/useTTDChatStorage.ts#L35-L192"><code>packages/excalidraw/components/TTDDialog/useTTDChatStorage.ts:35-192</code></a> The <code>useTTDChatStorage</code> hook manages loading, saving, and deleting chats using a provided <code>TTDPersistenceAdapter</code>. Saved chats are kept as a rolling window of up to 10 conversations, sorted by timestamp descending <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/useTTDChatStorage.ts#L129-L134"><code>packages/excalidraw/components/TTDDialog/useTTDChatStorage.ts:129-134</code></a>.</p>
+
+<p>A history menu accessed via a button in the chat panel header allows users to switch between saved chats, create new conversations, and delete old ones <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/Chat/ChatHistoryMenu.tsx#L24-L87"><code>packages/excalidraw/components/TTDDialog/Chat/ChatHistoryMenu.tsx:24-87</code></a>.</p>
+
+<h2 id="text-generation-flow">Text Generation Flow</h2>
+
+<h3 id="generation-and-streaming">Generation and Streaming</h3>
+
+<p>The <code>useTextGeneration</code> hook orchestrates text generation by calling a user-provided <code>onTextSubmit</code> callback. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts#L26-L224"><code>packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts:26-224</code></a> The callback receives an array of chat messages (limited to the last 3 prior messages plus the current user prompt) and streaming callbacks.</p>
+
+<p><strong>Streaming Response Handling</strong>:</p>
+<ol>
+  <li><code>onStreamCreated</code> — Called when the stream begins</li>
+  <li><code>onChunk</code> — Called for each text delta received</li>
+  <li>Chunks are accumulated into the assistant message content in real-time</li>
+  <li>The message <code>isGenerating</code> flag controls UI states (input disabled, send button shows stop icon)</li>
+</ol>
+
+<p><strong>Error Handling</strong>:</p>
+<ul>
+  <li>Network errors (status 429, 500, etc.) are caught and set as <code>errorType: "network"</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts#L171-L191"><code>packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts:171-191</code></a></li>
+  <li>Parse errors occur when the generated response fails Mermaid validation; these are set as <code>errorType: "parse"</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts#L193-L203"><code>packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts:193-203</code></a></li>
+  <li>Rate limit remaining is tracked and the chat input is disabled when the limit reaches zero <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts#L143-L169"><code>packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts:143-169</code></a></li>
+</ul>
+
+<h3 id="ttdstreamfetch-utility">TTDStreamFetch Utility</h3>
+
+<p>The <code>TTDStreamFetch</code> function handles Server-Sent Events (SSE) streaming from the backend. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/TTDStreamFetch.ts#L84-L224"><code>packages/excalidraw/components/TTDDialog/utils/TTDStreamFetch.ts:84-224</code></a> It parses SSE-formatted messages, extracts rate limit headers (<code>X-Ratelimit-Limit</code>, <code>X-Ratelimit-Remaining</code>), and returns a structured response containing the full generated text or an error.</p>
+
+<h2 id="mermaid-diagram-conversion">Mermaid Diagram Conversion</h2>
+
+<h3 id="live-preview-rendering">Live Preview Rendering</h3>
+
+<p>The <code>useMermaidRenderer</code> hook manages rendering Mermaid diagrams to an Excalidraw canvas preview. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/hooks/useMermaidRenderer.ts#L28-L213"><code>packages/excalidraw/components/TTDDialog/hooks/useMermaidRenderer.ts:28-213</code></a> It throttles rendering based on performance: fast renders (&lt; 100ms) use a 300ms throttle, while slower renders use a 3000ms throttle to avoid excessive redraws during streaming.</p>
+
+<p>The hook performs two key operations:</p>
+<ol>
+  <li><strong>Streaming render</strong> — As the AI generates Mermaid code, validate the syntax and render incrementally</li>
+  <li><strong>Final flush</strong> — After generation completes, force a final render of the complete diagram</li>
+</ol>
+
+<h3 id="mermaid-validation">Mermaid Validation</h3>
+
+<p>The <code>isValidMermaidSyntax</code> function performs lightweight client-side validation by checking <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/mermaidValidation.ts#L1-L41"><code>packages/excalidraw/components/TTDDialog/utils/mermaidValidation.ts:1-41</code></a>:</p>
+<ul>
+  <li>Balanced brackets <code>[]</code>, braces <code>{}</code>, and parentheses <code>()</code></li>
+  <li>No incomplete patterns at the end of the last line (dangling arrows, colons, etc.)</li>
+</ul>
+
+<p>This allows the renderer to skip rendering attempts on incomplete streaming content.</p>
+
+<h3 id="conversion-and-canvas-export">Conversion and Canvas Export</h3>
+
+<p>The <code>convertMermaidToExcalidraw</code> function calls the Mermaid-to-Excalidraw library to parse diagram syntax and generates Excalidraw elements. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/common.ts#L43-L131"><code>packages/excalidraw/components/TTDDialog/common.ts:43-131</code></a> It includes a fallback mechanism: if parsing fails with double quotes in the input, it retries with single quotes normalized, keeping the original error for accurate line number reporting in error messages <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/common.ts#L73-L95"><code>packages/excalidraw/components/TTDDialog/common.ts:73-95</code></a>.</p>
+
+<p>Once elements are generated, they are exported to a canvas for preview using the application’s export utilities.</p>
+
+<h2 id="error-recovery-and-auto-fix">Error Recovery and Auto-Fix</h2>
+
+<h3 id="error-detection">Error Detection</h3>
+
+<p>Mermaid parsing errors are categorized <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/mermaidError.ts#L1-L62"><code>packages/excalidraw/components/TTDDialog/utils/mermaidError.ts:1-62</code></a>:</p>
+<ul>
+  <li><strong>Parse errors</strong> — Syntax issues detected by the Mermaid parser</li>
+  <li><strong>Inactive participant errors</strong> — Runtime errors in sequence diagrams (trying to deactivate an already-inactive participant)</li>
+  <li><strong>Lexical errors</strong> — Unrecognized characters</li>
+</ul>
+
+<h3 id="auto-fix-candidates">Auto-Fix Candidates</h3>
+
+<p>The <code>getMermaidAutoFixCandidates</code> function generates repair suggestions for auto-fixable errors. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts#L114-L175"><code>packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts:114-175</code></a> Common fixes include:</p>
+
+<ul>
+  <li>Stripping trailing tokens after shape definitions <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts#L33-L49"><code>packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts:33-49</code></a></li>
+  <li>Removing extra arrowheads in edge labels (e.g., <code>--&gt;|label|&gt;</code> → <code>--&gt;|label|</code>) <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts#L51-L55"><code>packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts:51-55</code></a></li>
+  <li>Appending missing <code>end</code> statements for subgraphs <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts#L98-L109"><code>packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts:98-109</code></a></li>
+  <li>Removing invalid deactivate commands in sequence diagrams <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts#L60-L96"><code>packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts:60-96</code></a></li>
+  <li>Normalizing smart quotes to straight quotes <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts#L111-L112"><code>packages/excalidraw/components/TTDDialog/utils/mermaidAutoFix.ts:111-112</code></a></li>
+</ul>
+
+<p>In the Mermaid-to-Excalidraw tab, the system attempts to validate candidates up to a maximum depth of 4 iterations and 30 candidates, offering an “Apply auto-fix” button if a valid candidate is found <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/MermaidToExcalidraw.tsx#L135-L215"><code>packages/excalidraw/components/TTDDialog/MermaidToExcalidraw.tsx:135-215</code></a>.</p>
+
+<h3 id="ai-repair-flow">AI Repair Flow</h3>
+
+<p>When a parse error occurs in the chat, users can request “AI Repair” to ask the assistant to fix the Mermaid syntax. This constructs a repair prompt containing the original diagram and error message and re-submits it as a generation request. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/TextToDiagram.tsx#L133-L144"><code>packages/excalidraw/components/TTDDialog/TextToDiagram.tsx:133-144</code></a></p>
+
+<h2 id="rate-limiting-and-warnings">Rate Limiting and Warnings</h2>
+
+<p>Rate limit information is tracked in atoms and displayed in the chat panel header. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/TTDContext.tsx#L7"><code>packages/excalidraw/components/TTDDialog/TTDContext.tsx:7</code></a> When the remaining count reaches zero or a 429 response is received, a warning message is added to the chat and the input is disabled <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts#L143-L169"><code>packages/excalidraw/components/TTDDialog/hooks/useTextGeneration.ts:143-169</code></a>.</p>
+
+<p>Two warning types are supported <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/types.ts#L35-L37"><code>packages/excalidraw/components/TTDDialog/types.ts:35-37</code></a>:</p>
+<ul>
+  <li><code>messageLimitExceeded</code> — Daily hard limit on messages</li>
+  <li><code>rateLimitExceeded</code> — General 429 rate limit</li>
+</ul>
+
+<h2 id="chat-state-management">Chat State Management</h2>
+
+<h3 id="jotai-atoms">Jotai Atoms</h3>
+
+<p>The chat state is managed using Jotai atoms <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/TTDContext.tsx#L1-L17"><code>packages/excalidraw/components/TTDDialog/TTDContext.tsx:1-17</code></a>:</p>
+<ul>
+  <li><code>chatHistoryAtom</code> — Current chat history (id, messages, current prompt)</li>
+  <li><code>errorAtom</code> — Current error for display</li>
+  <li><code>showPreviewAtom</code> — Whether to show the preview panel</li>
+  <li><code>rateLimitsAtom</code> — Rate limit information from the API</li>
+</ul>
+
+<h3 id="chat-utils">Chat Utils</h3>
+
+<p>Utility functions provide immutable updates to chat history <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/utils/chat.ts#L1-L92"><code>packages/excalidraw/components/TTDDialog/utils/chat.ts:1-92</code></a>:</p>
+<ul>
+  <li><code>addMessages()</code> — Appends messages with auto-generated IDs and timestamps</li>
+  <li><code>updateAssistantContent()</code> — Updates the last assistant message</li>
+  <li><code>getLastAssistantMessage()</code> — Retrieves the most recent AI response</li>
+  <li><code>removeLastAssistantMessage()</code> — Removes the last assistant message (used when a 429 error occurs)</li>
+  <li><code>getMessagesForLLM()</code> — Converts chat history to the format expected by the LLM API</li>
+</ul>
+
+<h2 id="mermaid-syntax-highlighting">Mermaid Syntax Highlighting</h2>
+
+<p>The Mermaid tab uses CodeMirror with a lightweight custom language definition <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/mermaid-lang-lite.ts#L1-L82"><code>packages/excalidraw/components/TTDDialog/mermaid-lang-lite.ts:1-82</code></a> that highlights:</p>
+<ul>
+  <li>Keywords (flowchart, graph, sequenceDiagram, direction, etc.)</li>
+  <li>Strings with double or single quotes</li>
+  <li>Comments (%%…)</li>
+  <li>Operators (arrows: –&gt;, —&gt;, etc.)</li>
+  <li>Node IDs and numbers</li>
+</ul>
+
+<p>The editor supports Cmd/Ctrl+Enter for keyboard submission and Cmd/Shift+Z for redo on all platforms <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/CodeMirrorEditor.tsx#L140-L202"><code>packages/excalidraw/components/TTDDialog/CodeMirrorEditor.tsx:140-202</code></a>.</p>
+
+<h2 id="insertion-into-canvas">Insertion into Canvas</h2>
+
+<p>The <code>insertToEditor</code> function adds generated Excalidraw elements to the canvas at the center, scales them to fit if needed, and optionally saves the Mermaid definition to local storage for recovery. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/TTDDialog/common.ts#L139-L170"><code>packages/excalidraw/components/TTDDialog/common.ts:139-170</code></a> After insertion, the dialog closes automatically.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

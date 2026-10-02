@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Real-Time Collaboration · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html" aria-current="page">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="real-time-collaboration">Real-Time Collaboration</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Real-time collaboration allows multiple users to edit a scene simultaneously. The system handles live synchronization of element changes, cursor positions, user presence, and idle states through WebSocket connections, while managing conflicts that arise from concurrent edits.</p>
+
+<h2 id="architecture-overview">Architecture Overview</h2>
+
+<p>The collaboration system is built around two main components:</p>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L135-L210"><code>excalidraw-app/collab/Collab.tsx:135-210</code></a> <strong>Collab component</strong>: A React component that orchestrates the overall collaboration lifecycle, managing connections, state synchronization, and file handling.</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Portal.tsx#L25-L35"><code>excalidraw-app/collab/Portal.tsx:25-35</code></a> <strong>Portal</strong>: Handles low-level WebSocket communication, encryption, and message broadcasting.</li>
+</ul>
+
+<pre><code class="language-mermaid">graph TB
+    User["User (Client)"]
+    Collab["Collab Component"]
+    Portal["Portal (WebSocket)"]
+    Server["WebSocket Server"]
+    Firebase["Firebase Storage"]
+    
+    User --&gt;|User Actions| Collab
+    Collab --&gt;|Encrypted Messages| Portal
+    Portal --&gt;|Socket.io| Server
+    Server --&gt;|Broadcasts| Portal
+    Collab --&gt;|Save/Load| Firebase
+    
+    style Collab fill:#e1f5ff
+    style Portal fill:#f3e5f5
+    style Firebase fill:#fff3e0
+</code></pre>
+
+<h2 id="connection-and-room-management">Connection and Room Management</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L481-L712"><code>excalidraw-app/collab/Collab.tsx:481-712</code></a> When collaboration starts, the system either creates a new room or joins an existing one using a room ID and encryption key. The <code>startCollaboration</code> method:</p>
+
+<ol>
+  <li>Generates or retrieves room link data</li>
+  <li>Initializes a Socket.io connection to the WebSocket server</li>
+  <li>Sets up socket event listeners for incoming messages</li>
+  <li>Initializes the idle detection system</li>
+  <li>Returns a promise that resolves when the initial scene is loaded</li>
+</ol>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L714-L759"><code>excalidraw-app/collab/Collab.tsx:714-759</code></a> The <code>initializeRoom</code> method loads the initial scene from Firebase, prioritizing remote data when joining an existing room to avoid conflicts with potentially stale local data.</p>
+
+<h2 id="synchronization-and-conflict-resolution">Synchronization and Conflict Resolution</h2>
+
+<h3 id="scene-version-tracking">Scene Version Tracking</h3>
+
+<p>[[cite:excalidraw-app/collab/Collab.tsx:143,920-926]] The system tracks the last broadcasted or received scene version to avoid echoing back updates that were just received from remote collaborators. Each scene update increments a version number, which is compared before broadcasting.</p>
+
+<h3 id="element-reconciliation">Element Reconciliation</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L761-L793"><code>excalidraw-app/collab/Collab.tsx:761-793</code></a> The <code>_reconcileElements</code> method handles incoming remote elements by:</p>
+
+<ol>
+  <li>Restoring elements to their proper state using <code>restoreElements</code></li>
+  <li>Calling <code>reconcileElements</code> to merge local and remote changes</li>
+  <li>Bumping element versions to prevent unnecessary conflicts</li>
+  <li>Updating the last broadcasted version to suppress echo broadcasts</li>
+</ol>
+
+<p>This ensures that local edits and remote updates are merged intelligently rather than simply overwriting one another.</p>
+
+<h3 id="delta-based-changes">Delta-Based Changes</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/delta.ts#L76-L196"><code>packages/element/src/delta.ts:76-196</code></a> The system uses a <code>Delta</code> class to represent differences between element states. Each delta captures both deleted and inserted properties, allowing for:</p>
+
+<ul>
+  <li><strong>Forward and backward time-travel</strong>: Deltas can be inverted for undo/redo</li>
+  <li><strong>Bandwidth optimization</strong>: Only changed properties are transmitted</li>
+  <li><strong>Conflict detection</strong>: Versions and version nonces identify which changes conflict</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/delta.ts#L1034-L1554"><code>packages/element/src/delta.ts:1034-1554</code></a> The <code>ElementsDelta</code> class extends this concept to handle sets of elements, tracking added, removed, and updated elements separately. The <code>applyTo</code> method applies deltas while:</p>
+
+<ol>
+  <li>Expanding <code>idsToCheck</code> to include layout dependencies (containers, bound arrows, bound text)</li>
+  <li>Resolving binding conflicts (reconnecting arrows to their targets)</li>
+  <li>Reordering elements based on fractional indices (z-order)</li>
+  <li>Redrawing text bounding boxes and dependent elements</li>
+  <li>Detecting visible differences by comparing the applied result, where empty text elements and deleted elements paint nothing, and <code>boundElements</code> references are filtered to exclude empty labels</li>
+</ol>
+
+<h2 id="multi-user-state-management">Multi-User State Management</h2>
+
+<h3 id="collaborator-presence">Collaborator Presence</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L875-L918"><code>excalidraw-app/collab/Collab.tsx:875-918</code></a> Collaborators are tracked in a Map indexed by socket ID. Each collaborator stores:</p>
+
+<ul>
+  <li>Pointer position and button state</li>
+  <li>Selected element IDs</li>
+  <li>Username</li>
+  <li>User idle state (active, idle, away)</li>
+  <li>Whether they are the current user</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L620-L677"><code>excalidraw-app/collab/Collab.tsx:620-677</code></a> Remote updates for cursor positions and idle status are received via WebSocket and stored in the collaborators map, which is then passed to the scene for rendering.</p>
+
+<h3 id="user-following">User Following</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L1004-L1024"><code>excalidraw-app/collab/Collab.tsx:1004-1024</code></a> When a user follows another, their viewport automatically tracks the followed user’s visible scene bounds. The system maintains a <code>followedBy</code> set to track which users are following the current user, and relays viewport bounds only when needed.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L639-L668"><code>excalidraw-app/collab/Collab.tsx:639-668</code></a> Remote viewport bounds are received and applied to the app state using <code>zoomToFitBounds</code>, but only if the user is actively being followed and there is no cross-follow situation.</p>
+
+<h3 id="idle-detection">Idle Detection</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L821-L873"><code>excalidraw-app/collab/Collab.tsx:821-873</code></a> The system tracks user activity through pointer movement and visibility changes. Three idle states are maintained:</p>
+
+<ul>
+  <li><strong>ACTIVE</strong>: User is actively moving the pointer or the tab is visible</li>
+  <li><strong>IDLE</strong>: User has stopped moving the pointer (after <code>IDLE_THRESHOLD</code>)</li>
+  <li><strong>AWAY</strong>: Tab is hidden or browser is in background</li>
+</ul>
+
+<p>These states are periodically broadcast to other collaborators at intervals defined by <code>ACTIVE_THRESHOLD</code>.</p>
+
+<h2 id="broadcasting-and-throttling">Broadcasting and Throttling</h2>
+
+<h3 id="element-broadcasting">Element Broadcasting</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L960-L988"><code>excalidraw-app/collab/Collab.tsx:960-988</code></a> Elements are broadcast in two ways:</p>
+
+<ul>
+  <li><strong>Incremental updates</strong> (<code>broadcastElements</code>): Only sends elements with versions newer than the last broadcast version</li>
+  <li><strong>Periodic full syncs</strong> (<code>queueBroadcastAllElements</code>): Throttled to <code>SYNC_FULL_SCENE_INTERVAL_MS</code>, ensures no messages are lost</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Portal.tsx#L142-L183"><code>excalidraw-app/collab/Portal.tsx:142-183</code></a> Broadcasting filters elements through <code>isSyncableElement</code> and tracks broadcasted versions to minimize redundant transmissions. Image file uploads are queued and throttled separately.</p>
+
+<h3 id="cursor-and-metadata-broadcasting">Cursor and Metadata Broadcasting</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L932-L943"><code>excalidraw-app/collab/Collab.tsx:932-943</code></a> Pointer updates are throttled to <code>CURSOR_SYNC_TIMEOUT</code> to limit network traffic while maintaining responsiveness. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Portal.tsx#L202-L224"><code>excalidraw-app/collab/Portal.tsx:202-224</code></a> Each pointer broadcast includes the socket ID, pointer coordinates, button state, and selected element IDs so remote users can see what each collaborator is working on.</p>
+
+<h2 id="message-encryption-and-decryption">Message Encryption and Decryption</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L458-L477"><code>excalidraw-app/collab/Collab.tsx:458-477</code></a> All WebSocket payloads are encrypted using the room key. The <code>decryptPayload</code> method decrypts incoming data and handles decryption failures gracefully by alerting the user.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Portal.tsx#L85-L102"><code>excalidraw-app/collab/Portal.tsx:85-102</code></a> Outgoing data is encrypted before emission. The <code>_broadcastSocketData</code> method serializes data to JSON, encodes it, encrypts it with the room key, and emits it along with the initialization vector.</p>
+
+<h2 id="file-handling">File Handling</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L157-L205"><code>excalidraw-app/collab/Collab.tsx:157-205</code></a> The <code>FileManager</code> is configured to save and load files from a Firebase storage path specific to the collaboration room. Files are encrypted before upload and decrypted after download. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L430-L456"><code>excalidraw-app/collab/Collab.tsx:430-456</code></a> Image elements are fetched lazily; the system only loads images that are not already tracked and are in a “saved” state (or older than 10 seconds if forced).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Portal.tsx#L104-L140"><code>excalidraw-app/collab/Portal.tsx:104-140</code></a> File uploads are queued and throttled. Once files are successfully saved, image element statuses are updated from “pending” to “saved” so remote collaborators know to fetch them.</p>
+
+<h2 id="persistence-and-cleanup">Persistence and Cleanup</h2>
+
+<h3 id="saving-to-firebase">Saving to Firebase</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L323-L363"><code>excalidraw-app/collab/Collab.tsx:323-363</code></a> The <code>saveCollabRoomToFirebase</code> method persists the current scene to Firebase. It is called:</p>
+
+<ul>
+  <li>When stopping collaboration</li>
+  <li>Before page unload (if <code>beforeUnload</code> is not disabled)</li>
+  <li>Periodically via <code>queueSaveToFirebase</code> throttled to <code>SYNC_FULL_SCENE_INTERVAL_MS</code></li>
+</ul>
+
+<p>If saving fails due to size constraints or network errors, an error indicator is shown to the user.</p>
+
+<h3 id="stopping-collaboration">Stopping Collaboration</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L365-L411"><code>excalidraw-app/collab/Collab.tsx:365-411</code></a> The <code>stopCollaboration</code> method:</p>
+
+<ol>
+  <li>Cancels pending broadcasts and saves</li>
+  <li>Saves the current scene one final time</li>
+  <li>Either discards remote state (hard stop) or prompts to keep it (soft stop)</li>
+  <li>Resets browser state versions to prevent stale tabs from overwriting changes</li>
+  <li>Marks image elements as “pending” to re-download them locally</li>
+</ol>
+
+<h2 id="error-handling-and-indicators">Error Handling and Indicators</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/CollabError.tsx#L1-L54"><code>excalidraw-app/collab/CollabError.tsx:1-54</code></a> Collaboration errors are displayed via a <code>CollabError</code> component that shows a warning icon with a tooltip. The error indicator uses a <code>nonce</code> value that changes on each error to trigger animation re-runs even if the message is the same.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L1046-L1066"><code>excalidraw-app/collab/Collab.tsx:1046-1066</code></a> Error indicators and dialogs are managed separately; indicators show persistent issues while dialogs dismiss after user acknowledgment.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Version-based duplicate suppression</strong>: The system avoids echoing received broadcasts by tracking the last scene version. This prevents unnecessary network traffic and UI flickering when a remote update arrives, since the sender will see their own change broadcast back if not suppressed. From <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L784-L790"><code>excalidraw-app/collab/Collab.tsx:784-790</code></a>.</p>
+
+<p><strong>Lazy image loading</strong>: Images are not fetched immediately but only when needed and when their status is “saved”. This reduces initial load time and network usage for collaborative sessions with many images. From <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L430-L456"><code>excalidraw-app/collab/Collab.tsx:430-456</code></a>.</p>
+
+<p><strong>Periodic full scene resync</strong>: Despite incremental updates, the system periodically broadcasts the entire scene to handle dropped messages or server outages. This is throttled to prevent overwhelming the network. From <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/collab/Collab.tsx#L976-L988"><code>excalidraw-app/collab/Collab.tsx:976-988</code></a>.</p>
+
+<p><strong>Visible changes decided from applied result</strong>: Whether a delta results in a visible change is determined after layout has run (binding repair, text bounding box redraw, bound arrow updates), not from property patches alone. This ensures that layout effects count toward visibility, and entries like deleting an empty label—where both before and after paint nothing—are correctly identified as non-visible. From <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/delta.ts#L1446-L1452"><code>packages/element/src/delta.ts:1446-1452</code></a>.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

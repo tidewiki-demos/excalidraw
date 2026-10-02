@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storage and Persistence · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html" aria-current="page">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="storage-and-persistence">Storage and Persistence</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>This page covers how Excalidraw saves and retrieves data—elements, app state, binary files (images), and other persistent information—across local browser storage, cloud backends, and real-time collaboration systems.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>Data persistence in Excalidraw is layered:</p>
+
+<ul>
+  <li><strong>Local storage</strong> (browser): Elements and app state are saved to <code>localStorage</code>, while binary files are stored in IndexedDB</li>
+  <li><strong>Cloud storage</strong>: Firebase is used for collaborative scenes and file uploads</li>
+  <li><strong>Backend service</strong>: A backend API accepts exported drawings and returns shareable links</li>
+  <li><strong>File system</strong>: Native file handles allow direct read/write to the user’s file system</li>
+</ul>
+
+<p>The storage strategy is determined by context: local editing uses browser storage, collaboration uses Firebase and WebSocket synchronization, and exports may use the backend or file system.</p>
+
+<h2 id="local-storage">Local Storage</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/LocalData.ts#L1-L11"><code>excalidraw-app/data/LocalData.ts:1-11</code></a></p>
+
+<p>Local data includes the full DataState (app state, elements, images), saved separately to <code>localStorage</code> and IndexedDB due to their different size limits and purposes.</p>
+
+<h3 id="elements-and-app-state">Elements and App State</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/LocalData.ts#L73-L109"><code>excalidraw-app/data/LocalData.ts:73-109</code></a></p>
+
+<p>The <code>saveDataStateToLocalStorage</code> function serializes non-deleted elements and a cleaned app state to JSON, storing them in <code>localStorage</code> under keys defined in <code>STORAGE_KEYS</code>. The app state is filtered via <code>clearAppStateForLocalStorage</code> to remove transient fields. If a <code>QuotaExceededError</code> occurs (storage limit), an atom flag is set to notify the UI.</p>
+
+<h3 id="debounced-saving">Debounced Saving</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/LocalData.ts#L117-L147"><code>excalidraw-app/data/LocalData.ts:117-147</code></a></p>
+
+<p>The <code>LocalData</code> class uses a debounced <code>_save</code> method to batch storage writes. The <code>save</code> method checks synchronously if saving is paused (due to collaboration or the document being hidden) before delegating to the debounced version. <code>flushSave</code> forces an immediate write.</p>
+
+<h3 id="save-pausing-and-locking">Save Pausing and Locking</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/Locker.ts#L1-L18"><code>excalidraw-app/data/Locker.ts:1-18</code></a></p>
+
+<p>A generic <code>Locker</code> class manages multiple lock types (currently <code>"collaboration"</code>). When collaboration is active, <code>pauseSave</code> locks saving; when it ends, <code>resumeSave</code> unlocks. Saving also pauses if the document is hidden, checked via <code>document.hidden</code>.</p>
+
+<h3 id="binary-files-indexeddb">Binary Files (IndexedDB)</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/LocalData.ts#L49-L70"><code>excalidraw-app/data/LocalData.ts:49-70</code></a></p>
+
+<p>The <code>filesStore</code> is an IndexedDB store created via <code>idb-keyval</code>. <code>LocalFileManager</code> extends <code>FileManager</code> with a <code>clearObsoleteFiles</code> method that removes image files unused for over 24 hours and not currently on the canvas. This helps manage storage quota.</p>
+
+<h3 id="loading-from-local-storage">Loading from Local Storage</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/localStorage.ts#L37-L74"><code>excalidraw-app/data/localStorage.ts:37-74</code></a></p>
+
+<p><code>importFromLocalStorage</code> reads elements and app state from <code>localStorage</code>, parsing JSON and merging defaults. Errors during parsing are logged but don’t throw. The app state is reconstructed by merging saved state with defaults, ensuring required fields exist.</p>
+
+<h3 id="storage-size-queries">Storage Size Queries</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/localStorage.ts#L76-L100"><code>excalidraw-app/data/localStorage.ts:76-100</code></a></p>
+
+<p>Helper functions estimate storage usage: <code>getElementsStorageSize</code> and <code>getTotalStorageSize</code> measure JSON string lengths in <code>localStorage</code>. These are used for monitoring and quota warnings.</p>
+
+<h2 id="file-manager">File Manager</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/FileManager.ts#L22-L226"><code>excalidraw-app/data/FileManager.ts:22-226</code></a></p>
+
+<p>The <code>FileManager</code> class orchestrates binary file (image) operations. It tracks files through lifecycle states and delegates actual I/O to injected <code>getFiles</code> and <code>saveFiles</code> callbacks (implemented by <code>LocalFileManager</code> for local storage or Firebase for cloud).</p>
+
+<h3 id="file-state-tracking">File State Tracking</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/FileManager.ts#L23-L40"><code>excalidraw-app/data/FileManager.ts:23-40</code></a></p>
+
+<p>Files are tracked in separate maps:</p>
+<ul>
+  <li><code>fetchingFiles</code>: being downloaded</li>
+  <li><code>erroredFiles_fetch</code>: failed to download</li>
+  <li><code>savingFiles</code>: being uploaded (mapped to version)</li>
+  <li><code>savedFiles</code>: successfully persisted (mapped to version)</li>
+  <li><code>erroredFiles_save</code>: failed to upload (mapped to version)</li>
+</ul>
+
+<p>File versions prevent re-uploading unchanged data.</p>
+
+<h3 id="saving-files">Saving Files</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/FileManager.ts#L92-L137"><code>excalidraw-app/data/FileManager.ts:92-137</code></a></p>
+
+<p><code>saveFiles</code> takes elements and binary file data, collects unsaved files by checking <code>isFileSavedOrBeingSaved</code>, invokes the <code>_saveFiles</code> callback, and updates tracking maps. Files that have already errored during save are not retried. The <code>savingFiles</code> map is cleared in a <code>finally</code> block to ensure proper cleanup.</p>
+
+<h3 id="loading-files">Loading Files</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/FileManager.ts#L139-L180"><code>excalidraw-app/data/FileManager.ts:139-180</code></a></p>
+
+<p><code>getFiles</code> notifies listeners of “loading” status, invokes <code>_getFiles</code>, updates tracking maps with results, and sends “loaded” or “error” status callbacks. Failed files are retried on subsequent calls since they’re not added to <code>savedFiles</code>.</p>
+
+<h3 id="file-status-store">File Status Store</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/fileStatusStore.ts#L1-L48"><code>excalidraw-app/data/fileStatusStore.ts:1-48</code></a></p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><code>FileStatusStore</code> maintains a versioned snapshot of file statuses (“loading”</td>
+      <td>“loaded”</td>
+      <td>“error”). UI components subscribe to updates and can check pending vs. total file counts via <code>getPendingCount</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="preventing-unload">Preventing Unload</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/FileManager.ts#L182-L197"><code>excalidraw-app/data/FileManager.ts:182-197</code></a></p>
+
+<p><code>shouldPreventUnload</code> returns true if any non-deleted image element is currently being saved. This blocks the browser’s beforeunload event to avoid data loss.</p>
+
+<h3 id="encoding-files-for-upload">Encoding Files for Upload</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/FileManager.ts#L228-L270"><code>excalidraw-app/data/FileManager.ts:228-270</code></a></p>
+
+<p><code>encodeFilesForUpload</code> compresses and encrypts image file data URLs, attaching metadata (id, mimeType, timestamps). If uncompressed size exceeds <code>maxBytes</code>, an error is thrown. Each file is encoded with the supplied encryption key.</p>
+
+<h2 id="cloud-storage-firebase">Cloud Storage (Firebase)</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/firebase.ts#L1-L79"><code>excalidraw-app/data/firebase.ts:1-79</code></a></p>
+
+<p>Firebase provides storage for collaborative scenes and binary files. The Firebase config is loaded from environment variables; lazy initialization ensures the app and services are only initialized on first use.</p>
+
+<h3 id="saving-scenes">Saving Scenes</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/firebase.ts#L174-L247"><code>excalidraw-app/data/firebase.ts:174-247</code></a></p>
+
+<p><code>saveToFirebase</code> encrypts elements, runs a Firestore transaction to either create a new scene document or reconcile with an existing one (fetching, decrypting, and merging changes), and updates a local version cache. If the in-memory scene already matches the stored version, the save is skipped.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/firebase.ts#L93-L116"><code>excalidraw-app/data/firebase.ts:93-116</code></a></p>
+
+<p>Elements are encrypted/decrypted using the room’s encryption key. The <code>FirebaseStoredScene</code> structure holds <code>sceneVersion</code> (for cache validation), <code>iv</code>, and <code>ciphertext</code> as Firestore <code>Bytes</code>.</p>
+
+<h3 id="loading-scenes">Loading Scenes</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/firebase.ts#L249-L272"><code>excalidraw-app/data/firebase.ts:249-272</code></a></p>
+
+<p><code>loadFromFirebase</code> fetches a scene document by room ID, decrypts elements, optionally deletes invisible elements, and caches the version. If the document doesn’t exist, it returns null.</p>
+
+<h3 id="saving-files-to-firebase-storage">Saving Files to Firebase Storage</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/firebase.ts#L145-L172"><code>excalidraw-app/data/firebase.ts:145-172</code></a></p>
+
+<p><code>saveFilesToFirebase</code> uploads encoded file buffers to Firebase Storage under a prefix path, setting cache-control headers. Errors are collected per file; the operation doesn’t fail if individual uploads fail.</p>
+
+<h3 id="loading-files-from-firebase-storage">Loading Files from Firebase Storage</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/firebase.ts#L274-L319"><code>excalidraw-app/data/firebase.ts:274-319</code></a></p>
+
+<p><code>loadFilesFromFirebase</code> fetches files via direct HTTPS URLs to Firebase Storage, decompresses and decrypts each file (retrieving metadata), and collects errors. The <code>lastRetrieved</code> timestamp is set from metadata.</p>
+
+<h2 id="ttd-ai-chat-storage">TTD (AI Chat) Storage</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/TTDStorage.ts#L1-L51"><code>excalidraw-app/data/TTDStorage.ts:1-51</code></a></p>
+
+<p><code>TTDIndexedDBAdapter</code> persists saved chats for the AI text-to-diagram feature in a separate IndexedDB store. <code>loadChats</code> and <code>saveChats</code> provide async access with error handling.</p>
+
+<h2 id="multi-tab-synchronization">Multi-Tab Synchronization</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/tabSync.ts#L1-L39"><code>excalidraw-app/data/tabSync.ts:1-39</code></a></p>
+
+<p><code>LOCAL_STATE_VERSIONS</code> tracks in-memory timestamps of when data state and files were last saved. <code>isBrowserStorageStateNewer</code> compares stored timestamps with in-memory versions to detect whether another tab has updated storage. <code>updateBrowserStateVersion</code> and <code>resetBrowserStateVersions</code> manage this metadata, allowing tabs to coordinate.</p>
+
+<h2 id="export-and-backend-integration">Export and Backend Integration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/index.ts#L148-L242"><code>excalidraw-app/data/index.ts:148-242</code></a></p>
+
+<h3 id="exporting-to-backend">Exporting to Backend</h3>
+
+<p><code>exportToBackend</code> compresses the drawing (elements, app state, files) with an encryption key, posts it to a backend service, receives a shareable ID, and uploads binary files to Firebase Storage. The shareable URL embeds the ID and key as a hash fragment (never sent to the server).</p>
+
+<h3 id="importing-from-backend">Importing from Backend</h3>
+
+<p><code>importFromBackend</code> fetches data by ID from the backend, decompresses with the provided decryption key, and parses. It supports both new (compressed) and legacy (unencrypted buffer) formats for backward compatibility.</p>
+
+<h3 id="collaboration-links">Collaboration Links</h3>
+
+<p>Collaboration links encode room ID and encryption key as <code>#room=roomId,roomKey</code>. <code>isCollaborationLink</code>, <code>getCollaborationLinkData</code>, and <code>generateCollaborationLinkData</code> parse/generate these links.</p>
+
+<h2 id="file-system-operations">File System Operations</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/blob.ts#L1-L559"><code>packages/excalidraw/data/blob.ts:1-559</code></a></p>
+
+<h3 id="parsing-file-contents">Parsing File Contents</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/blob.ts#L32-L80"><code>packages/excalidraw/data/blob.ts:32-80</code></a></p>
+
+<p><code>parseFileContents</code> reads a blob or file, detecting PNG metadata via special decoder, decoding SVG base64 payloads, or reading as text. Errors are converted to <code>ImageSceneDataError</code>.</p>
+
+<h3 id="loading-scenes-from-blob">Loading Scenes from Blob</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/blob.ts#L138-L196"><code>packages/excalidraw/data/blob.ts:138-196</code></a></p>
+
+<p><code>loadSceneOrLibraryFromBlob</code> parses file contents as JSON, validates data structure, restores elements and app state with local state merging, and returns a typed result. It handles both Excalidraw scenes and library files. Elements are restored once and reused in both the returned data and the scroll calculation to ensure consistency.</p>
+
+<h3 id="converting-canvas-to-blob">Converting Canvas to Blob</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/blob.ts#L237-L257"><code>packages/excalidraw/data/blob.ts:237-257</code></a></p>
+
+<p><code>canvasToBlob</code> converts an HTML canvas to a Blob via <code>toBlob</code>, with error handling for oversized canvases.</p>
+
+<h3 id="generating-file-ids">Generating File IDs</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/blob.ts#L259-L273"><code>packages/excalidraw/data/blob.ts:259-273</code></a></p>
+
+<p><code>generateIdFromFile</code> computes SHA-1 digest of file contents via <code>crypto.subtle.digest</code>, or falls back to a random nanoid if not supported. This provides content-addressed file identification.</p>
+
+<h3 id="data-url-conversion">Data URL Conversion</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/blob.ts#L275-L313"><code>packages/excalidraw/data/blob.ts:275-313</code></a></p>
+
+<p><code>getDataURL</code> reads a file as a data URL via FileReader; <code>getDataURL_sync</code> encodes raw data as base64 data URL; <code>dataURLToFile</code> and <code>dataURLToString</code> provide reverse conversions.</p>
+
+<h3 id="image-handling">Image Handling</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/blob.ts#L315-L414"><code>packages/excalidraw/data/blob.ts:315-414</code></a></p>
+
+<p><code>getImageFileDimensions</code> loads an image and measures its natural dimensions (handling both blob URLs and data URLs). <code>resizeImageFile</code> uses the <code>image-blob-reduce</code> library to resize images above a threshold, preserving SVG files unchanged. <code>normalizeFile</code> corrects MIME types for images by detecting actual format from file headers.</p>
+
+<h3 id="mime-type-detection">MIME Type Detection</h3>
+
+<p>[[cite:packages/excalidraw/data/blob.ts:82-104,472-503]]</p>
+
+<p><code>getMimeType</code> infers MIME type from filename extension; <code>getActualMimeTypeFromImage</code> inspects leading bytes (magic numbers) for PNG, JPEG, GIF, WebP.</p>
+
+<h2 id="exported-canvas">Exported Canvas</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/index.ts#L98-L219"><code>packages/excalidraw/data/index.ts:98-219</code></a></p>
+
+<h3 id="preparing-elements-for-export">Preparing Elements for Export</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/index.ts#L48-L96"><code>packages/excalidraw/data/index.ts:48-96</code></a></p>
+
+<p><code>prepareElementsForExport</code> filters non-deleted elements, optionally selects only chosen elements or a single frame, and includes necessary bound text elements.</p>
+
+<h3 id="exporting-to-pngsvgclipboard">Exporting to PNG/SVG/Clipboard</h3>
+
+<p><code>exportCanvas</code> dispatches by type (svg, png, clipboard-svg, clipboard) and invokes appropriate render and save/copy operations. PNG export optionally embeds scene metadata via <code>encodePngMetadata</code>. SVG export prepends an XML preamble for compatibility.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>File versioning in FileManager</strong> — Files are tracked with version numbers to avoid re-uploading unchanged data and to safely handle concurrent saves. [[cite:excalidraw-app/data/FileManager.ts:20,88-90]]</p>
+
+<p><strong>Debounced local saves</strong> — Frequent element changes are batched into a single debounced save to reduce I/O and improve performance. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/LocalData.ts#L118-L134"><code>excalidraw-app/data/LocalData.ts:118-134</code></a></p>
+
+<p><strong>Separate local and cloud lifecycle</strong> — <code>LocalFileManager</code> and Firebase handlers are injected into <code>FileManager</code>, allowing the same abstraction to work for local IndexedDB and cloud uploads without hardcoding dependencies.</p>
+
+<p><strong>Encryption key in URL hash</strong> — Shareable links embed encryption keys as hash fragments (never querystring) so they’re never sent to the server, ensuring end-to-end security. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/index.ts#L282-L286"><code>excalidraw-app/data/index.ts:282-286</code></a></p>
+
+<p><strong>Multi-tab timestamp coordination</strong> — Timestamps in localStorage allow tabs to detect newer state and reload without relying on storage events, which may not fire across all scenarios. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/excalidraw-app/data/tabSync.ts#L12-L25"><code>excalidraw-app/data/tabSync.ts:12-25</code></a></p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

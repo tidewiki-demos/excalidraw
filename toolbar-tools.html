@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toolbar and Tools · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html" aria-current="page">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="toolbar-and-tools">Toolbar and Tools</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The toolbar provides the UI for selecting and configuring drawing tools. It adapts to different device form factors (desktop, tablet, mobile) and manages tool state, keyboard shortcuts, pen detection, and tool-specific options.</p>
+
+<h2 id="tool-configuration">Tool Configuration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L42-L57"><code>packages/excalidraw/components/Tools.tsx:42-57</code></a> All tools are defined in a single data structure <code>TOOLS</code> that centralizes tool metadata. Each tool has an icon, optional keyboard shortcuts (letter keys and numeric keys), whether it supports fill, and whether activating it while already active switches back to the previous tool (toggle behavior).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L69-L160"><code>packages/excalidraw/components/Tools.tsx:69-160</code></a> The <code>TOOLS</code> object contains 16 tool types: hand, selection, rectangle, diamond, ellipse, arrow, line, freedraw, text, stickynote, image, eraser, frame, autoshape, embeddable, laser, bucketfill, and lasso. Tools marked as <code>fillable</code> (rectangle, diamond, ellipse, arrow, line, selection) cause their icon to fill when active. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L168-L170"><code>packages/excalidraw/components/Tools.tsx:168-170</code></a> The <code>hand</code> and <code>eraser</code> tools are toggle tools—reactivating them via keyboard or UI switches back to the previously active tool.</p>
+
+<h2 id="tool-buttons-and-shortcuts">Tool Buttons and Shortcuts</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L267-L326"><code>packages/excalidraw/components/Tools.tsx:267-326</code></a> Tool button components are created via <code>createToolButton</code>, which produces a standardized button that activates the tool and handles pen detection. When a user first interacts with a pen (detected by <code>pointerType === "pen"</code>), pen mode is automatically enabled. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L172-L181"><code>packages/excalidraw/components/Tools.tsx:172-181</code></a> Shortcut hints are derived from tool configuration and formatted as human-readable strings (e.g., “R or 2” for rectangle). The letter key is preferred over the numeric key in badges and tooltips.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L192-L223"><code>packages/excalidraw/components/Tools.tsx:192-223</code></a> The <code>findShapeByKey</code> function maps keyboard input to tool types by checking letter keys and numeric keys while accounting for shift modifiers. It handles the special case where the selection shortcut activates the user’s preferred selection tool (selection or lasso).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L230-L231"><code>packages/excalidraw/components/Tools.tsx:230-231</code></a> Tool buttons are disabled when the active tool is host-controlled via <code>props.activeTool</code> and the button doesn’t match the forced tool type.</p>
+
+<h2 id="selection-tool-variants">Selection Tool Variants</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L345-L359"><code>packages/excalidraw/components/Tools.tsx:345-359</code></a> The standard <code>SelectionToolButton</code> includes special behavior: pointer-clicking it while selection is already active switches to lasso mode. Keyboard or accessibility activation keeps selection active.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L365-L367"><code>packages/excalidraw/components/Tools.tsx:365-367</code></a> The <code>LassoToolButton</code> is rendered when lasso is the user’s preferred selection tool; it shows the selection shortcut hint since that key activates lasso in that configuration.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L373-L420"><code>packages/excalidraw/components/Tools.tsx:373-420</code></a> The <code>SelectionToolPopover</code> provides a compact UI for choosing between selection and lasso modes on tablet and mobile. Selecting an option both activates the tool and saves it as the preferred selection tool via <code>setAppState</code>.</p>
+
+<h2 id="freedraw-and-autoshape-popover">Freedraw and Autoshape Popover</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L426-L478"><code>packages/excalidraw/components/Tools.tsx:426-478</code></a> The <code>FreedrawToolPopover</code> offers a choice between freedraw and autoshape (AI-assisted shape generation) in compact and mobile layouts. The popover remembers and displays the most recently used option via local state.</p>
+
+<h2 id="sticky-note-tool">Sticky Note Tool</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L121-L124"><code>packages/excalidraw/components/Tools.tsx:121-124</code></a> The sticky note tool is defined with the <code>N</code> keyboard shortcut. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L336"><code>packages/excalidraw/components/Tools.tsx:336</code></a> <code>StickyNoteToolButton</code> is exported and placed in the toolbar. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.toolDrag.ts#L49-L80"><code>packages/excalidraw/components/App.toolDrag.ts:49-80</code></a> The sticky note tool is draggable: pressing and dragging the button from the toolbar creates a default-sized note centered on the pointer release point. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.toolDrag.ts#L70-L77"><code>packages/excalidraw/components/App.toolDrag.ts:70-77</code></a> On drop, the note enters text-editing mode immediately via <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.toolDrag.ts#L72"><code>packages/excalidraw/components/App.toolDrag.ts:72</code></a> <code>app.text.startTextEditing</code>.</p>
+
+<h2 id="tool-dragging">Tool Dragging</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.toolDrag.ts#L27-L36"><code>packages/excalidraw/components/App.toolDrag.ts:27-36</code></a> Draggable tools can be dragged out of the toolbar to place a default-sized element where the pointer is released. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.toolDrag.ts#L97-L246"><code>packages/excalidraw/components/App.toolDrag.ts:97-246</code></a> The <code>AppToolDrag</code> class manages the drag gesture: a button press arms the drag; the gesture starts once the pointer moves beyond <code>DRAGGING_THRESHOLD</code>, so a plain click still selects the tool. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.toolDrag.ts#L100-L101"><code>packages/excalidraw/components/App.toolDrag.ts:100-101</code></a> The preview element exists only during the drag and is not added to the scene until the pointer is released over the canvas.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tools.tsx#L299-L303"><code>packages/excalidraw/components/Tools.tsx:299-303</code></a> Tool button components call <code>app.toolDrag.handleButtonPointerDown</code> on pointerdown to arm a potential drag.</p>
+
+<h2 id="desktop-toolbar">Desktop Toolbar</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Toolbar.tsx#L223-L326"><code>packages/excalidraw/components/Toolbar.tsx:223-326</code></a> The desktop toolbar is rendered as an <code>Island</code> component containing a horizontal row of tool buttons. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Toolbar.tsx#L265-L272"><code>packages/excalidraw/components/Toolbar.tsx:265-272</code></a> It includes a pen mode button (except in compact UI, where it appears separately). <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Toolbar.tsx#L273-L288"><code>packages/excalidraw/components/Toolbar.tsx:273-288</code></a> A lock button manages tool lock state if the active tool is not host-controlled.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Toolbar.tsx#L290-L310"><code>packages/excalidraw/components/Toolbar.tsx:290-310</code></a> In compact UI (tablet), the selection tool is rendered as a popover; otherwise, it shows either the lasso button (if lasso is preferred) or the standard selection button. Basic shape tools (rectangle, diamond, ellipse), arrows, and line tools are always visible. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Toolbar.tsx#L303-L310"><code>packages/excalidraw/components/Toolbar.tsx:303-310</code></a> Freedraw, text, and sticky note tools are always visible; the sticky note tool is no longer hidden in compact UI.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Toolbar.tsx#L54-L220"><code>packages/excalidraw/components/Toolbar.tsx:54-220</code></a> The <code>ExtraToolsDropdown</code> groups less-frequently-used tools: image (when not hidden via <code>UIOptions</code>), frame, embeddable, autoshape, laser, bucketfill, lasso (in full UI), and generation tools (Mermaid, AI magic frame). The dropdown button icon changes to match the currently selected extra tool.</p>
+
+<h2 id="mobile-toolbar">Mobile Toolbar</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/MobileToolbar.tsx#L49-L375"><code>packages/excalidraw/components/MobileToolbar.tsx:49-375</code></a> The mobile toolbar compacts all tools into a fixed width by using dropdowns and adaptive visibility. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/MobileToolbar.tsx#L86-L100"><code>packages/excalidraw/components/MobileToolbar.tsx:86-100</code></a> Shape tools (rectangle, diamond, ellipse) and linear element tools (arrow, line) are grouped into popovers that remember the last selected option within each group.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/MobileToolbar.tsx#L112-L135"><code>packages/excalidraw/components/MobileToolbar.tsx:112-135</code></a> The toolbar measures its available width and conditionally shows text, image, and frame tools directly—these are only hidden if space is constrained. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/MobileToolbar.tsx#L116-L135"><code>packages/excalidraw/components/MobileToolbar.tsx:116-135</code></a> All other extra tools (stickynote, embeddable, autoshape, laser, bucketfill, magicframe) are placed in a dropdown menu triggered by a button whose icon reflects the currently selected extra tool.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/MobileToolbar.tsx#L59-L75"><code>packages/excalidraw/components/MobileToolbar.tsx:59-75</code></a> The mobile toolbar uses <code>useEffect</code> hooks to keep the last-selected generic shape and last-selected linear element in sync with the active tool when switching via other UI paths.</p>
+
+<h2 id="pen-mode">Pen Mode</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Toolbar.tsx#L265-L272"><code>packages/excalidraw/components/Toolbar.tsx:265-272</code></a> The pen mode button toggles between mouse and pen input modes. On pen detection (first pen interaction), pen mode is automatically enabled. The button is only rendered in the desktop toolbar; the mobile toolbar omits it due to space constraints.</p>
+
+<h2 id="tool-properties-and-states">Tool Properties and States</h2>
+
+<p>Tool properties and configuration options are rendered separately in the <a href="properties-panel.html">Properties and Stats Panel</a>. The toolbar manages tool <em>selection</em> and general UI affordances; tool-specific settings (stroke color, fill color, etc.) are handled by <a href="element-data-model.html">Element Data Model and Types</a> and the properties panel.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Text editing moved to <code>app.text</code> namespace</strong> — Commit 39478830637a refactored text editing logic out of <code>App.tsx</code> into a new <code>App.text.ts</code> module (<code>AppText</code>). This change affected how the sticky note tool initiates text editing on drop: callers now invoke <code>app.text.startTextEditing()</code> instead of <code>app.startTextEditing()</code>.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

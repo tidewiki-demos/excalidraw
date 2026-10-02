@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html" aria-current="page">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="overview">Overview</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Excalidraw is an open-source virtual whiteboard for creating hand-drawn style diagrams. The repository contains both the core editor library (published as an npm package) and a full web application hosted at excalidraw.com with real-time collaboration, end-to-end encryption, and local-first storage.</p>
+
+<h2 id="what-this-project-does">What This Project Does</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/README.md#L54-L70"><code>README.md:54-70</code></a> The Excalidraw editor supports creating infinite canvas-based drawings with hand-drawn styling, a wide range of tools (shapes, arrows, freehand), image support, shape libraries, export to PNG/SVG/clipboard, undo/redo, zoom and panning, and arrow binding with labels.</p>
+
+<p>The hosted web app at excalidraw.com adds PWA offline support, real-time collaboration, end-to-end encryption, local-first autosaving, and shareable readonly links.</p>
+
+<h2 id="architecture-and-main-components">Architecture and Main Components</h2>
+
+<pre><code class="language-mermaid">graph TB
+    subgraph "Core Editor"
+        Canvas["Canvas Rendering &amp; Viewport"]
+        Elements["Element Data Model"]
+        Selection["Selection &amp; Bounding Boxes"]
+        Transform["Transformation &amp; Manipulation"]
+    end
+    
+    subgraph "User Interaction"
+        Actions["Actions &amp; Command System"]
+        Tools["Toolbar &amp; Tools"]
+        Input["Input Handlers"]
+    end
+    
+    subgraph "Content Features"
+        Shapes["Shape Generation"]
+        Text["Text Editing"]
+        Arrows["Arrows &amp; Bindings"]
+        Frames["Frames &amp; Groups"]
+        Images["Image Support"]
+    end
+    
+    subgraph "Visual &amp; Organization"
+        ZIndex["Z-Index &amp; Ordering"]
+        Snapping["Snapping &amp; Guides"]
+        Effects["Visual Effects"]
+        Colors["Color System"]
+    end
+    
+    subgraph "UI Layer"
+        UIComp["UI Components"]
+        Properties["Properties Panel"]
+        Search["Search &amp; Command Palette"]
+        Toolbar["Toolbar UI"]
+    end
+    
+    subgraph "Data &amp; State"
+        AppState["Application State"]
+        History["Undo/Redo &amp; History"]
+        Clipboard["Clipboard &amp; Export"]
+        Library["Library &amp; Assets"]
+    end
+    
+    subgraph "Advanced Features"
+        Collab["Real-Time Collaboration"]
+        Encryption["End-to-End Encryption"]
+        Storage["Storage &amp; Persistence"]
+        AI["AI &amp; Text Generation"]
+        Mermaid["Mermaid Conversion"]
+    end
+    
+    Canvas --&gt; Elements
+    Elements --&gt; Selection
+    Selection --&gt; Transform
+    Actions --&gt; Tools
+    Actions --&gt; Input
+    Input --&gt; Canvas
+    Shapes --&gt; Elements
+    Text --&gt; Elements
+    Arrows --&gt; Elements
+    Frames --&gt; Elements
+    Images --&gt; Elements
+    ZIndex --&gt; Elements
+    Snapping --&gt; Transform
+    Effects --&gt; Canvas
+    Colors --&gt; UIComp
+    UIComp --&gt; Properties
+    UIComp --&gt; Search
+    UIComp --&gt; Toolbar
+    AppState --&gt; History
+    AppState --&gt; Clipboard
+    AppState --&gt; Library
+    Clipboard --&gt; AppState
+    History --&gt; AppState
+    Collab --&gt; AppState
+    Encryption --&gt; Clipboard
+    Storage --&gt; AppState
+    AI --&gt; Elements
+    Mermaid --&gt; Elements
+</code></pre>
+
+<p>The system is organized into layers:</p>
+
+<ul>
+  <li><strong>Core Rendering</strong>: The canvas pipeline and viewport manage the drawing surface and interactive rendering.</li>
+  <li><strong>Element Model</strong>: All drawable objects (shapes, text, arrows, frames) use a unified data model with type checking.</li>
+  <li><strong>User Input</strong>: The actions system translates user gestures and keyboard commands into drawing operations. Tools control which drawing mode is active.</li>
+  <li><strong>Spatial Operations</strong>: Selection, bounding boxes, transformations (resize, rotate, flip, align), and z-index ordering handle element positioning and interaction.</li>
+  <li><strong>Content Creation</strong>: Specialized systems for generating shapes, handling text, binding arrows to elements, grouping, and image embedding.</li>
+  <li><strong>Visual Presentation</strong>: Snapping guides, color management, and visual effects enhance the drawing experience.</li>
+  <li><strong>Application State</strong>: Global state holds canvas data, configuration, and coordinates with the history system for undo/redo.</li>
+  <li><strong>Advanced Features</strong>: Built on top of the core, these include real-time sync, encryption, persistence, AI assistance, and Mermaid diagram conversion.</li>
+</ul>
+
+<h2 id="repository-structure">Repository Structure</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/package.json#L1-L9"><code>package.json:1-9</code></a> The project is a monorepo using Yarn workspaces with the main app in <code>excalidraw-app</code>, reusable libraries in <code>packages/*</code>, and examples in <code>examples/*</code>.</p>
+
+<h2 id="running-the-project">Running the Project</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/README.md#L85"><code>README.md:85</code></a> To run the repository locally for development, refer to the <a href="https://docs.excalidraw.com/docs/introduction/development">Development Guide</a>.</p>
+
+<p>Alternatively, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/docker-compose.yml"><code>docker-compose.yml</code></a> a Docker Compose file is available for development setup—it builds the project and runs the app on port 3000:</p>
+
+<pre><code class="language-bash">docker-compose up
+</code></pre>
+
+<h2 id="wiki-navigation">Wiki Navigation</h2>
+
+<h3 id="core-drawing-engine">Core Drawing Engine</h3>
+<ul>
+  <li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a> — Main editor component, canvas rendering, and viewport management</li>
+  <li><a href="element-data-model.html">Element Data Model and Types</a> — Fundamental data structures for all drawable objects</li>
+  <li><a href="shape-generation.html">Shape Generation and Drawing</a> — Algorithms for shape creation, recognition, and freehand drawing</li>
+  <li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a> — Selection logic and collision detection</li>
+  <li><a href="element-transformation.html">Element Transformation and Manipulation</a> — Resizing, rotating, flipping, aligning, and distributing</li>
+</ul>
+
+<h3 id="content-and-features">Content and Features</h3>
+<ul>
+  <li><a href="text-editing.html">Text Editing and Typography</a> — Text creation, editing, measurement, and font management</li>
+  <li><a href="arrows-bindings.html">Arrows and Bindings</a> — Arrow creation, endpoint binding, labels, and routing</li>
+  <li><a href="frames-groups.html">Frames and Groups</a> — Container management and hierarchical organization</li>
+  <li><a href="image-handling.html">Image Support</a> — Image import, embedding, and manipulation</li>
+  <li><a href="z-index-ordering.html">Z-Index and Element Ordering</a> — Layering system and efficient reordering</li>
+</ul>
+
+<h3 id="user-interaction">User Interaction</h3>
+<ul>
+  <li><a href="actions-system.html">Actions and Command System</a> — User actions, command registration, and shortcuts</li>
+  <li><a href="toolbar-tools.html">Toolbar and Tools</a> — Tool selection interface and tool-specific UI</li>
+  <li><a href="properties-panel.html">Properties and Stats Panel</a> — Element properties display and editing</li>
+  <li><a href="search-command.html">Search and Command Palette</a> — Quick search and command discovery</li>
+  <li><a href="snapping-guides.html">Snapping and Alignment Guides</a> — Grid snapping, object snapping, and visual guides</li>
+</ul>
+
+<h3 id="visual-and-effects">Visual and Effects</h3>
+<ul>
+  <li><a href="color-system.html">Color Picker and Color System</a> — Color management and picker interface</li>
+  <li><a href="canvas-effects.html">Visual Effects and Animation</a> — Canvas animations, trails, and laser pointer effects</li>
+  <li><a href="bucket-fill.html">Bucket Fill Tool</a> — Flood-fill algorithm and color application</li>
+</ul>
+
+<h3 id="data-and-state-management">Data and State Management</h3>
+<ul>
+  <li><a href="app-state.html">Application State Management</a> — Global state, updates, and observers</li>
+  <li><a href="undo-redo-history.html">Undo/Redo and History</a> — History management and transaction handling</li>
+  <li><a href="clipboard-export.html">Clipboard and Data Export</a> — Copy/paste and format conversion</li>
+  <li><a href="file-formats-restore.html">File Formats and Data Restoration</a> — Excalidraw file format and data migration</li>
+</ul>
+
+<h3 id="advanced-features">Advanced Features</h3>
+<ul>
+  <li><a href="collaboration.html">Real-Time Collaboration</a> — Live collaboration and synchronization</li>
+  <li><a href="encryption-security.html">End-to-End Encryption</a> — Encryption, decryption, and key management</li>
+  <li><a href="storage-persistence.html">Storage and Persistence</a> — Local and cloud storage</li>
+  <li><a href="library-system.html">Library and Asset Management</a> — Shape library and asset organization</li>
+  <li><a href="ai-features.html">AI and Text Generation</a> — AI-powered features and text-to-diagram</li>
+</ul>
+
+<h3 id="utilities-and-special-features">Utilities and Special Features</h3>
+<ul>
+  <li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a> — Converting Mermaid syntax to Excalidraw elements</li>
+  <li><a href="ui-components.html">UI Components Library</a> — Reusable React components</li>
+  <li><a href="math-geometry.html">Mathematical Utilities and Geometry</a> — Geometric calculations and helper functions</li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

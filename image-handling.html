@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Image Support · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html" aria-current="page">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="image-support">Image Support</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>This page covers image import, embedding, cropping, and canvas-based image operations for image elements in the editor.</p>
+
+<h2 id="image-import-and-caching">Image Import and Caching</h2>
+
+<p>Images are loaded and cached to avoid redundant processing. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/image.ts#L21-L32"><code>packages/element/src/image.ts:21-32</code></a> The <code>loadHTMLImageElement</code> function creates an HTML Image element from a data URL, resolving when the image finishes loading or rejecting on error.</p>
+
+<p>The <code>updateImageCache</code> function <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/image.ts#L36-L89"><code>packages/element/src/image.ts:36-89</code></a> manages bulk image caching. It accepts a list of file IDs and stores promises for in-progress image loads immediately, then updates the cache with the loaded HTMLImageElement. The function returns information about which files were successfully updated and which encountered errors.</p>
+
+<p>Only images can be cached; binary files trigger an error <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/image.ts#L56-L58"><code>packages/element/src/image.ts:56-58</code></a>.</p>
+
+<h2 id="svg-normalization">SVG Normalization</h2>
+
+<p>SVG images require normalization before use. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/image.ts#L104-L153"><code>packages/element/src/image.ts:104-153</code></a> The <code>normalizeSVG</code> function parses an SVG string and ensures:</p>
+
+<ul>
+  <li>The SVG has an <code>xmlns</code> attribute</li>
+  <li>Width and height are set to concrete values (not <code>%</code> or <code>auto</code>)</li>
+  <li>A <code>viewBox</code> attribute is present, derived from dimensions or extracted from existing viewBox values</li>
+</ul>
+
+<p>This prevents scaling issues when rendering SVGs at different sizes and zoom levels.</p>
+
+<h2 id="image-cropping">Image Cropping</h2>
+
+<p>Image cropping is handled by the <code>cropElement</code> function <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L33-L405"><code>packages/element/src/cropElement.ts:33-405</code></a>, which updates an image element’s crop region based on pointer movement from a transform handle.</p>
+
+<h3 id="crop-data-structure">Crop Data Structure</h3>
+
+<p>The <code>ImageCrop</code> type stores:</p>
+<ul>
+  <li><code>x</code>, <code>y</code>: crop offset in natural image coordinates</li>
+  <li><code>width</code>, <code>height</code>: cropped region dimensions</li>
+  <li><code>naturalWidth</code>, <code>naturalHeight</code>: original image dimensions</li>
+</ul>
+
+<h3 id="cropping-algorithm">Cropping Algorithm</h3>
+
+<p>The function operates in the element’s local (unrotated) coordinate space by rotating the pointer position against the element’s center <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L63-L70"><code>packages/element/src/cropElement.ts:63-70</code></a>. It then:</p>
+
+<ol>
+  <li>Calculates scaling factors between natural image dimensions and the currently displayed (uncropped) dimensions <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L46-L47"><code>packages/element/src/cropElement.ts:46-47</code></a></li>
+  <li>Determines crop boundaries based on which transform handle is being dragged (north, south, east, west, or corner combinations)</li>
+  <li>Clamps new dimensions to <code>MINIMAL_CROP_SIZE</code> (10 pixels) and enforces bounds to prevent cropping beyond the image [[cite:packages/element/src/cropElement.ts:31, 93-126]]</li>
+  <li>Handles flipped images by adjusting crop coordinates [[cite:packages/element/src/cropElement.ts:87-88, 135-160]]</li>
+  <li>Optionally maintains aspect ratio when provided <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L162-L377"><code>packages/element/src/cropElement.ts:162-377</code></a></li>
+</ol>
+
+<p>The <code>recomputeOrigin</code> function <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L407-L475"><code>packages/element/src/cropElement.ts:407-475</code></a> recalculates the element’s position during cropping to keep the appropriate corner (or center, for aspect-ratio-locked crops) fixed while the opposite side resizes.</p>
+
+<h3 id="uncropped-image-calculation">Uncropped Image Calculation</h3>
+
+<p><code>getUncroppedImageElement</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L478-L547"><code>packages/element/src/cropElement.ts:478-547</code></a> reconstructs the full uncropped image by reversing the crop transformation, accounting for element rotation and flipping. This is useful for operations that need the original image bounds.</p>
+
+<p><code>getUncroppedWidthAndHeight</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L549-L566"><code>packages/element/src/cropElement.ts:549-566</code></a> calculates the natural dimensions of a cropped image by scaling back through the crop ratios.</p>
+
+<h3 id="crop-position-adjustment">Crop Position Adjustment</h3>
+
+<p>The <code>adjustCropPosition</code> function <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L568-L590"><code>packages/element/src/cropElement.ts:568-590</code></a> and <code>getFlipAdjustedCropPosition</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/cropElement.ts#L592-L628"><code>packages/element/src/cropElement.ts:592-628</code></a> handle the complexity of flipped images by mirroring crop coordinates when the image is flipped horizontally or vertically.</p>
+
+<h2 id="crop-ui-action">Crop UI Action</h2>
+
+<p>The <code>actionToggleCropEditor</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionCropEditor.tsx#L13-L59"><code>packages/excalidraw/actions/actionCropEditor.tsx:13-59</code></a> registers the crop action in the <a href="actions-system.html">Actions and Command System</a>. It is only available when:</p>
+<ul>
+  <li>Exactly one image element is selected</li>
+  <li>Cropping is not already active</li>
+</ul>
+
+<p>Triggering the action sets <code>croppingElementId</code> in app state and sets <code>isCropping</code> to false, indicating the crop UI should be displayed. See <a href="toolbar-tools.html">Toolbar and Tools</a> for the visual crop interface.</p>
+
+<h2 id="png-metadata-embedding">PNG Metadata Embedding</h2>
+
+<p>Images can embed Excalidraw scene metadata within PNG files. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/image.ts#L14-L47"><code>packages/excalidraw/data/image.ts:14-47</code></a> The <code>encodePngMetadata</code> function encodes metadata as a tEXt chunk in a PNG, while <code>decodePngMetadata</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/image.ts#L49-L71"><code>packages/excalidraw/data/image.ts:49-71</code></a> extracts and decompresses it. This allows sharing images that contain the full drawing state. See <a href="file-formats-restore.html">File Formats and Data Restoration</a> for more context on data serialization.</p>
+
+<h2 id="related-systems">Related Systems</h2>
+
+<ul>
+  <li>Image elements are part of the <a href="element-data-model.html">Element Data Model and Types</a></li>
+  <li>Cropping integrates with <a href="element-transformation.html">Element Transformation and Manipulation</a> via transform handles</li>
+  <li>Rendering occurs in the <a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+  <li>Selected images are managed through <a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+  <li>Image files are stored in <a href="storage-persistence.html">Storage and Persistence</a></li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

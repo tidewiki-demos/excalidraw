@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Library and Asset Management · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html" aria-current="page">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="library-and-asset-management">Library and Asset Management</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The library system enables users to save, organize, and reuse collections of shapes and elements. It manages library items (unpublished and published), handles persistence through adapters, and supports importing libraries from external sources.</p>
+
+<h2 id="library-items-and-structure">Library Items and Structure</h2>
+
+<p>A library item contains a collection of elements plus metadata. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L39-L45"><code>packages/excalidraw/data/library.ts:39-45</code></a> Each item has:</p>
+
+<ul>
+  <li>A unique <code>id</code> (generated with <code>randomId()</code>)</li>
+  <li>A <code>status</code> field (“unpublished” or “published”)</li>
+  <li>An array of <code>elements</code> (deep copies of selected shapes)</li>
+  <li>A <code>created</code> timestamp</li>
+</ul>
+
+<p>Items are organized in a <code>LibraryItems</code> array, with newly added items prepended to the front. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L145-L157"><code>packages/excalidraw/data/library.ts:145-157</code></a></p>
+
+<h2 id="adding-elements-to-library">Adding Elements to Library</h2>
+
+<p>Users can add selected elements to the library through two paths:</p>
+
+<p><strong>Action-based (keyboard/command system):</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionAddToLibrary.ts#L10-L65"><code>packages/excalidraw/actions/actionAddToLibrary.ts:10-65</code></a> The <code>actionAddToLibrary</code> action retrieves selected elements, validates that no unsupported types are included (checked against <code>LIBRARY_DISABLED_TYPES</code>), creates a new library item with a timestamp, and prepends it to the existing library.</p>
+
+<p><strong>UI-based (LibraryMenu component):</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/LibraryMenu.tsx#L90-L121"><code>packages/excalidraw/components/LibraryMenu.tsx:90-121</code></a> Users can add elements directly through the library menu. The menu tracks “pending elements” (currently selected elements that could be added), and validates them before adding.</p>
+
+<p>Both paths check <code>LIBRARY_DISABLED_TYPES</code> to prevent certain element types from being saved to the library.</p>
+
+<h2 id="pending-elements-tracking">Pending Elements Tracking</h2>
+
+<p>The <code>LibraryMenu</code> component tracks which elements are pending addition via <code>usePendingElementsMemo</code>. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/LibraryMenu.tsx#L191-L258"><code>packages/excalidraw/components/LibraryMenu.tsx:191-258</code></a> This hook:</p>
+
+<ul>
+  <li>Monitors selected element IDs and their versions</li>
+  <li>Only updates when the pointer is released (not during interaction)</li>
+  <li>Detects changes by comparing element versions, not just selection changes</li>
+  <li>Returns the current set of selected elements available for library addition</li>
+</ul>
+
+<h2 id="library-class-and-state-management">Library Class and State Management</h2>
+
+<p>The <code>Library</code> class <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L197-L401"><code>packages/excalidraw/data/library.ts:197-401</code></a> manages the complete library lifecycle:</p>
+
+<ul>
+  <li><strong>Current state:</strong> Maintains <code>currLibraryItems</code> as the authoritative library state</li>
+  <li><strong>Update queue:</strong> Serializes library changes to prevent race conditions via <code>updateQueue</code></li>
+  <li><strong>Change tracking:</strong> Tracks previous state to emit change notifications via <code>onLibraryUpdateEmitter</code></li>
+  <li><strong>Listeners:</strong> Uses a Jotai atom (<code>libraryItemsAtom</code>) <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L108-L114"><code>packages/excalidraw/data/library.ts:108-114</code></a> to notify UI components of library changes</li>
+</ul>
+
+<p>The <code>getLatestLibrary()</code> method <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L268-L282"><code>packages/excalidraw/data/library.ts:268-282</code></a> waits for all pending updates to complete before returning a cloned snapshot.</p>
+
+<h2 id="library-publishing-and-import">Library Publishing and Import</h2>
+
+<p><strong>Updating library:</strong> The <code>updateLibrary()</code> method <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L287-L349"><code>packages/excalidraw/data/library.ts:287-349</code></a> is the high-level public API (exposed on ExcalidrawAPI) that:</p>
+
+<ul>
+  <li>Accepts library items as data, a Blob, or a function returning either</li>
+  <li>Supports merging with existing items or replacing them</li>
+  <li>Can prompt users for confirmation before adding large libraries</li>
+  <li>Opens the library menu if requested</li>
+  <li>Handles loading from Blob format via <code>loadLibraryFromBlob()</code></li>
+</ul>
+
+<p><strong>Library import from URL:</strong> Libraries can be installed from external URLs. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L530-L543"><code>packages/excalidraw/data/library.ts:530-543</code></a> The <code>parseLibraryTokensFromUrl()</code> function extracts library URLs from URL hash (<code>#addLibrary=...</code>) or legacy query parameters. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L718-L779"><code>packages/excalidraw/data/library.ts:718-779</code></a> The <code>useHandleLibrary</code> hook listens for URL changes and imports libraries, validating URLs against <code>ALLOWED_LIBRARY_URLS</code> (excalidraw.com and GitHub raw content) or a custom validator.</p>
+
+<h2 id="uniqueness-and-merging">Uniqueness and Merging</h2>
+
+<p>Library items are deduplicated before merging. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L122-L141"><code>packages/excalidraw/data/library.ts:122-141</code></a> The <code>isUniqueItem()</code> function checks if an item already exists by comparing element counts, IDs, and <code>versionNonce</code> values. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L145-L157"><code>packages/excalidraw/data/library.ts:145-157</code></a> When merging, unique items from the source are prepended, preserving newly-added-first ordering.</p>
+
+<h2 id="persistence-and-adapters">Persistence and Adapters</h2>
+
+<p>Library data is persisted through adapter pattern. <code>LibraryPersistenceAdapter</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L78-L95"><code>packages/excalidraw/data/library.ts:78-95</code></a> defines load/save interface for database operations. <code>LibraryMigrationAdapter</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L97-L106"><code>packages/excalidraw/data/library.ts:97-106</code></a> handles migration from legacy data stores.</p>
+
+<p><strong>Persistence flow:</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L607-L675"><code>packages/excalidraw/data/library.ts:607-675</code></a> On library updates, <code>persistLibraryUpdate()</code> reconciles local changes with database state, handles deleted/added/updated items, and only writes if the library hash has changed. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L677-L1001"><code>packages/excalidraw/data/library.ts:677-1001</code></a> The <code>useHandleLibrary</code> hook orchestrates initial load (with migration if needed) and subscribes to library changes to persist them asynchronously.</p>
+
+<h2 id="grid-distribution">Grid Distribution</h2>
+
+<p>When inserting multiple library items into the canvas, <code>distributeLibraryItemsOnSquareGrid()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L405-L495"><code>packages/excalidraw/data/library.ts:405-495</code></a> arranges them in a square grid pattern with padding. It:</p>
+
+<ul>
+  <li>Calculates grid dimensions based on item count</li>
+  <li>Computes per-row heights and per-column widths</li>
+  <li>Centers items within their grid cells</li>
+  <li>Offsets coordinates so items are positioned from origin (0, 0)</li>
+</ul>
+
+<p>This ensures inserted libraries appear organized rather than overlapping.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Update queue serialization</strong> — Library changes are queued to prevent race conditions. [[cite:packages/excalidraw/data/library.ts:210-214,351-368]] When <code>setLibrary()</code> is called with a function, it receives the latest library items only after previous updates resolve, ensuring consistent state and correct merging.</p>
+
+<p><strong>Jotai atom for UI state</strong> — Library loading/loaded status and items are exposed via a Jotai atom <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L108-L114"><code>packages/excalidraw/data/library.ts:108-114</code></a> rather than direct React state. This allows the library state to survive component remounts and be accessed globally across the UI.</p>
+
+<p><strong>Adapter pattern for persistence</strong> — Library persistence is decoupled via <code>LibraryPersistenceAdapter</code> rather than baked into the Library class. This lets host apps provide their own storage backend (database, local storage, cloud API) without modifying core code.</p>
+
+<p><strong>Migration on init</strong> — Legacy library data is migrated on first load through <code>LibraryMigrationAdapter</code>, then cleared from the old store. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/library.ts#L849-L896"><code>packages/excalidraw/data/library.ts:849-896</code></a> This ensures data isn’t duplicated or lost during the transition to a new storage layer.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

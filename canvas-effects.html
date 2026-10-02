@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visual Effects and Animation · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html" aria-current="page">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="visual-effects-and-animation">Visual Effects and Animation</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>This page covers canvas animations, laser pointer trails, and visual feedback effects that enhance the user experience during drawing and collaboration.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>The visual effects system provides smooth, performant animations for trails left by drawing tools and laser pointers. It consists of three main components:</p>
+
+<ol>
+  <li><strong>AnimationController</strong> – A frame-based animation scheduler that manages the lifecycle of concurrent animations</li>
+  <li><strong>AnimatedTrail</strong> – Renders SVG trail graphics with optional dashing animations, powered by the laser pointer algorithm</li>
+  <li><strong>LaserTrails</strong> – Manages both local user trails and remote collaborator trails</li>
+</ol>
+
+<h2 id="animation-controller">Animation Controller</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderer/animation.ts#L1-L50"><code>packages/excalidraw/renderer/animation.ts:1-50</code></a></p>
+
+<p>The <code>AnimationController</code> is a static class that schedules and ticks animations efficiently. It uses <code>requestAnimationFrame</code> when render throttling is enabled, otherwise falls back to <code>setTimeout</code> for more consistent timing.</p>
+
+<p><strong>Key features:</strong></p>
+
+<ul>
+  <li>Animations are registered by a string key and run until they return <code>null</code> or <code>undefined</code></li>
+  <li>Each animation receives <code>deltaTime</code> and accumulated <code>state</code> on every frame</li>
+  <li>Multiple animations can run concurrently; they are processed once per tick to prevent callbacks from running twice in a single frame</li>
+  <li>The scheduler is lazy: it only schedules the next frame when animations are active, and stops when none remain</li>
+</ul>
+
+<p><strong>Lifecycle:</strong> When <code>start()</code> is called with an animation function, it immediately invokes it with <code>deltaTime: 0</code> to get initial state. If that initial call returns falsy, the animation is not registered. Otherwise, <code>scheduleNextFrame()</code> is called to begin the animation loop.</p>
+
+<h2 id="animated-trail">Animated Trail</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/animatedTrail.ts#L1-L50"><code>packages/excalidraw/animatedTrail.ts:1-50</code></a></p>
+
+<p><code>AnimatedTrail</code> is the primary class for rendering laser pointer trails as SVG paths. It maintains a current trail (being drawn) and past trails (finished), all powered by the <code>LaserPointer</code> algorithm.</p>
+
+<p><strong>Trail lifecycle:</strong></p>
+
+<ul>
+  <li><code>startPath(x, y)</code> – Creates a new <code>LaserPointer</code> and adds the first point</li>
+  <li><code>addPointToPath(x, y)</code> – Adds points to the current trail as the user moves</li>
+  <li><code>endPath()</code> – Closes the current trail and moves it to the past trails list</li>
+  <li><code>start(container)</code> – Begins animation, appending the trail SVG element to the container and registering with <code>AnimationController</code></li>
+  <li><code>stop()</code> – Cancels the animation and cleans up</li>
+</ul>
+
+<p><strong>SVG rendering:</strong> On each frame, <code>onFrame()</code> iterates over all trails (current and past), calls <code>drawTrail()</code> to convert each to an SVG path string, and combines them into a single <code>d</code> attribute. Past trails are filtered out once their stroke outline becomes empty (they decay).</p>
+
+<p><strong>Trail decay:</strong> The <code>drawTrail()</code> method retrieves the stroke outline from each <code>LaserPointer</code> at the current zoom level and converts scene coordinates to viewport coordinates. If <code>animateTrail</code> is enabled, the stroke is sliced to only the first half, creating the visual effect of a dashing animation.</p>
+
+<p><strong>Dashing animation:</strong> When <code>animateTrail</code> is true, an SVG <code>&lt;animate&gt;</code> element is appended to the trail element that animates the <code>stroke-dashoffset</code> from 0 to -14 with a 0.3s duration on repeat <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/animatedTrail.ts#L48-L58"><code>packages/excalidraw/animatedTrail.ts:48-58</code></a>.</p>
+
+<h2 id="laser-trails">Laser Trails</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/laserTrails.ts#L1-L50"><code>packages/excalidraw/laserTrails.ts:1-50</code></a></p>
+
+<p><code>LaserTrails</code> is a manager that implements the <code>Trail</code> interface and wraps both the local user’s trail and trails for remote collaborators in real-time collaboration.</p>
+
+<p><strong>Local trail:</strong> The local trail uses a default laser color and is always rendered.</p>
+
+<p><strong>Collaborative trails:</strong> Remote collaborator trails are created on-demand when a collaborator’s state is updated. The system:</p>
+
+<ul>
+  <li>Tracks which collaborators have active trails using their socket ID</li>
+  <li>Creates an <code>AnimatedTrail</code> for each collaborator, colored by their assigned client color (or their <code>laserColor</code> if set)</li>
+  <li>Starts a new path when the collaborator presses the laser pointer tool with the button down</li>
+  <li>Adds points as long as the button is down and the position differs from the last point</li>
+  <li>Ends the path when the button is released</li>
+  <li>Cleans up trails for collaborators who disconnect</li>
+</ul>
+
+<p><strong>Size mapping:</strong> Both local and collaborative trails use a custom <code>sizeMapping</code> function <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/laserTrails.ts#L24-L42"><code>packages/excalidraw/laserTrails.ts:24-42</code></a> that applies exponential decay over time (1000ms) and based on remaining stroke length (50px). This creates a natural fade-out effect as trails age.</p>
+
+<h2 id="laser-pointer-algorithm">Laser Pointer Algorithm</h2>
+
+<p>The <code>LaserPointer</code> class in <code>@excalidraw/laser-pointer</code> generates smooth, pressure-aware stroke outlines. It is not specific to visual effects but is central to trail rendering.</p>
+
+<p><strong>Point processing:</strong></p>
+
+<ul>
+  <li>Original points are stored as-is</li>
+  <li>Points are streamlined (smoothed) by interpolating towards the last stable point with a configurable factor</li>
+  <li>A “tail” buffer holds recent points that may still stabilize; it’s flushed when it exceeds <code>maxTailLength</code> (50)</li>
+  <li>Points can be simplified using the Douglas-Peucker algorithm <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/laser-pointer/src/simplify.ts"><code>packages/laser-pointer/src/simplify.ts</code></a> at different phases (input, tail, or output)</li>
+</ul>
+
+<p><strong>Stroke outline generation:</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/laser-pointer/src/state.ts#L119-L377"><code>packages/laser-pointer/src/state.ts:119-377</code></a></p>
+
+<p>The <code>getStrokeOutline()</code> method returns a closed polygon representing the visual width of the stroke:</p>
+
+<ul>
+  <li>For single-point strokes, a circle is generated</li>
+  <li>For two-point strokes, two half-circles are placed at each end</li>
+  <li>For longer strokes, forward and backward outline points are computed by rotating perpendicular directions around each point</li>
+  <li>Corner detection identifies sharp angle changes and applies rounded bevels rather than sharp corners</li>
+  <li>Size varies along the stroke based on <code>sizeMapping</code>, which receives pressure, running length, and index information</li>
+  <li>Start and end caps are added with variable radius</li>
+</ul>
+
+<h2 id="render-overrides">Render Overrides</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/renderOverrides.ts#L1-L70"><code>packages/excalidraw/renderOverrides.ts:1-70</code></a></p>
+
+<p>The <code>renderOverrides</code> module provides utilities to apply visual-only transformations to elements without modifying the underlying document. These overrides are used for real-time visual feedback such as fade and translation effects during collaborative interactions.</p>
+
+<p><strong>Key functions:</strong></p>
+
+<ul>
+  <li><code>copyElementRenderOverrides()</code> – Validates and copies a snapshot of render overrides (opacity and offset), clamping opacity to 0–100 and rejecting non-finite values atomically</li>
+  <li><code>getElementRenderOffsets()</code> – Extracts offsets from an overrides snapshot, memoizing the result on map identity so opacity-only fades reuse cached visibility without recalculating viewport geometry</li>
+</ul>
+
+<p><strong>Design principle:</strong> Render overrides are visual-only and never modify elements, history, or trigger <code>onChange</code> events. Mutations by callers are detected by copying the input map. Equivalent snapshots are recognized by comparing offset entries, so submissions that only change opacities can skip expensive viewport recalculations.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p>The <code>renderOverrides</code> system was introduced to allow real-time visual feedback during frame animations and collaborative interactions. The key decision was to separate visual-only state from document state: [[commit:a9186480121a]] implements <code>setElementRenderOverrides()</code> to apply temporary opacity and translation transforms without persisting changes or triggering document update handlers. This enables smooth, responsive visual effects while keeping the document layer clean.</p>
+
+<h2 id="see-also">See also</h2>
+
+<ul>
+  <li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a> – How trails are rendered onto the canvas</li>
+  <li><a href="actions-system.html">Actions and Command System</a> – How laser pointer tool actions are triggered</li>
+  <li><a href="app-state.html">Application State Management</a> – How animation state is managed</li>
+  <li><a href="collaboration.html">Real-Time Collaboration</a> – How collaborator pointer state is transmitted and updated</li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

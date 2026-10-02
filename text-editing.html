@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text Editing and Typography · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html" aria-current="page">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="text-editing-and-typography">Text Editing and Typography</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Text editing and typography in Excalidraw comprises text element creation, measurement, wrapping, alignment, font management, and a WYSIWYG editor. The system handles both free-standing text and text bound to containers (shapes and arrows), with support for multiple languages including CJK and emoji. Sticky notes are a specialized text container with auto-fitting typography and creation-date footers. List items are auto-numbered when duplicated.</p>
+
+<h2 id="text-element-fundamentals">Text Element Fundamentals</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L1-L45"><code>packages/element/src/textElement.ts:1-45</code></a> defines the core text element operations. Text elements can either be standalone or bound to containers (rectangles, diamonds, ellipses, arrows, sticky notes). <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L508-L514"><code>packages/element/src/textElement.ts:508-514</code></a> specifies that five container types support bound text: <code>rectangle</code>, <code>stickynote</code>, <code>ellipse</code>, <code>diamond</code>, and <code>arrow</code>.</p>
+
+<p>When a text element is bound to a container, its position and dimensions are constrained by the container’s geometry. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L51-L64"><code>packages/element/src/textElement.ts:51-64</code></a> The <code>redrawTextBoundingBox</code> function handles sticky notes specially: the sticky fit owns both the label and note geometry through <code>updateStickyNoteLayout</code>. For other containers, it recalculates text metrics, applies wrapping if needed, and positions the text within container constraints. The function may also grow the container if the text exceeds available space.</p>
+
+<h2 id="text-measurement">Text Measurement</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textMeasurements.ts#L12-L27"><code>packages/element/src/textMeasurements.ts:12-27</code></a> The <code>measureText</code> function calculates text dimensions by measuring width and computing height based on line count and line height. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textMeasurements.ts#L121-L150"><code>packages/element/src/textMeasurements.ts:121-150</code></a> Measurement uses a <code>CanvasTextMetricsProvider</code> that employs canvas 2D context’s <code>measureText</code> API to obtain advance width, which matches browser text wrapping behavior.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textMeasurements.ts#L179-L208"><code>packages/element/src/textMeasurements.ts:179-208</code></a> Character width is cached per font to optimize repeated calculations. The system supports querying minimum and maximum character widths for a given font, which is used for container sizing calculations.</p>
+
+<h2 id="text-wrapping">Text Wrapping</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textWrapping.ts#L7-L22"><code>packages/element/src/textWrapping.ts:7-22</code></a> The wrapping system approximates browser-like soft wrapping through tokenization, reflowing, and trimming stages. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textWrapping.ts#L382-L389"><code>packages/element/src/textWrapping.ts:382-389</code></a> Tokens are created by breaking lines at natural break points identified via Unicode-aware regexes that recognize whitespace, hyphens, CJK characters, emoji, and punctuation.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textWrapping.ts#L151-L169"><code>packages/element/src/textWrapping.ts:151-169</code></a> Advanced line breaking rules handle alphabetic languages, CJK, and emoji. For CJK text, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textWrapping.ts#L89-L118"><code>packages/element/src/textWrapping.ts:89-118</code></a> the system defines character classes for CJK opening/closing punctuation, currency symbols, and regular characters, enabling proper breaks before/after these characters based on context.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textWrapping.ts#L446-L478"><code>packages/element/src/textWrapping.ts:446-478</code></a> The <code>getWrappedTextLines</code> function returns wrapped lines with source offsets, enabling caret placement and editor features. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textWrapping.ts#L397-L405"><code>packages/element/src/textWrapping.ts:397-405</code></a> The <code>wrapText</code> convenience function returns the wrapped string without metadata.</p>
+
+<h2 id="alignment-and-positioning">Alignment and Positioning</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L249-L324"><code>packages/element/src/textElement.ts:249-324</code></a> The <code>computeBoundTextPosition</code> function calculates text position within a container using horizontal (<code>textAlign</code>) and vertical (<code>verticalAlign</code>) alignment properties. Sticky notes receive special handling: their label body ends above the creation-date footer, so middle-aligned text centers in the whole padded note while staying clear of the footer, only pushed up against the body’s bottom once it would overlap. For rotated containers, it rotates the computed position around the container’s center (or the note’s center for sticky notes) to maintain alignment.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L396-L417"><code>packages/element/src/textElement.ts:396-417</code></a> Container coordinate calculations account for shape-specific geometry and padding: sticky notes use <code>STICKY_NOTE_PADDING</code>, other containers use <code>BOUND_TEXT_PADDING</code>. Ellipses and diamonds have inset padding to account for their non-rectangular shapes. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L540-L569"><code>packages/element/src/textElement.ts:540-569</code></a> Max width and height constraints vary by container type—ellipses and diamonds have tighter bounds due to their geometry, sticky notes reserve height for the footer, while arrows apply special label width fractions.</p>
+
+<h2 id="font-management">Font Management</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/fonts/Fonts.ts#L46-L89"><code>packages/excalidraw/fonts/Fonts.ts:46-89</code></a> The <code>Fonts</code> class manages font registration, loading, and caching globally across instances. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/fonts/Fonts.ts#L63-L77"><code>packages/excalidraw/fonts/Fonts.ts:63-77</code></a> Fonts are lazily initialized on first access via the <code>registered</code> property.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/fonts/Fonts.ts#L153-L164"><code>packages/excalidraw/fonts/Fonts.ts:153-164</code></a> Scene fonts are loaded via <code>loadSceneFonts</code>, which gathers unique font families and characters in use, then loads them with proper concurrency control. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/fonts/Fonts.ts#L182-L217"><code>packages/excalidraw/fonts/Fonts.ts:182-217</code></a> <code>generateFontFaceDeclarations</code> creates CSS <code>@font-face</code> rules with font subsetting by Unicode range.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/fonts/ExcalidrawFontFace.ts#L37-L51"><code>packages/excalidraw/fonts/ExcalidrawFontFace.ts:37-51</code></a> Each font face can generate CSS declarations with subsetted glyphs based on characters present. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/fonts/ExcalidrawFontFace.ts#L58-L88"><code>packages/excalidraw/fonts/ExcalidrawFontFace.ts:58-88</code></a> Content is fetched from registered URLs with fallback chains and cached based on request headers.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/fonts/Fonts.ts#L106-L148"><code>packages/excalidraw/fonts/Fonts.ts:106-148</code></a> When fonts load, text elements using them are invalidated in the shape cache so they re-render with the actual font instead of fallback metrics.</p>
+
+<p>Registered fonts include <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/fonts/Fonts.ts#L398-L411"><code>packages/excalidraw/fonts/Fonts.ts:398-411</code></a> Cascadia, Comic Shanns, Excalifont, Helvetica, Liberation Sans, Lilita One, Nunito, Virgil, and fallback fonts for CJK (Xiaolai) and Windows emoji.</p>
+
+<h2 id="wysiwyg-editor">WYSIWYG Editor</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L250-L279"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:250-279</code></a> The <code>textWysiwyg</code> function creates an in-place text editor as a textarea element, positioned and styled to match the text element being edited. It accepts callbacks for text changes and submission.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L337-L527"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:337-527</code></a> The <code>updateWysiwygStyle</code> function continuously synchronizes the editor’s appearance with the edited element’s properties: font, size, color (with dark mode filter), position, dimensions, and rotation. For sticky notes, it delegates to <code>computeBoundTextPosition</code> instead of auto-growing the container. For bound text in other containers, it updates container coordinates and handles auto-growing containers.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L538-L564"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:538-564</code></a> The textarea is styled with appropriate <code>white-space</code> and <code>word-break</code> properties depending on whether the text is bound (<code>pre-wrap</code> / <code>break-word</code>) or unbound and auto-resizing (<code>pre</code> / <code>normal</code>).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L620-L844"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:620-844</code></a> Input handling normalizes text (EOL and tabs) and invokes <code>onChange</code> callbacks. Paste events extract text from Excalidraw clipboard data or plain text, and auto-resize the editor if the text is bound to a container.</p>
+
+<h3 id="keyboard-shortcuts">Keyboard Shortcuts</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L864-L913"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:864-913</code></a> Key handling in the editor supports:</p>
+<ul>
+  <li>Zoom in/out/reset (Ctrl+Plus, Ctrl+Minus, Ctrl+0)</li>
+  <li>Font size increase/decrease (Ctrl+Shift+Right/Left)</li>
+  <li>Tab/Shift+Tab for indentation</li>
+  <li>Escape to submit</li>
+  <li>Ctrl+Enter to submit</li>
+  <li>Ctrl+S/Cmd+S to save (actionSaveToActiveFile)</li>
+  <li>Ctrl+Shift+S/Cmd+Shift+S to save to disk (actionSaveFileToDisk)</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L920-L980"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:920-980</code></a> Indentation logic applies TAB characters (4 spaces) to selected lines, tracking cursor position correctly.</p>
+
+<h3 id="caret-positioning">Caret Positioning</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L130-L246"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:130-246</code></a> Caret positioning uses native DOM Range API measurement. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L143-L201"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:143-201</code></a> The <code>measureNativeLineCaretPositions</code> function measures where the caret appears at each offset into a line, accounting for bidirectional text. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L203-L230"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:203-230</code></a> <code>getLineCaretOffsetFromNativeLayout</code> finds the closest offset to a target X coordinate. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L237-L246"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:237-246</code></a> <code>getLineCaretXFromNativeLayout</code> returns the caret’s X position at a given offset.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L568-L619"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:568-619</code></a> Initial caret placement uses <code>getCaretIndexFromInitialSceneCoords</code>, which unrotates scene coordinates, determines the line, accounts for text alignment, and calls the caret offset function.</p>
+
+<h3 id="caret-following">Caret Following</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L625-L694"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:625-694</code></a> <code>getCaretViewportBounds</code> computes where the caret appears on screen, accounting for text alignment, bidirectional layout, and rotation. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L704-L728"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:704-728</code></a> <code>followCaretFromUnderPanels</code> pans the canvas when a caret would be hidden under the stats or styles panel, bringing it back into view with room to spare. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L1239-L1272"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:1239-1272</code></a> The editor’s scroll container detects when the browser tries to reveal an out-of-view caret, captures that scroll, and instead pans the canvas while keeping the editor box stationary.</p>
+
+<h3 id="blur-and-submit-handling">Blur and Submit Handling</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L1085-L1139"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:1085-1139</code></a> The <code>handleSubmit</code> function finalizes editing by updating the text element’s wrapped text and bound element references. For bound text, it ensures the element is in the container’s <code>boundElements</code> array or removes it if empty.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/wysiwyg/textWysiwyg.tsx#L1154-L1200"><code>packages/excalidraw/wysiwyg/textWysiwyg.tsx:1154-1200</code></a> The <code>onPointerDown</code> handler prevents blur-on-submit when interacting with UI elements (shape actions, properties panel) and supports Alt+drag on the edited text for duplication.</p>
+
+<h2 id="text-editing-session-management">Text Editing Session Management</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.text.ts#L83-L908"><code>packages/excalidraw/components/App.text.ts:83-908</code></a> The <code>AppText</code> class manages the editing lifecycle: resolving what text to edit or create, and where; the editor’s callbacks; and the canvas area the text is kept within. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.text.ts#L168-L390"><code>packages/excalidraw/components/App.text.ts:168-390</code></a> <code>handleTextWysiwyg</code> sets up the WYSIWYG editor for a text element, handling both sticky note layout and free text resizing. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.text.ts#L613-L908"><code>packages/excalidraw/components/App.text.ts:613-908</code></a> <code>startTextEditing</code> creates or edits a text element at a scene position, with support for container binding, arrow endpoint binding, and caret positioning.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.text.ts#L113-L118"><code>packages/excalidraw/components/App.text.ts:113-118</code></a> <code>getTextSidePanels</code> returns the panels (stats, styles) that should be kept clear of the edited text. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.text.ts#L120-L152"><code>packages/excalidraw/components/App.text.ts:120-152</code></a> <code>getTextViewportOffsets</code> and <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.text.ts#L159-L166"><code>packages/excalidraw/components/App.text.ts:159-166</code></a> <code>getMaxTextWidth</code> constrain the text to the canvas area, accounting for side panels and a viewport padding.</p>
+
+<h2 id="text-tool-pointer-interaction">Text Tool Pointer Interaction</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.textTool.ts#L97-L455"><code>packages/excalidraw/components/App.textTool.ts:97-455</code></a> The <code>AppTextTool</code> class handles the text tool’s pointer interaction. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.textTool.ts#L128-L162"><code>packages/excalidraw/components/App.textTool.ts:128-162</code></a> <code>getTargetAt</code> answers what a click at a position would do: bind to an endpoint, edit existing text, bind a label to an empty container, or create free text—in that priority order. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.textTool.ts#L171-L201"><code>packages/excalidraw/components/App.textTool.ts:171-201</code></a> <code>updateHover</code> keeps the affordance (<code>appState.textToolHover</code>) in sync with the pointer. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.textTool.ts#L217-L233"><code>packages/excalidraw/components/App.textTool.ts:217-233</code></a> <code>refresh</code> re-resolves the hover when modifiers change or the viewport moves.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.textTool.ts#L279-L336"><code>packages/excalidraw/components/App.textTool.ts:279-336</code></a> <code>handlePointerDown</code> responds to the pointer, with special handling for empty containers: the click is deferred on pointerdown. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.textTool.ts#L346-L363"><code>packages/excalidraw/components/App.textTool.ts:346-363</code></a> <code>handlePointerMove</code> detects if the pointer has dragged past the autowrap threshold, turning the deferred click into a free text drag. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/App.textTool.ts#L371-L392"><code>packages/excalidraw/components/App.textTool.ts:371-392</code></a> <code>handlePointerUp</code> commits the deferred click as a label or discards it if it was a drag.</p>
+
+<h2 id="sticky-notes">Sticky Notes</h2>
+
+<p>Sticky notes are a specialized text container type that combines a visually distinct container with auto-fitting typography and automatic layout. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L1-L41"><code>packages/element/src/stickyNote.ts:1-41</code></a> The sticky note system is implemented in a dedicated module with rendering, layout, and typography management.</p>
+
+<h3 id="sticky-note-layout-and-typography">Sticky Note Layout and Typography</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L379-L423"><code>packages/element/src/stickyNote.ts:379-423</code></a> Font sizing uses two properties: <code>baseFontSize</code> is the user’s picked ceiling, and <code>fontSize</code> is the fitted result that shrinks to accommodate text overflow. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L405-L412"><code>packages/element/src/stickyNote.ts:405-412</code></a> The <code>getBaseFontSize</code> function retrieves the ceiling (user’s pick), while <code>getBaseFontSizeUpdate</code> applies changes, distinguishing sticky note labels from regular text.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L470-L770"><code>packages/element/src/stickyNote.ts:470-770</code></a> The <code>getStickyNoteLayout</code> function is the single source of truth for sticky note geometry: it wraps the label at the note’s width, fits the font under the ceiling using a warm-started binary search, grows the note past <code>baseHeight</code> only when text overflows at minimum size, and positions the label inside. The layout returns updates for both container and text elements.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L772-L837"><code>packages/element/src/stickyNote.ts:772-837</code></a> <code>getStickyNoteResizeIntent</code> computes resize parameters from gestures: width-only moves preserve the base height, height changes set it, proportional gestures scale the font ceiling, and the content correction anchors at the held edge. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L839-L878"><code>packages/element/src/stickyNote.ts:839-878</code></a> <code>updateStickyNoteLayout</code> applies the layout to a live scene and runs the bound-arrow pass, while <code>relayoutStickyNotes</code> applies it inside immutable element arrays for property actions and restore.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L498-L567"><code>packages/element/src/stickyNote.ts:498-567</code></a> <code>getStickyNoteMinSize</code> computes the smallest note the UI allows: one line at the label’s font ceiling plus padding (and the footer vertically), never below the constant <code>STICKY_NOTE_MIN_SIZE</code>. This prevents notes from growing on the first keystroke.</p>
+
+<h3 id="sticky-note-color-and-ink">Sticky Note Color and Ink</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L67-L136"><code>packages/element/src/stickyNote.ts:67-136</code></a> Sticky notes have unified ink: the note’s <code>strokeColor</code> seeds new labels and the creation-date footer. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L146-L188"><code>packages/element/src/stickyNote.ts:146-188</code></a> <code>syncStickyNoteInk</code> keeps note and label colors synchronized by tracking which side changed and copying it to the other; when both changed or data drifted, the label wins as the user’s styled text. Transparent labels always take the note’s color.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L95-L136"><code>packages/element/src/stickyNote.ts:95-136</code></a> <code>getColorTargetElement</code> and <code>getColorUpdate</code> route color picks through the sticky note policy: a note’s label has no fill of its own, so background picks on the label go to the note, and label stroke picks never go transparent.</p>
+
+<h3 id="sticky-note-rendering">Sticky Note Rendering</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L213-L370"><code>packages/element/src/stickyNote.ts:213-370</code></a> The rendering system combines hand-drawn corner jitter (when <code>roughness</code> is set), corner fold effects, and rounded corner radii. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L226-L273"><code>packages/element/src/stickyNote.ts:226-273</code></a> <code>getStickyNoteRenderPoints</code> generates the four corners with optional jitter, while <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L275-L370"><code>packages/element/src/stickyNote.ts:275-370</code></a> <code>getStickyNotePathCommands</code> builds smooth quadratic-curve paths with reduced radii, fold effects on roughness level 2, and shadows offset from the paper.</p>
+
+<h3 id="sticky-note-creation-date-footer">Sticky Note Creation-Date Footer</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L447-L463"><code>packages/element/src/stickyNote.ts:447-463</code></a> <code>getStickyNoteDateLabel</code> formats the creation timestamp as absolute English text (“7 Sep” in the current year, “7 Sep 2025” otherwise), returning <code>null</code> for missing or invalid timestamps. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/stickyNote.ts#L465-L487"><code>packages/element/src/stickyNote.ts:465-487</code></a> <code>getStickyNoteFooter</code> returns the footer text and position in note-local coordinates (right-aligned, baseline-anchored), chosen by width bucket rather than measured so canvas and SVG renderers need no text measurer, and <code>null</code> for the 0×0 creation draft or notes under the data floor where it would overlap top padding.</p>
+
+<h2 id="bound-text-auto-resizing">Bound Text Auto-Resizing</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L155-L247"><code>packages/element/src/textElement.ts:155-247</code></a> The <code>handleBindTextResize</code> function manages container resizing when text dimensions change. For sticky notes, it delegates to <code>updateStickyNoteLayout</code> and returns early. For other containers, it rewraps text to fit the new width, and the container height adjusts to fit the text if needed, respecting transform handles (top/bottom/both).</p>
+
+<h2 id="container-coordinate-calculations">Container Coordinate Calculations</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L377-L394"><code>packages/element/src/textElement.ts:377-394</code></a> The <code>getContainerCenter</code> function returns the point text centers on within a container—for shapes it’s the geometric center, for arrows it delegates to <code>LinearElementEditor.getBoundTextElementCenter</code>.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L357-L371"><code>packages/element/src/textElement.ts:357-371</code></a> The <code>getContainerElement</code> function retrieves the container of a text element via its <code>containerId</code>.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/textElement.ts#L452-L473"><code>packages/element/src/textElement.ts:452-473</code></a> <code>getTextElementWithAccuratePosition</code> returns a text element’s accurate position. Arrow labels have derived positions (updated at render time, not on the element), so code reading coords must use this helper.</p>
+
+<h2 id="list-item-auto-numbering">List Item Auto-Numbering</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/listMarker.ts#L1-L364"><code>packages/element/src/listMarker.ts:1-364</code></a> The list marker system auto-numbers list items when duplicated. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/listMarker.ts#L241-L331"><code>packages/element/src/listMarker.ts:241-331</code></a> <code>advanceDuplicatedListMarkers</code> advances the markers of duplicated texts and labels: duplicating <code>1. foo</code> gives <code>2. foo</code>. Duplicating several list items at once continues from the highest; only if nothing but list items are selected. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/listMarker.ts#L336-L364"><code>packages/element/src/listMarker.ts:336-364</code></a> <code>applyListMarkerAdvances</code> applies or reverses these changes for undo/redo.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<ul>
+  <li>
+    <p><strong>Sticky notes as a specialized container</strong> (commit afa3a653fc5d): Sticky notes bundle a visually distinct container with auto-fitting typography. Rather than treat them as shapes with bound text, the sticky fit owns both halves of the geometry calculation, making layout consistent across every gesture and property action. The label’s <code>baseFontSize</code> is the user’s ceiling; <code>fontSize</code> is the fitted result.</p>
+  </li>
+  <li>
+    <p><strong>Sticky note ink is unified</strong> (commit afa3a653fc5d): A note and its label always have the same <code>strokeColor</code>. The sync logic tracks which side changed (note or label) and copies it; when both changed, the label wins because it’s the text the user directly styled. This keeps the visible text and footer color coherent without user confusion.</p>
+  </li>
+  <li>
+    <p><strong>Footer is never measured</strong> (commit afa3a653fc5d): The creation-date footer text is chosen by width bucket (e.g., “7 Sep” vs. “7 Sep 2025”) rather than measured. This keeps canvas and SVG export renderers measurement-free and exports date-stable—an absolute timestamp means paintings never go stale.</p>
+  </li>
+  <li>
+    <p><strong>One layout calculation owns sticky note geometry</strong> (commit afa3a653fc5d): <code>getStickyNoteLayout</code> is the single source of truth. It wraps, fits the font, grows the height only when needed, and positions the label. Property actions and resizing both call this function (directly or via <code>updateStickyNoteLayout</code> / <code>relayoutStickyNotes</code>), making the pair always self-consistent and preventing the phantom-container mismatch that plagued earlier designs.</p>
+  </li>
+  <li>
+    <p><strong>Text tool resolves targets once</strong> (c10499eebb62): What a click would do was computed in three places with different modifier awareness. <code>AppTextTool.getTargetAt</code> now answers it once — endpoint → text → empty centered container (unless Ctrl/Cmd) → free — and feeds the hover, cursor, and pointerdown. The affordance never promises what the click won’t deliver.</p>
+  </li>
+  <li>
+    <p><strong>Deferred center click for text tool drag</strong> (c10499eebb62): An empty container’s center click waits for pointerup: dragging horizontally past the autowrap threshold creates fixed-width free text instead, preventing provisional container enlargement. This gives users drag-to-size without binding commitment.</p>
+  </li>
+  <li>
+    <p><strong>Ctrl/Cmd, not Alt, opts out of binding</strong> (c10499eebb62): Ctrl/Cmd disables container label binding in the text tool (as it does arrow endpoint binding), making one key mean “no binding” throughout the tool. Alt is left for its generic drag meaning (resize from center).</p>
+  </li>
+  <li>
+    <p><strong>Caret follows panels when typed under them</strong> (c10499eebb62): When a caret would hide under the stats or styles panel, the canvas pans to bring it back into view with room to spare. The editor’s scroll box detects the reveal and diverts it to canvas panning instead.</p>
+  </li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

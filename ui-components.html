@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI Components Library · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html" aria-current="page">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="ui-components-library">UI Components Library</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>Excalidraw provides a collection of reusable React components that implement common interface patterns following the application’s design system. These components are used throughout the UI for menus, dialogs, popovers, buttons, and tooltips.</p>
+
+<h2 id="button">Button</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Button.tsx#L8-L45"><code>packages/excalidraw/components/Button.tsx:8-45</code></a> The <code>Button</code> component is a generic button that wraps a standard HTML button element with Excalidraw styling. It accepts all standard button props, supports a <code>selected</code> state to indicate active buttons, and fires an <code>onSelect</code> callback when clicked. The component uses <code>clsx</code> for conditional class application and <code>composeEventHandlers</code> to chain click handlers.</p>
+
+<h2 id="modal-and-dialog">Modal and Dialog</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Modal.tsx#L13-L71"><code>packages/excalidraw/components/Modal.tsx:13-71</code></a> <code>Modal</code> creates a portal-based overlay dialog that renders outside the normal DOM tree. It supports configurable max width, keyboard handling (ESC to close), optional click-outside-to-close behavior, and accessibility attributes (<code>role="dialog"</code>, <code>aria-modal="true"</code>, <code>aria-labelledby</code>).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Dialog.tsx#L24-L136"><code>packages/excalidraw/components/Dialog.tsx:24-136</code></a> <code>Dialog</code> is a higher-level wrapper around <code>Modal</code> that adds additional features: size presets (small/regular/wide), automatic focus management with tab-trapping, support for both desktop and mobile (fullscreen) layouts, and lifecycle management. It restores focus to the previously active element when closed and coordinates with the <a href="toolbar-tools.html">Toolbar and Tools</a> menu state.</p>
+
+<h2 id="popover">Popover</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Popover.tsx#L14-L154"><code>packages/excalidraw/components/Popover.tsx:14-154</code></a> <code>Popover</code> is a lightweight positioned container for menus and other temporary content. It supports:</p>
+<ul>
+  <li>Manual positioning via <code>top</code> and <code>left</code> props</li>
+  <li>Automatic viewport fitting to prevent overflow, with configurable gap padding</li>
+  <li>Tab-trapping keyboard navigation</li>
+  <li>Click-outside detection for dismissal</li>
+  <li>Automatic focus management, preferring nested focusable elements</li>
+</ul>
+
+<h2 id="tooltip">Tooltip</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tooltip.tsx#L19-L61"><code>packages/excalidraw/components/Tooltip.tsx:19-61</code></a> <code>Tooltip</code> provides inline help text on hover. It uses a singleton DOM element (<code>.excalidraw-tooltip</code>) for all tooltip instances to reduce overhead. The <code>updateTooltipPosition</code> function intelligently repositions tooltips to stay within the viewport, supporting both top and bottom placement with automatic fallback. Tooltips can be disabled and support configurable width for short (<code>10ch</code>) or long (<code>50ch</code>) text.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tooltip.tsx#L79-L89"><code>packages/excalidraw/components/Tooltip.tsx:79-89</code></a> The <code>hideTooltip</code> function uses a plain DOM query rather than calling <code>getTooltipDiv()</code>, ensuring that hiding a tooltip never creates the tooltip node if it doesn’t already exist. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Tooltip.tsx#L91-L117"><code>packages/excalidraw/components/Tooltip.tsx:91-117</code></a> The <code>updateTooltip</code> helper sets up a <code>MutationObserver</code> that watches for the tooltip’s item being removed from the DOM (e.g., unmounted while hovered), and automatically hides the tooltip in that case.</p>
+
+<h2 id="dropdown-menu">Dropdown Menu</h2>
+
+<p>The dropdown menu system is built on <a href="https://www.radix-ui.com/docs/primitives/components/dropdown-menu">Radix UI’s DropdownMenu primitive</a> and provides a complete menu implementation for Excalidraw.</p>
+
+<h3 id="architecture">Architecture</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenu.tsx#L23-L68"><code>packages/excalidraw/components/dropdownMenu/DropdownMenu.tsx:23-68</code></a> The main <code>DropdownMenu</code> component is a container that coordinates Trigger and Content sub-components. It uses <code>getMenuTriggerComponent</code> and <code>getMenuContentComponent</code> utilities to locate child elements by their <code>displayName</code>, allowing flexible JSX ordering while maintaining internal structure. The <code>open</code> prop controls menu visibility.</p>
+
+<h3 id="content-and-items">Content and Items</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuContent.tsx#L16-L108"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuContent.tsx:16-108</code></a> <code>DropdownMenuContent</code> wraps the menu’s item list. It handles outside-click dismissal (excluding the trigger), ESC key dismissal, and form factor detection. On phones, content renders in a <code>Stack.Col</code>; on desktop, it’s wrapped in an <code>Island</code> component for visual separation.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuItem.tsx#L19-L61"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuItem.tsx:19-61</code></a> <code>DropdownMenuItem</code> renders clickable menu items with optional icons, badges, and keyboard shortcuts. The <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuItemContent.tsx#L7-L33"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuItemContent.tsx:7-33</code></a> <code>MenuItemContent</code> helper composes these elements with text truncation via <code>Ellipsify</code>.</p>
+
+<h3 id="variants">Variants</h3>
+
+<ul>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuItemCheckbox.tsx#L7-L13"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuItemCheckbox.tsx:7-13</code></a> <code>DropdownMenuItemCheckbox</code> displays a check or empty icon based on <code>checked</code> prop</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuItemLink.tsx#L13-L58"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuItemLink.tsx:13-58</code></a> <code>DropdownMenuItemLink</code> renders as an anchor tag, useful for external links</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuItemCustom.tsx#L3-L23"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuItemCustom.tsx:3-23</code></a> <code>DropdownMenuItemCustom</code> allows arbitrary JSX content within menu items</li>
+  <li><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuItemContentRadio.tsx#L19-L51"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuItemContentRadio.tsx:19-51</code></a> <code>DropdownMenuItemContentRadio</code> provides radio button selection within a menu</li>
+</ul>
+
+<h3 id="submenus">Submenus</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuSub.tsx#L10-L25"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuSub.tsx:10-25</code></a> <code>DropdownMenuSub</code> wraps trigger and content for nested menus. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuSubContent.tsx#L14-L68"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuSubContent.tsx:14-68</code></a> <code>DropdownMenuSubContent</code> intelligently positions submenus, calculating available space and adjusting offsets if the submenu would overflow the viewport. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuSubTrigger.tsx#L12-L35"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuSubTrigger.tsx:12-35</code></a> <code>DropdownMenuSubTrigger</code> displays an item with a right-pointing chevron icon.</p>
+
+<h3 id="styling-and-groups">Styling and Groups</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuGroup.tsx#L3-L22"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuGroup.tsx:3-22</code></a> <code>DropdownMenuGroup</code> groups related items with an optional title. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenuSeparator.tsx#L3-L14"><code>packages/excalidraw/components/dropdownMenu/DropdownMenuSeparator.tsx:3-14</code></a> <code>DropdownMenuSeparator</code> adds a visual divider.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/DropdownMenu.scss#L1-L292"><code>packages/excalidraw/components/dropdownMenu/DropdownMenu.scss:1-292</code></a> The stylesheet provides styling for desktop and mobile layouts, including hover/active states, keyboard navigation hints, and theme support. Mobile menus display with additional spacing and rounded corners. The menu adapts max-height based on available viewport space.</p>
+
+<h3 id="common-utilities">Common Utilities</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/common.ts#L1-L27"><code>packages/excalidraw/components/dropdownMenu/common.ts:1-27</code></a> The <code>common.ts</code> file provides:</p>
+<ul>
+  <li><code>DropdownMenuContentPropsContext</code> for passing callbacks to nested items</li>
+  <li><code>getDropdownMenuItemClassName</code> for consistent item styling with selection/hover states</li>
+  <li><code>useHandleDropdownMenuItemSelect</code> for composing per-item and menu-level selection handlers</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/dropdownMenu/dropdownMenuUtils.ts#L1-L27"><code>packages/excalidraw/components/dropdownMenu/dropdownMenuUtils.ts:1-27</code></a> The <code>dropdownMenuUtils.ts</code> file exports utilities to find child components by <code>displayName</code>, supporting the flexible JSX composition pattern.</p>
+
+<h2 id="integration-with-application-state">Integration with Application State</h2>
+
+<p>Dialog and dropdown components integrate with <a href="app-state.html">Application State Management</a> via hooks like <code>useExcalidrawSetAppState</code> to update <code>openMenu</code> state and coordinate visibility across the UI. The <a href="toolbar-tools.html">Toolbar and Tools</a> page documents how these components are used in the main interface.</p>
+
+<h2 id="accessibility">Accessibility</h2>
+
+<p>All components follow WCAG standards:</p>
+<ul>
+  <li>Buttons and menu items are keyboard-navigable with proper focus management</li>
+  <li>Tab navigation wraps around to the first/last focusable element</li>
+  <li>ESC key closes modals and menus</li>
+  <li>Semantic HTML roles and aria labels are applied</li>
+  <li>Focus is restored after dismissal</li>
+</ul>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Tooltip state and owner tracking</strong> (834e5af631ef, follow-ups to #12188): The tooltip implementation was refactored to fix unrelated Tooltip unmounting from hiding a visible tooltip. Since tooltip state (timer and visibility) is shared by all instances (one tooltip node per page), the component now uses a <code>MutationObserver</code> in <code>updateTooltip</code> to watch whether the item is still connected to the DOM. If an item is removed, the observer hides the tooltip. This eliminates the need for a cleanup effect in the <code>Tooltip</code> component itself, which was previously calling <code>hideTooltip()</code> on unmount and inadvertently hiding tooltips from unrelated instances. Additionally, <code>hideTooltip()</code> now uses a plain DOM query (<code>document.querySelector</code>) instead of <code>getTooltipDiv()</code> to ensure that hiding never creates the tooltip node if it doesn’t exist.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

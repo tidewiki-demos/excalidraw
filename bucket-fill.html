@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bucket Fill Tool · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html" aria-current="page">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="bucket-fill-tool">Bucket Fill Tool</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The bucket fill tool implements a flood-fill algorithm that finds and fills enclosed regions in the canvas. Given a click point, it constructs a planar arrangement of boundary segments from scene elements, extracts the bounded face containing that point, and returns a closed polygon ready for rendering as a fill element.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>The core algorithm proceeds in stages: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L56-L89"><code>packages/element/src/bucketFill.ts:56-89</code></a></p>
+
+<ol>
+  <li>
+    <p><strong>Owner detection</strong>: Find the topmost closed, visible element containing the click — a shape, polygon line, or looped freedraw. This anchors the fast path by limiting boundary candidates to elements near the owner’s bounds.</p>
+  </li>
+  <li>
+    <p><strong>Boundary collection</strong>: Extract segments from eligible elements (lines, freedraw, shapes) within a search region. Segments are clipped to remove portions hidden behind opaque fills.</p>
+  </li>
+  <li>
+    <p><strong>Planar arrangement</strong>: Split segments at intersections and T-junctions to build an undirected planar graph. Bridging closes visual gaps up to <code>gapTolerance</code>.</p>
+  </li>
+  <li>
+    <p><strong>Face extraction</strong>: Walk half-edges around nodes to extract face rings. Faces are classified by connected component to identify islands (holes).</p>
+  </li>
+  <li>
+    <p><strong>Face selection</strong>: Pick the smallest bounded face containing the click point, collecting its island holes.</p>
+  </li>
+  <li>
+    <p><strong>Simplification and validation</strong>: Reduce polygon point count via Ramer–Douglas–Peucker, splice holes via zero-width keyhole bridges, and validate the result.</p>
+  </li>
+  <li>
+    <p><strong>Z-order placement</strong>: Determine insertion position relative to existing elements based on coverage and containment rules.</p>
+  </li>
+</ol>
+
+<h2 id="geometry-helpers">Geometry Helpers</h2>
+
+<p>Small utilities support the main algorithm. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L219-L295"><code>packages/element/src/bucketFill.ts:219-295</code></a> provides bounds expansion, segment parameterization, and perpendicular distance calculations. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L249-L278"><code>packages/element/src/bucketFill.ts:249-278</code></a> walks grid cells along a segment, used for spatial hashing during intersection and T-junction detection.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L298-L320"><code>packages/element/src/bucketFill.ts:298-320</code></a> subtracts parameter intervals (used to remove covered portions from clipped segments). <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L337-L369"><code>packages/element/src/bucketFill.ts:337-369</code></a> extracts the LOGICAL centerline of line elements — curved lines are sampled via Bézier fitting (same as the renderer), avoiding the rough rendering’s jitter. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L382-L399"><code>packages/element/src/bucketFill.ts:382-399</code></a> similarly gets freedraw centerline points from the smoothed stroke path.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L411-L462"><code>packages/element/src/bucketFill.ts:411-462</code></a> clips segments to visible portions by testing whether regions between intersection points lie inside and deep enough within opaque coverers. The <code>margin</code> parameter prevents the fill’s own centerline from clipping itself.</p>
+
+<h2 id="spatial-indexing">Spatial Indexing</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L468-L535"><code>packages/element/src/bucketFill.ts:468-535</code></a> defines <code>NodeStore</code>, a spatial hash that merges points within <code>snapEpsilon</code> into single nodes. This ensures the planar graph has no near-duplicate vertices. Cells are at least <code>eps</code> wide so the 3×3 neighborhood around a point always contains all candidates within <code>eps</code>.</p>
+
+<h2 id="owner-and-boundary-selection">Owner and Boundary Selection</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L552-L569"><code>packages/element/src/bucketFill.ts:552-569</code></a> defines <code>rendersOpaqueFill</code>: elements with solid fill, full opacity, and opaque colors that actually paint their background. Used to identify elements that hide outlines beneath them. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L576-L584"><code>packages/element/src/bucketFill.ts:576-584</code></a> lists element types eligible as fill boundaries (shapes, lines, freedraw, frames — excludes text, images, arrows).</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L610-L618"><code>packages/element/src/bucketFill.ts:610-618</code></a> identifies fill-compatible paint: closed polygon lines with a background, transparent stroke, and no visible fill stroke. These are never owners; re-clicking them triggers in-place restyling or re-derivation from actual strokes. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L644-L670"><code>packages/element/src/bucketFill.ts:644-670</code></a> finds the owner by walking elements top-down, checking closure and point containment while excluding fill-compatible paint.</p>
+
+<h2 id="planar-arrangement-and-face-extraction">Planar Arrangement and Face Extraction</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L717-L1218"><code>packages/element/src/bucketFill.ts:717-1218</code></a> builds the core graph. The <code>NodeStore</code> merges segment endpoints. Segments are then split at <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L775-L821"><code>packages/element/src/bucketFill.ts:775-821</code></a> transversal intersections (via broad-phase sweep on bounding box minX) and <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L830-L887"><code>packages/element/src/bucketFill.ts:830-887</code></a> T-junctions (using a grid for broad-phase lookup).</p>
+
+<p>The <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L945-L1126"><code>packages/element/src/bucketFill.ts:945-1126</code></a> bridging pass closes visual gaps by adding connector edges from degree-1 (dangling) nodes to nearby geometry. Each loose end seeks its nearest reachable node or edge. If an edge is targeted, it is split at the projection point, preserving the stroke geometry.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1128-L1166"><code>packages/element/src/bucketFill.ts:1128-1166</code></a> computes connected components (for hole detection) and sorts half-edges around each node by angle. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1168-L1215"><code>packages/element/src/bucketFill.ts:1168-1215</code></a> walks half-edges clockwise from the twin direction to extract face rings, recording which source elements contributed to each face’s boundary.</p>
+
+<h2 id="face-selection-and-simplification">Face Selection and Simplification</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1237-L1311"><code>packages/element/src/bucketFill.ts:1237-1311</code></a> selects the smallest bounded face containing the click. Face orientation (sign of shoelace area) distinguishes bounded faces from the unbounded outside. Islands are identified as other components whose outside contour lies inside the selected face and is not nested inside another island.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1317-L1376"><code>packages/element/src/bucketFill.ts:1317-1376</code></a> simplifies rings by deduping consecutive points, removing collinear points, and applying Ramer–Douglas–Peucker (reusing the same tolerance as freedraw) until under the point budget. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1386-L1422"><code>packages/element/src/bucketFill.ts:1386-1422</code></a> splices holes into the outer ring as zero-width keyhole bridges: the hole is traversed with opposite winding and sandwiched between two copies of a bridge edge. The doubled bridge cancels under the even-odd fill rule the renderer uses. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1433-L1464"><code>packages/element/src/bucketFill.ts:1433-1464</code></a> finalizes the polygon by simplifying the outer ring and holes (largest first, to prioritize visible islands), splicing them in, and explicitly closing the path.</p>
+
+<h2 id="public-api">Public API</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1470-L1868"><code>packages/element/src/bucketFill.ts:1470-1868</code></a> <code>computeBucketFillPolygon</code> is the main entry point. It searches for an owner and either uses its tight bounds or runs an expanding-box fallback for owner-less regions. Segments are collected and clipped to visible portions, then faces are built and selected. Z-order is determined by checking coverage (opaque fills overlapping the region) and containment (elements and participants that must stay visible). <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1853-L1858"><code>packages/element/src/bucketFill.ts:1853-1858</code></a> resolves insertion placement relative to the topmost covering element or the lowest element that must stay above.</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L1885-L1918"><code>packages/element/src/bucketFill.ts:1885-1918</code></a> <code>isRestylableFill</code> checks whether a hit element should be restyled in place. Fill-compatible elements matching the computed region’s area and bounds (within tolerance) are restyled rather than replaced.</p>
+
+<h2 id="configuration">Configuration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L136-L173"><code>packages/element/src/bucketFill.ts:136-173</code></a> defines <code>BucketFillOptions</code> with tunable parameters:</p>
+
+<ul>
+  <li><code>snapEpsilon</code>: Vertex merging radius (upper bound on filled shape deviation from strokes).</li>
+  <li><code>gapTolerance</code>: Bridging radius for closing visual gaps.</li>
+  <li><code>minArea</code>: Minimum face area to accept.</li>
+  <li><code>maxBoundarySegments</code>: Segment budget before bailing with <code>too_complex</code>.</li>
+  <li><code>maxGeneratedPoints</code>: Point cap for final polygon.</li>
+  <li><code>fallbackSearchRadius</code>: Initial search box half-extent for owner-less fills (doubles up to 3 times).</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L99-L134"><code>packages/element/src/bucketFill.ts:99-134</code></a> define hardcoded tolerance constants:</p>
+
+<ul>
+  <li><code>BUCKET_FILL_GAP_TOLERANCE</code> (6 px): Bridging radius default.</li>
+  <li><code>BUCKET_FILL_REGION_MATCH_TOLERANCE</code> (2 px): Bounds tolerance for fill restyling detection.</li>
+  <li><code>BUCKET_FILL_COVER_MARGIN</code> (2 px): Depth margin for clipping to opaque elements.</li>
+  <li><code>BUCKET_FILL_CURVE_MAX_DEVIATION</code> (0.5 px): Fidelity knob for sampling curved lines.</li>
+</ul>
+
+<h2 id="result-types">Result Types</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/bucketFill.ts#L175-L213"><code>packages/element/src/bucketFill.ts:175-213</code></a> defines result and error types. Success returns the owner (if any), boundary element IDs, scene-coordinate polygon points (possibly a keyhole with holes spliced in), and z-order insertion spec. Failure reasons are <code>no_owner</code>, <code>open_region</code> (no enclosed face), <code>too_complex</code> (segment budget exceeded), <code>too_small</code> (below minimum area), or <code>invalid_polygon</code> (simplification collapsed it).</p>
+
+<h2 id="integration">Integration</h2>
+
+<p>The tool connects to <a href="element-data-model.html">Element Data Model and Types</a> for element type checks and <a href="shape-generation.html">Shape Generation and Drawing</a> for freedraw centerline extraction. It uses <a href="math-geometry.html">Mathematical Utilities and Geometry</a> for polygon operations and point-in-polygon tests. Generated fills are inserted via <a href="z-index-ordering.html">Z-Index and Element Ordering</a> logic. The app layer converts returned scene points into <a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a> and applies <a href="color-system.html">Color System</a> styling.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

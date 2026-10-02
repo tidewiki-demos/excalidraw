@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Z-Index and Element Ordering · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html" aria-current="page">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="z-index-and-element-ordering">Z-Index and Element Ordering</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The z-index system manages the visual layering and ordering of elements on the canvas. Instead of storing numeric z-index values, the codebase uses <strong>fractional indices</strong>—a space-efficient format that allows elements to be reordered without renumbering the entire scene.</p>
+
+<h2 id="fractional-index-system">Fractional Index System</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L27-L42"><code>packages/element/src/fractionalIndex.ts:27-42</code></a></p>
+
+<p>Elements store a <code>FractionalIndex</code> that defines their position in the layer order. This approach enables:</p>
+<ul>
+  <li><strong>Incremental API support</strong>: Elements can be reordered through encoded indices</li>
+  <li><strong>Multiplayer-friendly</strong>: Indices work well with reconciliation and <a href="undo-redo-history.html">undo/redo operations</a></li>
+  <li><strong>Backward compatibility</strong>: The system maintains array order as a cache, supporting old scenes and libraries</li>
+</ul>
+
+<p>Each element’s <code>index</code> field is a fractional value, and the array order serves as the canonical source of z-order visually presented to users.</p>
+
+<h2 id="validation-and-synchronization">Validation and Synchronization</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L49-L143"><code>packages/element/src/fractionalIndex.ts:49-143</code></a></p>
+
+<p>The <code>validateFractionalIndices</code> function ensures all elements have valid indices by checking that each element’s index lies strictly between its predecessor and successor. It can optionally:</p>
+<ul>
+  <li>Validate bound text elements stay above their containers</li>
+  <li>Report errors with reconciliation context for debugging multiplayer conflicts</li>
+  <li>Throw or log without failing, depending on configuration</li>
+</ul>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L396-L428"><code>packages/element/src/fractionalIndex.ts:396-428</code></a></p>
+
+<p>An index is valid if it:</p>
+<ol>
+  <li>Exists and passes format validation via <code>validateOrderKey()</code></li>
+  <li>Falls strictly between its predecessor and successor (if both exist)</li>
+  <li>Is less than the successor (if only successor exists)</li>
+  <li>Is greater than the predecessor (if only predecessor exists)</li>
+</ol>
+
+<h2 id="fixing-invalid-indices">Fixing Invalid Indices</h2>
+
+<p>When fractional indices become invalid (e.g., after undo/redo or collaboration), two synchronization strategies exist:</p>
+
+<p><strong><code>syncMovedIndices</code></strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L175-L216"><code>packages/element/src/fractionalIndex.ts:175-216</code></a> fixes indices of specific moved elements by:</p>
+<ol>
+  <li>Detecting contiguous groups of moved elements</li>
+  <li>Generating new valid indices between boundary elements using <code>generateNKeysBetween</code></li>
+  <li>Validating the result before mutation</li>
+  <li>Falling back to <code>syncInvalidIndices</code> if generation fails</li>
+</ol>
+
+<p><strong><code>syncInvalidIndices</code></strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L223-L235"><code>packages/element/src/fractionalIndex.ts:223-235</code></a> or <code>syncInvalidIndicesImmutable</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L242-L254"><code>packages/element/src/fractionalIndex.ts:242-254</code></a> scan the entire array for invalid indices and regenerate them. These should only be used when the moved elements cannot be identified reliably.</p>
+
+<h2 id="ordering-elements">Ordering Elements</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L150-L169"><code>packages/element/src/fractionalIndex.ts:150-169</code></a></p>
+
+<p>The <code>orderByFractionalIndex</code> function sorts elements by their fractional indices, breaking ties by element ID when indices are identical. This provides a stable sort for determining visual layer order.</p>
+
+<h2 id="element-normalization">Element Normalization</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/sortElements.ts#L56-L119"><code>packages/element/src/sortElements.ts:56-119</code></a></p>
+
+<p>Element order is also constrained by structural relationships:</p>
+
+<p><strong><code>normalizeBoundElementsOrder</code></strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/sortElements.ts#L65-L113"><code>packages/element/src/sortElements.ts:65-113</code></a> ensures text elements bound to containers appear immediately after their containers in the array, preventing visual inconsistencies.</p>
+
+<p><strong><code>defragmentGroups</code></strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/sortElements.ts#L5-L54"><code>packages/element/src/sortElements.ts:5-54</code></a> reorganizes elements so members of the same <a href="frames-groups.html">group</a> stay together, respecting nested group hierarchies. Groups are stored innermost-first, so the algorithm recurses from the outermost level inward.</p>
+
+<p><strong><code>normalizeElementOrder</code></strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/sortElements.ts#L115-L119"><code>packages/element/src/sortElements.ts:115-119</code></a> applies both normalizations together.</p>
+
+<h2 id="z-index-manipulation-commands">Z-Index Manipulation Commands</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/zindex.ts#L626-L664"><code>packages/element/src/zindex.ts:626-664</code></a></p>
+
+<p>Public API functions handle moving elements forward/backward:</p>
+
+<ul>
+  <li><strong><code>moveOneLeft</code> / <code>moveOneRight</code></strong>: Shift selected elements one position, respecting group and frame boundaries via <code>shiftElementsByOne</code></li>
+  <li><strong><code>moveAllLeft</code> / <code>moveAllRight</code></strong>: Move selected elements to the front/back via <code>shiftElementsToEnd</code></li>
+</ul>
+
+<p>Both account for <a href="frames-groups.html">frames</a> by processing frame children separately from regular elements.</p>
+
+<h2 id="movement-logic">Movement Logic</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/zindex.ts#L345-L429"><code>packages/element/src/zindex.ts:345-429</code></a></p>
+
+<p><code>shiftElementsByOne</code> moves selected elements one step in the specified direction:</p>
+<ol>
+  <li>Groups contiguous selected indices</li>
+  <li>Processes groups in reverse order (for right moves) to avoid index shifts</li>
+  <li>Finds the next valid target index accounting for:
+    <ul>
+      <li>Deleted elements (skipped)</li>
+      <li>Group membership (cannot move outside editing group)</li>
+      <li>Frame boundaries (moves entire frame when needed)</li>
+      <li>Bound text elements (moved as a unit with container)</li>
+    </ul>
+  </li>
+  <li>Rearranges array slices and syncs fractional indices via <code>syncMovedIndices</code></li>
+</ol>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/zindex.ts#L431-L541"><code>packages/element/src/zindex.ts:431-541</code></a></p>
+
+<p><code>shiftElementsToEnd</code> moves elements to the absolute front or back within their scope (frame, editing group, or canvas).</p>
+
+<h2 id="arrow-binding-order">Arrow Binding Order</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/zindex.ts#L153-L187"><code>packages/element/src/zindex.ts:153-187</code></a></p>
+
+<p><code>moveArrowAboveBindable</code> automatically repositions arrow elements above any bindable elements they intersect or hover over. This ensures arrows remain visible on top of the elements they connect to. The function identifies bindable elements (the hovered shape, its bound text, or its container) and moves the arrow above them if needed. The <code>hoveredElement</code> parameter is now passed directly by the caller rather than being resolved internally.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Fractional indices over numeric z-index</strong>: Fractional indices allow efficient reordering without renumbering all elements, reducing the cost of z-index operations and making the system more suitable for real-time collaboration. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L27-L42"><code>packages/element/src/fractionalIndex.ts:27-42</code></a></p>
+
+<p><strong>Array as cache</strong>: The element array serves as the cached order derived from fractional indices, avoiding the need to reorder on every operation while supporting backward compatibility with old scenes. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/element/src/fractionalIndex.ts#L27-L42"><code>packages/element/src/fractionalIndex.ts:27-42</code></a></p>
+
+<p><strong>Hovered element passed to moveArrowAboveBindable</strong>: The caller now determines which element is hovered and passes it directly to <code>moveArrowAboveBindable</code>, allowing binding detection to be based on distance calculations performed upstream rather than internally. <a href="https://github.com/excalidraw/excalidraw/commit/4850bf336fe0">4850bf336fe0</a></p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

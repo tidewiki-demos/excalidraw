@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Actions and Command System · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html" aria-current="page">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="actions-and-command-system">Actions and Command System</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The actions and command system is the core mechanism for executing user operations in the editor. It provides a unified way to register, execute, and manage all editor operations—from simple element manipulation to complex state changes—with built-in support for keyboard shortcuts, undo/redo, event tracking, and conditional execution.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>Actions represent discrete, composable operations that modify elements, application state, or both. The system consists of:</p>
+
+<ul>
+  <li><strong>Action Definition</strong>: Individual action objects that describe an operation via <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/types.ts#L163-L223"><code>packages/excalidraw/actions/types.ts:163-223</code></a></li>
+  <li><strong>Registration</strong>: A central registry where actions are collected via <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/register.ts"><code>packages/excalidraw/actions/register.ts</code></a></li>
+  <li><strong>Execution</strong>: The ActionManager that dispatches actions from multiple sources (keyboard, UI, API) via <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/manager.tsx#L52-L197"><code>packages/excalidraw/actions/manager.tsx:52-197</code></a></li>
+  <li><strong>Shortcuts</strong>: A mapping system that associates keyboard combinations to actions via <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/shortcuts.ts"><code>packages/excalidraw/actions/shortcuts.ts</code></a></li>
+</ul>
+
+<h2 id="action-definition">Action Definition</h2>
+
+<p>An action is a TypeScript object conforming to the <code>Action</code> interface <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/types.ts#L163-L223"><code>packages/excalidraw/actions/types.ts:163-223</code></a>. Key properties include:</p>
+
+<ul>
+  <li><code>name</code>: Unique identifier for the action</li>
+  <li><code>perform</code>: Main function that executes the operation and returns an <code>ActionResult</code></li>
+  <li><code>label</code>: Human-readable name (string or dynamic function)</li>
+  <li><code>icon</code>: Optional icon for UI display</li>
+  <li><code>keyTest</code>: Optional function to detect keyboard shortcuts</li>
+  <li><code>predicate</code>: Optional function to determine if the action should be available</li>
+  <li><code>trackEvent</code>: Analytics configuration</li>
+  <li><code>viewMode</code>: Whether the action is allowed in view-only mode</li>
+  <li><code>navigation</code>: Whether the action counts as canvas navigation</li>
+  <li><code>PanelComponent</code>: Optional React component for rendering UI elements</li>
+  <li><code>checked</code>: Optional function to determine if a toggle action is active</li>
+</ul>
+
+<p>The <code>perform</code> function receives <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/types.ts#L35-L40"><code>packages/excalidraw/actions/types.ts:35-40</code></a>:</p>
+<ul>
+  <li><code>elements</code>: Current elements array</li>
+  <li><code>appState</code>: Current application state</li>
+  <li><code>formData</code>: Action-specific payload</li>
+  <li><code>app</code>: AppClassProperties instance</li>
+</ul>
+
+<p>It returns <code>ActionResult</code>, which can specify updated elements, appState, files, and a <code>CaptureUpdateAction</code> strategy for undo/redo.</p>
+
+<h2 id="action-registration">Action Registration</h2>
+
+<p>Actions are registered using the <code>register</code> function <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/register.ts"><code>packages/excalidraw/actions/register.ts</code></a>, which adds them to a global registry. For example, <code>actionDuplicateSelection</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionDuplicateSelection.tsx#L34-L118"><code>packages/excalidraw/actions/actionDuplicateSelection.tsx:34-118</code></a> registers a duplication operation with keyboard shortcut Ctrl+D and a panel component for UI integration.</p>
+
+<h2 id="action-manager-and-execution">Action Manager and Execution</h2>
+
+<p>The <code>ActionManager</code> class <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/manager.tsx#L52-L197"><code>packages/excalidraw/actions/manager.tsx:52-197</code></a> orchestrates action execution through three primary paths:</p>
+
+<h3 id="keyboard-handling">Keyboard Handling</h3>
+
+<p><code>handleKeyDown()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/manager.tsx#L92-L149"><code>packages/excalidraw/actions/manager.tsx:92-149</code></a> processes keyboard events by:</p>
+<ol>
+  <li>Filtering registered actions whose <code>keyTest</code> matches the event</li>
+  <li>Checking predicate conditions, view mode restrictions, and viewport transitions</li>
+  <li>Tracking the action via analytics if applicable</li>
+  <li>Calling the action’s <code>perform</code> function and passing the result to the updater</li>
+</ol>
+
+<h3 id="direct-execution">Direct Execution</h3>
+
+<p><code>executeAction()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/manager.tsx#L151-L177"><code>packages/excalidraw/actions/manager.tsx:151-177</code></a> allows programmatic execution (from UI clicks, API calls, or context menus) with optional source tracking and custom values.</p>
+
+<h3 id="ui-rendering">UI Rendering</h3>
+
+<p><code>renderAction()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/manager.tsx#L182-L246"><code>packages/excalidraw/actions/manager.tsx:182-246</code></a> renders an action’s <code>PanelComponent</code> if present, creating UI elements like buttons with automatic state management via <code>updateData</code>.</p>
+
+<h2 id="predicates-and-conditionals">Predicates and Conditionals</h2>
+
+<p>Actions use predicates to determine availability. For example, <code>alignActionsPredicate</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionAlign.tsx#L39-L53"><code>packages/excalidraw/actions/actionAlign.tsx:39-53</code></a> checks that multiple elements are selected and not frames before enabling alignment actions. Predicates prevent disabled actions from being executed or rendered.</p>
+
+<h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
+
+<p>Shortcuts are defined via <code>keyTest</code> functions on individual actions. For instance:</p>
+<ul>
+  <li><code>actionZoomIn</code> uses Ctrl/Cmd + Plus <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionCanvas.tsx#L178-L181"><code>packages/excalidraw/actions/actionCanvas.tsx:178-181</code></a></li>
+  <li><code>actionDeleteSelected</code> uses Delete key</li>
+  <li><code>actionFlipHorizontal</code> uses Shift + H <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionFlip.ts#L51"><code>packages/excalidraw/actions/actionFlip.ts:51</code></a></li>
+</ul>
+
+<p>A centralized <code>shortcutMap</code> in <code>shortcuts.ts</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/shortcuts.ts#L58-L116"><code>packages/excalidraw/actions/shortcuts.ts:58-116</code></a> documents all shortcuts for help dialogs and the command palette.</p>
+
+<h2 id="common-action-patterns">Common Action Patterns</h2>
+
+<h3 id="state-only-actions">State-Only Actions</h3>
+
+<p>Simple operations that only modify <code>appState</code>:</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionToggleGridMode.tsx#L9-L33"><code>packages/excalidraw/actions/actionToggleGridMode.tsx:9-33</code></a> toggles grid mode without modifying elements.</p>
+
+<h3 id="element-mutations">Element Mutations</h3>
+
+<p>Complex actions that transform elements. For example:</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionDuplicateSelection.tsx#L34-L118"><code>packages/excalidraw/actions/actionDuplicateSelection.tsx:34-118</code></a> duplicates selected elements by calling <code>duplicateElements()</code> from the element library, then updates selections. It also advances list markers on duplicated text elements via <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionDuplicateSelection.tsx#L101"><code>packages/excalidraw/actions/actionDuplicateSelection.tsx:101</code></a>.</p>
+
+<h3 id="async-actions">Async Actions</h3>
+
+<p>Actions that return Promises for network or file operations:</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionExport.tsx"><code>packages/excalidraw/actions/actionExport.tsx</code></a> handles asynchronous export with progress tracking.</p>
+
+<h3 id="conditional-branching">Conditional Branching</h3>
+
+<p>Actions may return <code>false</code> to prevent execution. For example:</p>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionDeselect.ts#L130-L150"><code>packages/excalidraw/actions/actionDeselect.ts:130-150</code></a> only executes if no text editing or element dragging is in progress.</p>
+
+<h2 id="action-categories">Action Categories</h2>
+
+<p>Actions are grouped by function:</p>
+
+<ul>
+  <li><strong>Element Manipulation</strong>: Delete, duplicate, lock, bind text, align, distribute, flip, wrap in frame (<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionDeleteSelected.tsx"><code>packages/excalidraw/actions/actionDeleteSelected.tsx</code></a>, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionAlign.tsx"><code>packages/excalidraw/actions/actionAlign.tsx</code></a>, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionFrame.ts"><code>packages/excalidraw/actions/actionFrame.ts</code></a>)</li>
+  <li><strong>Styling</strong>: Change colors, stroke width, fill style, text properties, arrowheads (<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionProperties.tsx"><code>packages/excalidraw/actions/actionProperties.tsx</code></a>)</li>
+  <li><strong>Canvas Control</strong>: Zoom, clear, change background, toggle view mode, grid mode (<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionCanvas.tsx"><code>packages/excalidraw/actions/actionCanvas.tsx</code></a>, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionToggleViewMode.tsx"><code>packages/excalidraw/actions/actionToggleViewMode.tsx</code></a>)</li>
+  <li><strong>Clipboard</strong>: Copy, paste, cut, copy as PNG/SVG (<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionClipboard.tsx"><code>packages/excalidraw/actions/actionClipboard.tsx</code></a>)</li>
+  <li><strong>History</strong>: Undo, redo (<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionHistory.tsx"><code>packages/excalidraw/actions/actionHistory.tsx</code></a>)</li>
+  <li><strong>UI Toggles</strong>: Zen mode, grid, stats, search menu, hints (<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionToggleZenMode.tsx"><code>packages/excalidraw/actions/actionToggleZenMode.tsx</code></a>, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionToggleStats.tsx"><code>packages/excalidraw/actions/actionToggleStats.tsx</code></a>, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionToggleShowHints.tsx"><code>packages/excalidraw/actions/actionToggleShowHints.tsx</code></a>)</li>
+  <li><strong>Library &amp; Export</strong>: Add to library, save, load, export (<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionAddToLibrary.ts"><code>packages/excalidraw/actions/actionAddToLibrary.ts</code></a>, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionExport.tsx"><code>packages/excalidraw/actions/actionExport.tsx</code></a>)</li>
+</ul>
+
+<h2 id="integration-with-other-systems">Integration with Other Systems</h2>
+
+<p>Actions integrate with:</p>
+
+<ul>
+  <li><strong><a href="undo-redo-history.html">Undo/Redo and History</a></strong>: Through <code>CaptureUpdateAction</code> flags (IMMEDIATELY, EVENTUALLY, NEVER)</li>
+  <li><strong><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></strong>: Actions query selected elements via <code>app.scene.getSelectedElements()</code></li>
+  <li><strong><a href="element-transformation.html">Element Transformation and Manipulation</a></strong>: Actions call utility functions like <code>alignElements()</code>, <code>flipElements()</code>, <code>duplicateElements()</code></li>
+  <li><strong><a href="text-editing.html">Text Editing and Typography</a></strong>: Actions modify text element properties and redraw bounding boxes</li>
+  <li><strong><a href="clipboard-export.html">Clipboard and Data Export</a></strong>: Clipboard actions export and import elements via <code>app.clipboard.pasteFromClipboard()</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionClipboard.tsx#L92"><code>packages/excalidraw/actions/actionClipboard.tsx:92</code></a></li>
+  <li><strong><a href="app-state.html">Application State Management</a></strong>: All actions flow through the central state updater</li>
+</ul>
+
+<h2 id="example-actionalign">Example: actionAlign</h2>
+
+<p>The alignment actions <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/actions/actionAlign.tsx#L79-L110"><code>packages/excalidraw/actions/actionAlign.tsx:79-110</code></a> demonstrate a complete action implementation:</p>
+
+<ol>
+  <li><strong>Predicate</strong> checks that 2+ non-frame elements are selected</li>
+  <li><strong>Perform</strong> calls <code>alignElements()</code> from the element library with the selected alignment</li>
+  <li><strong>KeyTest</strong> detects Ctrl+Shift+Arrow shortcuts</li>
+  <li><strong>PanelComponent</strong> renders an icon button with tooltips showing shortcuts</li>
+  <li>Results are passed to the updater for state synchronization</li>
+</ol>
+
+<p>All exported actions are collected via <code>register()</code> and made available to the ActionManager for unified access across the editor.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<h3 id="aria-labels-for-zoom-buttons">Aria Labels for Zoom Buttons</h3>
+
+<p>The zoom in/out buttons now include <code>aria-keyshortcuts</code> attributes (c10499eebb62) to communicate keyboard shortcuts to assistive technologies. The comment notes these shortcuts were previously exposed via the native title attribute, which has been removed.</p>
+
+<h3 id="clipboard-access-via-appclipboard">Clipboard Access via app.clipboard</h3>
+
+<p>The paste action now accesses clipboard functionality through <code>app.clipboard.pasteFromClipboard()</code> (c10499eebb62) rather than directly on <code>app</code>, reflecting a refactoring that moved clipboard operations into a dedicated module.</p>
+
+<h3 id="removal-of-hoveredarrowtextanchor-state">Removal of hoveredArrowTextAnchor State</h3>
+
+<p>The <code>hoveredArrowTextAnchor</code> field was removed from appState in <code>actionDeselect</code> and <code>actionFinalize</code> (c10499eebb62), consolidating text tool hover state into a single <code>textToolHover</code> field managed by the text tool.</p>
+
+<h3 id="list-marker-advancement-on-duplication">List Marker Advancement on Duplication</h3>
+
+<p>The <code>actionDuplicateSelection</code> action now calls <code>app.duplicate.advanceListMarkers()</code> after duplication (c10499eebb62) to automatically increment list markers (e.g., <code>1.</code> → <code>2.</code>) on duplicated text elements, captured as a separate undo step.</p>
+
+<h3 id="new-toggle-hints-action">New Toggle Hints Action</h3>
+
+<p>The <code>actionToggleShowHints</code> action was added (c10499eebb62) to control the visibility of hints in the toolbar. It is not available in view mode since the toolbar is hidden in that mode. The action includes a <code>checked</code> property to reflect the current state.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

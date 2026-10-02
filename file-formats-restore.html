@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>File Formats and Data Restoration · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html" aria-current="page">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="file-formats-and-data-restoration">File Formats and Data Restoration</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>This page describes how Excalidraw handles loading, validating, and restoring drawing data from files and other sources. It covers format versioning, element data migration, conflict resolution, and repair of corrupted or incomplete element state.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>When Excalidraw loads a file or receives data from collaboration or import, the data must be validated and normalized before use. The restoration process handles:</p>
+
+<ul>
+  <li><strong>Element restoration</strong>: Converting raw stored data into valid <code>ExcalidrawElement</code> instances with normalized properties</li>
+  <li><strong>Data migration</strong>: Converting legacy element formats and properties to current formats</li>
+  <li><strong>Binding repair</strong>: Fixing arrow bindings and text container references</li>
+  <li><strong>Conflict resolution</strong>: Choosing between local and remote element versions during collaboration</li>
+  <li><strong>Index management</strong>: Ensuring fractional indices are valid and ordered</li>
+  <li><strong>Sticky note restoration</strong>: Normalizing sticky note and label pairs with consistent colors and layout</li>
+  <li><strong>File drop handling</strong>: Processing dragged files with visual feedback for merge vs. replace operations</li>
+</ul>
+
+<h2 id="element-restoration">Element Restoration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L517-L752"><code>packages/excalidraw/data/restore.ts:517-752</code></a></p>
+
+<p>The <code>restoreElement</code> function converts a single raw element from storage into a valid <code>ExcalidrawElement</code>. It handles each element type separately, normalizing type-specific properties:</p>
+
+<ul>
+  <li><strong>Text elements</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L531-L591"><code>packages/excalidraw/data/restore.ts:531-591</code></a>: Restores font family and size, detects line height from element dimensions for backward compatibility, marks empty text as deleted, and stores arrow label position (<code>labelPosition</code>, normalized 0–1) and sticky note label font size ceiling (<code>baseFontSize</code>)</li>
+  <li><strong>Freedraw elements</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L592-L604"><code>packages/excalidraw/data/restore.ts:592-604</code></a>: Validates and restores point arrays and pressure values</li>
+  <li><strong>Linear elements (lines and arrows)</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L612-L723"><code>packages/excalidraw/data/restore.ts:612-723</code></a>: Normalizes point coordinates so the first point is at (0, 0), restores arrowhead types, and handles legacy “draw” type</li>
+  <li><strong>Sticky notes</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L732-L740"><code>packages/excalidraw/data/restore.ts:732-740</code></a>: Restores <code>baseHeight</code> (migrating from legacy <code>maxHeight</code>), then normalizes the element’s geometry and layout</li>
+  <li><strong>Other shapes</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L725-L731"><code>packages/excalidraw/data/restore.ts:725-731</code></a>: Restores generic properties for rectangles, diamonds, ellipses, frames, and embedded content</li>
+</ul>
+
+<p>All elements go through <code>restoreElementWithProperties</code>, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L430-L515"><code>packages/excalidraw/data/restore.ts:430-515</code></a> which ensures required properties have valid values, assigns defaults, migrates deprecated properties like <code>strokeSharpness</code> to the <code>roundness</code> object, and adds a <code>created</code> timestamp (defaulting to <code>null</code>).</p>
+
+<h3 id="oversized-linear-elements">Oversized Linear Elements</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L126-L157"><code>packages/excalidraw/data/restore.ts:126-157</code></a></p>
+
+<p>Extremely large lines or arrows (width or height &gt; 75,000 pixels) are removed during restoration. These cause rendering freezes because their stroke arrays (especially dashed/dotted) become enormous. The element is marked deleted and its geometry reset to a minimal size.</p>
+
+<h3 id="point-restoration">Point Restoration</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L159-L218"><code>packages/excalidraw/data/restore.ts:159-218</code></a></p>
+
+<ul>
+  <li><strong>Linear element points</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L159-L182"><code>packages/excalidraw/data/restore.ts:159-182</code></a> validates each point is a valid <code>[x, y]</code> pair. If fewer than 2 points remain, creates a default line from (0, 0) to (width, height).</li>
+  <li><strong>Freedraw points</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L184-L218"><code>packages/excalidraw/data/restore.ts:184-218</code></a> validates points and associated pressure values, defaulting missing pressures to 0.5.</li>
+</ul>
+
+<h2 id="batch-element-restoration">Batch Element Restoration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L946-L1138"><code>packages/excalidraw/data/restore.ts:946-1138</code></a></p>
+
+<p>The <code>restoreElements</code> function processes all elements, repairs cross-element references, and ensures data consistency:</p>
+
+<ol>
+  <li><strong>Filters legacy selection elements</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L969-L971"><code>packages/excalidraw/data/restore.ts:969-971</code></a></li>
+  <li><strong>Detects duplicate IDs</strong> and regenerates IDs for duplicates <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1000-L1003"><code>packages/excalidraw/data/restore.ts:1000-1003</code></a></li>
+  <li><strong>Optionally repairs bindings</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1012-L1064"><code>packages/excalidraw/data/restore.ts:1012-1064</code></a> if <code>repairBindings</code> is set:
+    <ul>
+      <li>Removes frame references to non-existent frames <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L876-L887"><code>packages/excalidraw/data/restore.ts:876-887</code></a></li>
+      <li>Repairs text container relationships <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L809-L841"><code>packages/excalidraw/data/restore.ts:809-841</code></a></li>
+      <li>Cleans up duplicate bound elements <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L761-L801"><code>packages/excalidraw/data/restore.ts:761-801</code></a></li>
+      <li>Reorders bound text to follow their containers <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L849-L869"><code>packages/excalidraw/data/restore.ts:849-869</code></a></li>
+      <li>Removes invalid arrow bindings <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1048-L1063"><code>packages/excalidraw/data/restore.ts:1048-1063</code></a></li>
+    </ul>
+  </li>
+  <li><strong>Restores sticky note pairs</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1066-L1068"><code>packages/excalidraw/data/restore.ts:1066-1068</code></a> by synchronizing label and container colors, seeding label font size ceilings, and refitting geometry if needed</li>
+  <li><strong>Fixes self-bound elbow arrows</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1072-L1137"><code>packages/excalidraw/data/restore.ts:1072-1137</code></a> by resetting their geometry if they bind to themselves and have invalid points</li>
+</ol>
+
+<h2 id="binding-repair">Binding Repair</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L298-L428"><code>packages/excalidraw/data/restore.ts:298-428</code></a></p>
+
+<p>The <code>repairBinding</code> function migrates arrow bindings from legacy schema to current schema:</p>
+
+<ul>
+  <li><strong>Schema v2</strong> (current): Bindings have an <code>elementId</code>, <code>mode</code> (“orbit” or “inside”), and <code>fixedPoint</code> (normalized position)</li>
+  <li><strong>Schema v1</strong> (legacy): Bindings lack the <code>mode</code> field and may have incomplete <code>fixedPoint</code> data</li>
+</ul>
+
+<p>For elbow arrows, bindings are normalized to v2 format directly. For simple arrows, if a v1 binding is detected, the function reconstructs the binding mode by checking if the arrow’s endpoint is inside or outside the target element, then calculates the fixed point using the non-elbow arrow binding logic. If the bound element no longer exists, the binding is removed.</p>
+
+<h2 id="sticky-note-restoration">Sticky Note Restoration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L889-L944"><code>packages/excalidraw/data/restore.ts:889-944</code></a></p>
+
+<p>The <code>restoreStickyNotes</code> function ensures sticky note invariants after binding repair completes, so both the note and its label are present:</p>
+
+<ul>
+  <li><strong>Label font size ceiling</strong>: A label’s <code>baseFontSize</code> is meaningful only while bound to a sticky note. It is seeded from <code>fontSize</code> when missing and cleared for unbound text.</li>
+  <li><strong>Label stroke color</strong>: A sticky note label’s stroke is never transparent (it is the visible text). If transparent, it takes the note’s stroke color; otherwise the label’s color wins.</li>
+  <li><strong>Note ink color</strong>: The note’s stroke (its visible ink, which the footer date paints with) equals its label’s stroke. If they diverge (from edit-mode coloring on older builds), the label color is synchronized to the note.</li>
+  <li><strong>Layout refresh</strong>: With <code>refreshDimensions</code> enabled, the note and its label are refitted together using <code>getStickyNoteLayout</code>, with the container geometry and text properties updated <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L931-L943"><code>packages/excalidraw/data/restore.ts:931-943</code></a>.</li>
+</ul>
+
+<h2 id="application-state-restoration">Application State Restoration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1254-L1372"><code>packages/excalidraw/data/restore.ts:1254-1372</code></a></p>
+
+<p>The <code>restoreAppState</code> function loads and normalizes application state (UI settings, zoom, grid, active tool, etc.) from imported data:</p>
+
+<ul>
+  <li><strong>Migrates legacy properties</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1187-L1204"><code>packages/excalidraw/data/restore.ts:1187-1204</code></a> converts old property names (e.g., <code>isSidebarDocked</code> → <code>defaultSidebarDockedPreference</code>)</li>
+  <li><strong>Validates active tool</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1334-L1344"><code>packages/excalidraw/data/restore.ts:1334-1344</code></a> restricts to allowed tool types from <code>AllowedExcalidrawActiveTools</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L220-L244"><code>packages/excalidraw/data/restore.ts:220-244</code></a>, which now includes <code>stickynote</code></li>
+  <li><strong>Normalizes numeric values</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1358-L1363"><code>packages/excalidraw/data/restore.ts:1358-1363</code></a> validates zoom, grid size, and grid step</li>
+  <li><strong>Normalizes sticky note colors</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1364-L1369"><code>packages/excalidraw/data/restore.ts:1364-1369</code></a> validates and assigns defaults for sticky note stroke and background colors</li>
+  <li><strong>Restores color and font picks</strong>: <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1300-L1318"><code>packages/excalidraw/data/restore.ts:1300-1318</code></a> validates and deduplicates stored color history for element stroke, background, bucket fill, and sticky notes; also validates and restores font family top picks using <code>restoreFontTopPicks</code> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1232-L1252"><code>packages/excalidraw/data/restore.ts:1232-1252</code></a></li>
+</ul>
+
+<h2 id="library-item-restoration">Library Item Restoration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1374-L1415"><code>packages/excalidraw/data/restore.ts:1374-1415</code></a></p>
+
+<p>Library items (reusable element groups) can be stored in old array format or new object format. The <code>restoreLibraryItems</code> function handles both, restoring elements within each item and filtering out items with no valid elements.</p>
+
+<h2 id="element-versioning">Element Versioning</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L1150-L1173"><code>packages/excalidraw/data/restore.ts:1150-1173</code></a></p>
+
+<p>The <code>bumpElementVersions</code> function updates element version numbers when importing or replacing elements that may already exist locally. This ensures the <a href="reconcile.html">conflict resolution</a> system can correctly choose which version to keep during <a href="collaboration.html">real-time collaboration</a>. If the local element has a newer version or matching version with different edits, the imported element’s version is bumped to <code>localVersion + 1</code>.</p>
+
+<h2 id="reconciliation-during-collaboration">Reconciliation During Collaboration</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/reconcile.ts#L73-L117"><code>packages/excalidraw/data/reconcile.ts:73-117</code></a></p>
+
+<p>The <code>reconcileElements</code> function merges local and remote element changes during collaborative editing:</p>
+
+<ol>
+  <li><strong>Processes remote elements</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/reconcile.ts#L82-L100"><code>packages/excalidraw/data/reconcile.ts:82-100</code></a>: For each remote element, checks if it should be discarded via <code>shouldDiscardRemoteElement</code></li>
+  <li><strong>Decides which version to keep</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/reconcile.ts#L23-L44"><code>packages/excalidraw/data/reconcile.ts:23-44</code></a>: Keeps local if:
+    <ul>
+      <li>The local element is currently being edited (text editing, resizing, or creation in progress)</li>
+      <li>The local version is newer</li>
+      <li>Versions match but local <code>versionNonce</code> is lower (deterministic conflict resolution)</li>
+    </ul>
+  </li>
+  <li><strong>Adds remaining local elements</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/reconcile.ts#L102-L108"><code>packages/excalidraw/data/reconcile.ts:102-108</code></a> that weren’t in the remote list</li>
+  <li><strong>Orders and validates indices</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/reconcile.ts#L110-L115"><code>packages/excalidraw/data/reconcile.ts:110-115</code></a> using fractional indices, with throttled validation in dev/test modes</li>
+</ol>
+
+<h2 id="data-export-and-resaving">Data Export and Resaving</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/resave.ts#L12-L52"><code>packages/excalidraw/data/resave.ts:12-52</code></a></p>
+
+<p>The <code>resaveAsImageWithScene</code> function exports the canvas with embedded scene data. It prepares elements for export, applies the export background setting, and sets <code>exportEmbedScene</code> to true so the drawing can be re-imported later with all element data intact. See <a href="clipboard-export.html">Clipboard and Data Export</a> for related export functionality.</p>
+
+<h2 id="file-drop-and-scene-merge">File Drop and Scene Merge</h2>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/FileDropOverlay.tsx"><code>packages/excalidraw/components/FileDropOverlay.tsx</code></a></p>
+
+<p>The <code>FileDropOverlay</code> component provides visual feedback when users drag files over the canvas. It distinguishes between replacing and merging (Shift-dropping) based on modifier keys and file type:</p>
+
+<ul>
+  <li><strong>Replace mode</strong> (default): Dragging a <code>.excalidraw</code> file shows a “Drop to replace content” overlay with a crossed-out file illustration, indicating the scene will be replaced</li>
+  <li><strong>Add/merge mode</strong> (Shift held or library file): Dragging with Shift or dropping a <code>.excalidrawlib</code> shows “Drop to add to canvas” or “Drop to import library”, indicating content is preserved</li>
+  <li><strong>File type detection</strong>: The overlay distinguishes scene files (JSON MIME type), library files (<code>excalidrawlib</code> MIME type), and untyped files (OS-dragged <code>.excalidraw</code>/<code>.excalidrawlib</code> files, which are ambiguous until dropped). For unknown types, it displays a hint that library files will append rather than replace</li>
+  <li><strong>Image handling</strong>: Image drags keep the canvas visible, allowing the browser’s native image insertion to proceed</li>
+  <li><strong>Modal protection</strong>: File drags over modal dialogs are cancelled to prevent the browser from opening dropped files</li>
+</ul>
+
+<p>When a scene file is dropped and replaces content, a toast message shows how to undo the replacement using the keyboard shortcut.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Oversized linear elements are removed</strong> (<a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/data/restore.ts#L126-L157"><code>packages/excalidraw/data/restore.ts:126-157</code></a>): Elements with width or height exceeding 75,000 pixels are marked deleted during restoration. This prevents rendering freezes caused by enormous dash arrays. See <a href="https://github.com/excalidraw/excalidraw/issues/11497">GitHub issue #11497</a>.</p>
+
+<p><strong>Fractional indices are validated and synced</strong>: The reconciliation process uses fractional indices to maintain element ordering without requiring full re-sorting after each change. Invalid indices are detected and corrected during restoration.</p>
+
+<p><strong>Legacy binding schema is supported</strong>: Arrow bindings from older Excalidraw versions lacking the <code>mode</code> field are automatically upgraded to the current schema during restoration, reconstructing the binding mode by geometric analysis.</p>
+
+<p><strong>Arrow labels are positioned along the arrow’s path</strong> (commit 214cd6e6e8ac): A label’s place is stored as <code>labelPosition</code>, a normalized arc-length parameter (0–1) covering the whole arrow path. The label’s x/y is derived from this parameter, so the label keeps its place when points are dragged, midpoints are inserted or removed, or the arrow is resized.</p>
+
+<p><strong>Sticky notes have dedicated restoration logic</strong> (commit afa3a653fc5d): Sticky note labels and their container notes are restored as a pair. The label’s <code>baseFontSize</code> (the font ceiling) is seeded during restoration and reconciled against the container. A label’s stroke is never transparent and takes the note’s color if needed. Both pairs are refitted together when <code>refreshDimensions</code> is enabled, ensuring consistent layout and geometry.</p>
+
+<p><strong>Element creation timestamps are tracked</strong> (commit 854d00c31b71): All elements now have a <code>created</code> timestamp field (defaulting to <code>null</code>), which is restored from imported data or set during element creation.</p>
+
+<p><strong>File drop overlay shows merge vs. replace feedback</strong> (#12177): When users drag files over the canvas, an overlay indicates whether the drop will replace the scene or add to it. The behavior depends on the Shift modifier (holding Shift merges) and file type (library files always append). Images are excluded to allow native insertion. Modals are protected from accidental file opens by cancelling file drops over them. After a replace, a toast guides users to undo with the keyboard shortcut.</p>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Properties and Stats Panel · tidewiki-demos/excalidraw</title>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><a class="brand" href="index.html">tidewiki-demos/excalidraw</a>
+<input id="search" type="search" placeholder="Search" aria-label="Search the wiki" autocomplete="off">
+<ul id="results" hidden></ul></header>
+<div class="layout">
+<nav><ul>
+<li><a href="index.html">Overview</a></li>
+<li><a href="ai-features.html">AI and Text Generation</a></li>
+<li><a href="actions-system.html">Actions and Command System</a></li>
+<li><a href="app-state.html">Application State Management</a></li>
+<li><a href="arrows-bindings.html">Arrows and Bindings</a></li>
+<li><a href="bucket-fill.html">Bucket Fill Tool</a></li>
+<li><a href="clipboard-export.html">Clipboard and Data Export</a></li>
+<li><a href="color-system.html">Color Picker and Color System</a></li>
+<li><a href="core-editor-canvas.html">Core Editor and Canvas Rendering</a></li>
+<li><a href="element-data-model.html">Element Data Model and Types</a></li>
+<li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a></li>
+<li><a href="element-transformation.html">Element Transformation and Manipulation</a></li>
+<li><a href="encryption-security.html">End-to-End Encryption</a></li>
+<li><a href="file-formats-restore.html">File Formats and Data Restoration</a></li>
+<li><a href="frames-groups.html">Frames and Groups</a></li>
+<li><a href="image-handling.html">Image Support</a></li>
+<li><a href="library-system.html">Library and Asset Management</a></li>
+<li><a href="math-geometry.html">Mathematical Utilities and Geometry</a></li>
+<li><a href="mermaid-conversion.html">Mermaid Diagram Conversion</a></li>
+<li><a href="properties-panel.html" aria-current="page">Properties and Stats Panel</a></li>
+<li><a href="collaboration.html">Real-Time Collaboration</a></li>
+<li><a href="search-command.html">Search and Command Palette</a></li>
+<li><a href="shape-generation.html">Shape Generation and Drawing</a></li>
+<li><a href="snapping-guides.html">Snapping and Alignment Guides</a></li>
+<li><a href="storage-persistence.html">Storage and Persistence</a></li>
+<li><a href="text-editing.html">Text Editing and Typography</a></li>
+<li><a href="toolbar-tools.html">Toolbar and Tools</a></li>
+<li><a href="ui-components.html">UI Components Library</a></li>
+<li><a href="undo-redo-history.html">Undo/Redo and History</a></li>
+<li><a href="canvas-effects.html">Visual Effects and Animation</a></li>
+<li><a href="z-index-ordering.html">Z-Index and Element Ordering</a></li>
+</ul></nav>
+<main><h1 id="properties-and-stats-panel">Properties and Stats Panel</h1>
+
+<!-- Maintained by Tidewiki. Edits are kept on later updates; wrap text in tidewiki:keep markers to freeze it. -->
+
+<p>The Properties and Stats Panel provides detailed information about selected elements, including their dimensions, position, angle, and visual properties. It allows users to view and edit these measurements through an interactive interface, with support for single and multiple element selections.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>The stats panel displays two main sections:</p>
+
+<ol>
+  <li><strong>General Stats</strong>: Scene-wide information like total number of shapes and canvas dimensions</li>
+  <li><strong>Element Properties</strong>: Detailed properties of selected element(s) including position (X, Y), dimensions (width, height), rotation angle, and font size for text elements</li>
+</ol>
+
+<p>The panel supports both single-element and multi-element selection, with special handling for grouped elements and frames. Users can edit properties by dragging input labels or typing values directly.</p>
+
+<h2 id="architecture">Architecture</h2>
+
+<pre><code class="language-mermaid">graph TD
+    A["Stats Panel&lt;br/&gt;(index.tsx)"] --&gt;|renders| B["General Stats Section"]
+    A --&gt;|renders| C["Element Properties Section"]
+    B --&gt;|displays| D["Scene Statistics"]
+    B --&gt;|displays| E["Canvas Grid Control"]
+    C --&gt;|single element| F["Position, Dimension,&lt;br/&gt;Angle, FontSize"]
+    C --&gt;|multiple elements| G["Multi-element&lt;br/&gt;versions with&lt;br/&gt;common value logic"]
+    F --&gt;|delegates to| H["DragInput Component"]
+    G --&gt;|delegates to| H
+    H --&gt;|mouse drag| I["Interactive Value Change"]
+    H --&gt;|text input| J["Direct Value Input"]
+    I --&gt; K["Scene Mutation"]
+    J --&gt; K
+</code></pre>
+
+<h2 id="key-components">Key Components</h2>
+
+<h3 id="draginput-packagesexcalidrawcomponentsstatsdraginputtsx1-100">DragInput <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/DragInput.tsx#L1-L100"><code>packages/excalidraw/components/Stats/DragInput.tsx:1-100</code></a></h3>
+
+<p>The core interactive input component that supports both dragging the label and typing values. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/DragInput.tsx#L120-L177"><code>packages/excalidraw/components/Stats/DragInput.tsx:120-177</code></a> It tracks pointer movement to accumulate changes and fires callbacks at configurable sensitivity. The component preserves original element state during interactions and supports step-sized increments when Shift is held. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/DragInput.tsx#L131-L137"><code>packages/excalidraw/components/Stats/DragInput.tsx:131-137</code></a> Non-finite values (NaN, Infinity) are rejected to prevent corruption of element geometry.</p>
+
+<h3 id="stats-panel-packagesexcalidrawcomponentsstatsindextsx115-180">Stats Panel <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/index.tsx#L115-L180"><code>packages/excalidraw/components/Stats/index.tsx:115-180</code></a></h3>
+
+<p>The main panel container <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/index.tsx#L115-L143"><code>packages/excalidraw/components/Stats/index.tsx:115-143</code></a> that determines which stats to display based on selection state. It memoizes atomic units (grouping elements that should be resized together) and throttles scene dimension calculations.</p>
+
+<h3 id="single-element-components">Single-Element Components</h3>
+
+<p>For individual elements, specialized components handle property editing:</p>
+
+<ul>
+  <li><strong>Position</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/Position.tsx#L175-L209"><code>packages/excalidraw/components/Stats/Position.tsx:175-209</code></a>: Edits X/Y coordinates while accounting for element rotation and crop mode</li>
+  <li><strong>Dimension</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/Dimension.tsx#L320-L359"><code>packages/excalidraw/components/Stats/Dimension.tsx:320-359</code></a>: Edits width/height with aspect ratio preservation for images</li>
+  <li><strong>Angle</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/Angle.tsx#L87-L101"><code>packages/excalidraw/components/Stats/Angle.tsx:87-101</code></a>: Rotates elements in degrees (0-360), updating bound text if present</li>
+  <li><strong>FontSize</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/FontSize.tsx#L85-L112"><code>packages/excalidraw/components/Stats/FontSize.tsx:85-112</code></a>: Adjusts font size for text elements and elements with bound text, using <code>getBaseFontSize</code> to read the actual font size (accounting for sticky note label ceiling)</li>
+</ul>
+
+<h3 id="multi-element-components">Multi-Element Components</h3>
+
+<p>When multiple elements are selected, these components display common values or “Mixed” when they differ:</p>
+
+<ul>
+  <li><strong>MultiPosition</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/MultiPosition.tsx#L223-L271"><code>packages/excalidraw/components/Stats/MultiPosition.tsx:223-271</code></a>: Moves multiple elements or groups as units</li>
+  <li><strong>MultiDimension</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/MultiDimension.tsx#L83-L143"><code>packages/excalidraw/components/Stats/MultiDimension.tsx:83-143</code></a>: Resizes element groups while maintaining aspect ratios and internal relationships. Sticky note elements are handled specially: their layout owns the bound label entirely, and direct scaling is skipped <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/MultiDimension.tsx#L95-L121"><code>packages/excalidraw/components/Stats/MultiDimension.tsx:95-121</code></a></li>
+  <li><strong>MultiAngle</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/MultiAngle.tsx#L102-L133"><code>packages/excalidraw/components/Stats/MultiAngle.tsx:102-133</code></a>: Rotates multiple individual elements</li>
+  <li><strong>MultiFontSize</strong> <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/MultiFontSize.tsx#L133-L165"><code>packages/excalidraw/components/Stats/MultiFontSize.tsx:133-165</code></a>: Adjusts font size for multiple text elements, using <code>getBaseFontSize</code> to read values</li>
+</ul>
+
+<h2 id="property-editing">Property Editing</h2>
+
+<h3 id="interaction-flow">Interaction Flow</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/DragInput.tsx#L240-L357"><code>packages/excalidraw/components/Stats/DragInput.tsx:240-357</code></a> Users can interact with properties in two ways:</p>
+
+<ol>
+  <li><strong>Drag the label</strong>: Moving the mouse horizontally triggers <code>onPointerDown</code> on the label, which tracks movement and accumulates changes</li>
+  <li><strong>Type in the input</strong>: Direct text input that’s submitted on Enter or blur</li>
+</ol>
+
+<p>Both paths call the <code>dragInputCallback</code> with change information, which then calls <code>scene.mutateElement()</code> to update the element. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/DragInput.tsx#L149-L157"><code>packages/excalidraw/components/Stats/DragInput.tsx:149-157</code></a> The typed-value path creates a snapshot of the elements map (copying all elements) to ensure gesture-start values are read from the original state, not the live map that may already carry applied changes.</p>
+
+<h3 id="handling-grouped-elements">Handling Grouped Elements</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/utils.ts#L235-L254"><code>packages/excalidraw/components/Stats/utils.ts:235-254</code></a> Atomic units group elements that should resize together. When resizing a group, the code maintains aspect ratio and scales all contained elements proportionally. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/MultiDimension.tsx#L145-L181"><code>packages/excalidraw/components/Stats/MultiDimension.tsx:145-181</code></a></p>
+
+<h3 id="position-and-rotation">Position and Rotation</h3>
+
+<p>Properties account for element rotation. The panel calculates the top-left corner position after rotation transformation <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/Position.tsx#L175-L181"><code>packages/excalidraw/components/Stats/Position.tsx:175-181</code></a> using <code>pointRotateRads()</code>, so displayed coordinates match visual position on the canvas.</p>
+
+<h2 id="special-cases">Special Cases</h2>
+
+<h3 id="crop-mode">Crop Mode</h3>
+
+<p>When an image is being cropped, <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/Dimension.tsx#L67-L166"><code>packages/excalidraw/components/Stats/Dimension.tsx:67-166</code></a> the dimension and position inputs operate on crop coordinates rather than element bounds. The crop offset and natural image dimensions are tracked separately.</p>
+
+<h3 id="frames-and-children">Frames and Children</h3>
+
+<p>When resizing a frame, the panel detects which elements should be added or removed from frame membership based on new bounds. <a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/Dimension.tsx#L200-L216"><code>packages/excalidraw/components/Stats/Dimension.tsx:200-216</code></a> This is handled through <code>getElementsInResizingFrame()</code> and <code>replaceAllElementsInFrame()</code>.</p>
+
+<h3 id="text-elements-and-sticky-notes">Text Elements and Sticky Notes</h3>
+
+<p><a href="https://github.com/tidewiki-demos/excalidraw/blob/b6b91fb60f6c07025ee359a51ad32b13540971eb/packages/excalidraw/components/Stats/FontSize.tsx#L1-L83"><code>packages/excalidraw/components/Stats/FontSize.tsx:1-83</code></a> Font size changes trigger <code>redrawTextBoundingBox()</code> to recalculate text layout. For bound text (text inside shapes), the panel can edit font size through the container element. For sticky notes, <code>getBaseFontSize</code> returns the label’s ceiling value (the maximum font size that fits), while <code>getBaseFontSizeUpdate</code> produces the appropriate update object accounting for the note’s layout constraints.</p>
+
+<h2 id="decisions">Decisions</h2>
+
+<p><strong>Font size representation for sticky notes</strong> (commit afa3a653fc5d): Sticky note labels have a maximum font size (ceiling) that determines note growth. The Stats panel reads and writes this ceiling through <code>getBaseFontSize</code> / <code>getBaseFontSizeUpdate</code> rather than direct <code>fontSize</code> access. This ensures the panel shows the user’s constraint ceiling, not the fitted result, and preserves it through edits.</p>
+
+<p><strong>Non-finite value rejection in DragInput</strong> (commit afa3a653fc5d): The typed-value path now validates using <code>Number.isFinite()</code> instead of <code>isNaN()</code>, rejecting Infinity and values like “1e999” that would corrupt element geometry and fail JSON serialization on save.</p>
+
+<p><strong>Snapshot semantics for typed input</strong> (commit afa3a653fc5d): The typed-value path in DragInput now creates a real snapshot of elements (deep copying) before calling callbacks, matching the pointer-drag path behavior. This ensures gesture-start values are read from the original state, preventing stale reads from the live elements map.</p>
+
+<h2 id="related-pages">Related Pages</h2>
+
+<ul>
+  <li><a href="element-data-model.html">Element Data Model and Types</a> — Element structure and properties</li>
+  <li><a href="element-transformation.html">Element Transformation and Manipulation</a> — How elements are resized and moved</li>
+  <li><a href="text-editing.html">Text Editing and Typography</a> — Text element handling</li>
+  <li><a href="frames-groups.html">Frames and Groups</a> — Group and frame behavior</li>
+  <li><a href="element-selection-bounds.html">Element Selection and Bounding Boxes</a> — Selection and bounds calculation</li>
+</ul>
+</main>
+</div>
+<footer>Generated by Tidewiki. Works offline.</footer>
+<script src="assets/search-index.js"></script>
+<script src="assets/minisearch.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>
